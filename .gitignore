@@ -13,4 +13,3 @@ web/dist/
 .env
 .venv/
 .pdf_preview/
-*.log
