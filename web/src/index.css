@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b1220;
+  --panel: rgba(8, 14, 28, 0.55);
+  --text: #f4f7fb;
+  --muted: #b7c2d6;
+  --accent: #3ecf8e;
+  --danger: #ff3b4e;
+  --caption-bg: rgba(0, 0, 0, 0.55);
+  --font-scale: 1;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+.caption-text {
+  font-size: calc(1.35rem * var(--font-scale));
+  line-height: 1.45;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.alert-flash {
+  animation: flash 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes flash {
+  from {
+    background: rgba(255, 40, 60, 0.15);
+  }
+  to {
+    background: rgba(255, 40, 60, 0.55);
+  }
+}
+
+.sign-pulse {
+  animation: signPulse 0.45s ease-out;
+}
+
+@keyframes signPulse {
+  0% {
+    transform: scale(0.88);
+    opacity: 0.7;
+  }
+  55% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.hand-guide-frame {
+  animation: guidePulse 2.2s ease-in-out infinite;
+}
+
+@keyframes guidePulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+.gesture-wave {
+  transform-origin: 60px 90px;
+  animation: gestureWave 1.6s ease-in-out infinite;
+}
+.gesture-nod {
+  transform-origin: 60px 90px;
+  animation: gestureNod 1.8s ease-in-out infinite;
+}
+.gesture-reach {
+  transform-origin: 60px 100px;
+  animation: gestureReach 1.7s ease-in-out infinite;
+}
+.gesture-point {
+  transform-origin: 70px 80px;
+  animation: gesturePoint 1.5s ease-in-out infinite;
+}
+.gesture-pulse {
+  transform-origin: 60px 60px;
+  animation: gesturePulseIcon 1.4s ease-in-out infinite;
+}
+.gesture-shake {
+  transform-origin: 60px 80px;
+  animation: gestureShake 0.9s ease-in-out infinite;
+}
+.gesture-sleep {
+  transform-origin: 60px 70px;
+  animation: gestureSleep 2.2s ease-in-out infinite;
+}
+.gesture-smoke {
+  transform-origin: 60px 80px;
+  animation: gestureSmoke 2s ease-in-out infinite;
+}
+
+@keyframes gestureWave {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+@keyframes gestureNod {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+@keyframes gestureReach {
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+@keyframes gesturePoint {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+@keyframes gesturePulseIcon {
+  0%,
+  100% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+@keyframes gestureShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+@keyframes gestureSleep {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+}
+@keyframes gestureSmoke {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert-flash {
+    animation: none;
+    background: rgba(255, 40, 60, 0.45);
+  }
+
+  .sign-pulse,
+  .hand-guide-frame,
+  .gesture-wave,
+  .gesture-nod,
+  .gesture-reach,
+  .gesture-point,
+  .gesture-pulse,
+  .gesture-shake,
+  .gesture-sleep,
+  .gesture-smoke {
+    animation: none;
+  }
+}

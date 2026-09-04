@@ -1,0 +1,5 @@
+# Install when you have enough disk (~4GB+ free):
+faster-whisper>=1.1.0
+torch>=2.2.0
+huggingface_hub>=0.26.0
+transformers>=4.46.0

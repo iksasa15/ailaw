@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+web/node_modules/
+backend/.venv/
+__pycache__/
+*.pyc
+.DS_Store
+dist/
+web/dist/
+*.pt
+*.pth
+.cache/
+.env
+.venv/
+.pdf_preview/
+*.log
