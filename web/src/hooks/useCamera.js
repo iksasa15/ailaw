@@ -6,6 +6,22 @@ export function useCamera({ facingMode = 'user', enabled = true } = {}) {
   const [status, setStatus] = useState('idle') // idle | requesting | ready | denied | unsupported | error
   const [error, setError] = useState(null)
 
+  const attachStream = useCallback(async (stream) => {
+    const video = videoRef.current
+    if (!video || !stream) return
+    if (video.srcObject !== stream) {
+      video.srcObject = stream
+    }
+    video.muted = true
+    video.setAttribute('playsinline', 'true')
+    video.setAttribute('webkit-playsinline', 'true')
+    try {
+      await video.play()
+    } catch {
+      /* iOS may need a tap; muted autoplay usually works */
+    }
+  }, [])
+
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
@@ -21,21 +37,30 @@ export function useCamera({ facingMode = 'user', enabled = true } = {}) {
     setError(null)
     try {
       stop()
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30, max: 30 },
-        },
-        audio: false,
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play().catch(() => {})
+      // Soft constraints — harsh ideals often fail on iOS Safari
+      let stream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        })
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        })
       }
+      streamRef.current = stream
+      await attachStream(stream)
       setStatus('ready')
+      // Re-attach next paint in case <video> mounted after PermissionGate flipped
+      requestAnimationFrame(() => {
+        attachStream(stream)
+      })
     } catch (err) {
       const name = err?.name || ''
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
@@ -45,11 +70,20 @@ export function useCamera({ facingMode = 'user', enabled = true } = {}) {
         setError(err?.message || 'تعذر فتح الكاميرا')
       }
     }
-  }, [facingMode, stop])
+  }, [facingMode, stop, attachStream])
+
+  // When <video> appears (or remounts), bind the live stream
+  useEffect(() => {
+    if (status !== 'ready' || !streamRef.current) return
+    attachStream(streamRef.current)
+  }, [status, attachStream])
 
   useEffect(() => {
     if (enabled) start()
-    else stop()
+    else {
+      stop()
+      setStatus('idle')
+    }
     return stop
   }, [enabled, start, stop])
 

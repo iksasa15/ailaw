@@ -46,8 +46,9 @@ export default function Home() {
   const needMic = settings.receiveEnabled || settings.safetyEnabled
   const mic = useSharedMic({ enabled: needMic })
 
-  // أمان بدون إرسال → كاميرا خلفية ترى الحاجز أمامك؛ مع الإرسال تبقى الأمامية للإشارات
-  const facingMode = settings.sendEnabled ? 'user' : 'environment'
+  // أمان بدون إرسال → كاميرا خلفية؛ مع الإرسال تبقى الأمامية
+  // ثبّت الاتجاه حتى لا يعيد تشغيل الكاميرا باستمرار على الجوال
+  const facingMode = settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user'
   const camera = useCamera({ facingMode, enabled: true })
   const hands = useHands({
     videoRef: camera.videoRef,
