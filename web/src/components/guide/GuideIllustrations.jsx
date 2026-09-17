@@ -96,8 +96,8 @@ export function SvgSettings() {
 
 export function SvgHowToSend() {
   const steps = [
-    { e: '📤', t: 'إرسال' },
-    { e: '✋', t: 'ثبّت' },
+    { e: '☝️5ث', t: 'محامي' },
+    { e: '✌️5ث', t: 'شخص' },
     { e: '🖐️', t: 'أصابع' },
     { e: '🔊', t: 'جملة' },
   ]
@@ -105,17 +105,14 @@ export function SvgHowToSend() {
     <div
       className="flex items-center justify-between gap-1 rounded-xl bg-[#152033] px-3 py-4 ring-1 ring-white/10"
       role="img"
-      aria-label="خطوات الإرسال"
+      aria-label="خطوات الإرسال والدور"
     >
-      {steps.map((s, i) => (
+      {steps.map((s) => (
         <div key={s.t} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-3xl" aria-hidden>
+          <span className="text-2xl leading-none" aria-hidden>
             {s.e}
           </span>
           <span className="text-[11px] font-semibold text-white">{s.t}</span>
-          {i < steps.length - 1 ? (
-            <span className="sr-only">ثم</span>
-          ) : null}
         </div>
       ))}
     </div>

@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
-import { GESTURE_CLIPS, GestureClipCard } from '../components/guide/GestureArt'
+import {
+  GestureClipCard,
+  LAWYER_CLIPS,
+  PERSON_CLIPS,
+} from '../components/guide/GestureArt'
 import { SECTION_SVG, SvgHowToSend } from '../components/guide/GuideIllustrations'
 
 const HOW_TO_VOCAB = [
   'فعّل زر «إرسال» من الشريط السفلي.',
-  'ضع يدك (أو يديك) حتى تظهر «يد متثبتة».',
-  'ارفع عدد الأصابع حسب الجملة (1–5 يد واحدة، 6–10 يدين).',
-  'ثبّت — تظهر الجملة في الوسط ويُنطق الصوت.',
+  'ثبّت إصبعاً واحداً 5 ثوانٍ → وضع المحامي ⚖️',
+  'ثبّت إصبعين 5 ثوانٍ → وضع الشخص 👤',
+  'بعد اختيار الدور ارفع عدد الأصابع (1–10) لتُنطق عبارة الدور.',
 ]
 
 const SECTIONS = [
@@ -35,16 +39,16 @@ const SECTIONS = [
   },
   {
     id: 'send',
-    title: 'إرسال — رقم الأصابع يتحول إلى جملة',
+    title: 'إرسال — سيناريو قضية (محامي ↔ شخص)',
     accent: 'إرسال',
-    emoji: '🖐️',
+    emoji: '⚖️',
     steps: [
       'اضغط زر «إرسال».',
-      'يد واحدة: ١ سلام · ٢ كيف حالك · ٣ شكراً · ٤ مساعدة · ٥ مع السلامة',
-      'يدين (مجموع الأصابع): ٦ نعم · ٧ لا · ٨ من فضلك · ٩ أنا آسف · ١٠ أنا بخير',
-      'أظهر اليدين معاً في الإطار للأرقام 6–10، وثبّت حتى تُنطق الجملة.',
+      'تغيير الدور: إصبع واحد لمدة 5 ثوانٍ = محامي · إصبعان لمدة 5 ثوانٍ = شخص.',
+      'ثم ارفع رقم الأصابع حسب عبارة الدور الحالي (1–10).',
+      'تظهر الجملة في الوسط مع صوت الدور (محامي أو شخص).',
     ],
-    tip: 'للإرسال بيد واحدة اكتفِ بـ 1–5؛ للجمل الإضافية استخدم يدين.',
+    tip: 'ابدأ كشخص، ثم بدّل للمحامي بالتثبيت الطويل لإكمال الحوار.',
   },
   {
     id: 'safety',
@@ -68,6 +72,7 @@ const SECTIONS = [
       '«وجّه يدك» — لا توجد يد في الإطار؛ ضع يدك في المنتصف.',
       '«تتبع ضعيف» — اليد ظاهرة لكن تتحرك كثيراً؛ ثبّتها قليلاً.',
       '«يد متثبتة» — التتبع جاهز للتعرف على الإشارة.',
+      'شارة «وضع المحامي / وضع الشخص» — الدور الحالي لعبارات القضية.',
     ],
   },
   {
@@ -97,7 +102,7 @@ export default function Guide() {
         </div>
 
         <p className="leading-7 text-white/80">
-          كل قسم فيه <strong className="text-white">إيموجي</strong> يوضح الفكرة، ثم الخطوات.
+          سيناريو قضية: بدّل الدور بالتثبيت 5 ثوانٍ، ثم تحدّث بعبارات الأصابع.
         </p>
 
         <section
@@ -105,10 +110,11 @@ export default function Guide() {
           className="space-y-4 rounded-2xl border border-[#3ecf8e]/35 bg-[#3ecf8e]/8 p-4"
         >
           <div>
-            <p className="text-xs font-semibold text-[#3ecf8e]">🖐️ إرسال · أصابع</p>
-            <h2 className="mt-1 text-xl font-bold">محادثة بالأصابع (1 → 10)</h2>
+            <p className="text-xs font-semibold text-[#3ecf8e]">⚖️ إرسال · قضية</p>
+            <h2 className="mt-1 text-xl font-bold">محامي ↔ شخص (1 → 10)</h2>
             <p className="mt-2 text-sm leading-7 text-white/75">
-              ارفع <strong className="text-white">رقم الأصابع</strong> لتظهر الجملة وتُنطق تلقائياً.
+              <strong className="text-white">1 إصبع × 5 ثوانٍ</strong> = محامي ·{' '}
+              <strong className="text-white">2 أصابع × 5 ثوانٍ</strong> = شخص.
             </p>
           </div>
 
@@ -123,13 +129,21 @@ export default function Guide() {
           </ol>
 
           <div className="space-y-3">
-            {GESTURE_CLIPS.map((clip, index) => (
-              <GestureClipCard key={clip.display} clip={clip} index={index} />
+            <h3 className="text-base font-bold text-white">👤 عبارات الشخص</h3>
+            {PERSON_CLIPS.map((clip) => (
+              <GestureClipCard key={`person-${clip.number}-${clip.display}`} clip={clip} />
+            ))}
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <h3 className="text-base font-bold text-white">⚖️ عبارات المحامي</h3>
+            {LAWYER_CLIPS.map((clip) => (
+              <GestureClipCard key={`lawyer-${clip.number}-${clip.display}`} clip={clip} />
             ))}
           </div>
 
           <p className="text-xs leading-5 text-white/50">
-            ملاحظة: الرسوم تعليمية مبسّطة — لـ 6–10 استخدم يدين ومجموع الأصابع.
+            ملاحظة: لـ 6–10 استخدم يدين ومجموع الأصابع. العبارات حسب الدور الظاهر أعلى الشاشة.
           </p>
         </section>
 

@@ -17,9 +17,11 @@ import {
   AlertToast,
   CaptionBubble,
   HandGuide,
+  RoleBadge,
   SignBadge,
   TrackingBadge,
 } from '../components/overlay/Overlay'
+import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
 
 export default function Home() {
@@ -27,7 +29,9 @@ export default function Home() {
   const [backendWhisper, setBackendWhisper] = useState(false)
   const [pulseToken, setPulseToken] = useState(0)
   const [badgePulse, setBadgePulse] = useState(false)
+  const [rolePulse, setRolePulse] = useState(false)
   const lastSpokenRef = useRef('')
+  const lastRoleSpokenRef = useRef('')
 
   useEffect(() => {
     let cancelled = false
@@ -126,10 +130,31 @@ export default function Home() {
     }
   }, [settings.sendEnabled, hands.trackingQuality])
 
+  // تبديل الدور: 1×5ث محامي · 2×5ث شخص
+  useEffect(() => {
+    const change = finger.roleChanged
+    if (!change?.role) return
+    const announce = change.role === 'lawyer' ? 'وضع المحامي' : 'وضع الشخص'
+    if (lastRoleSpokenRef.current === `${change.role}:${change.at}`) return
+    lastRoleSpokenRef.current = `${change.role}:${change.at}`
+    lastSpokenRef.current = ''
+    unlockTts()
+    speak(announce, { force: true })
+    setRolePulse(true)
+    const t = setTimeout(() => setRolePulse(false), 700)
+    finger.clearRoleChanged?.()
+    return () => clearTimeout(t)
+  }, [finger.roleChanged, finger.clearRoleChanged, speak, unlockTts])
+
   useEffect(() => {
     const r = sendResult
     if (!settings.sendEnabled || !r?.accepted || !r.display) return
-    const key = r.fingers != null ? `${r.fingers}:${r.display}` : r.display
+    // أثناء اكتمال تثبيت الدور لا نكرر نطق الجملة فوراً بعد إعلان الدور
+    if (finger.roleHoldProgress > 0.92) return
+    const key =
+      r.fingers != null
+        ? `${r.role || finger.role}:${r.fingers}:${r.display}`
+        : r.display
     if (lastSpokenRef.current === key) return
     lastSpokenRef.current = key
     speak(r.display, { force: true })
@@ -137,7 +162,7 @@ export default function Home() {
     setBadgePulse(true)
     const t = setTimeout(() => setBadgePulse(false), 500)
     return () => clearTimeout(t)
-  }, [sendResult, speak, settings.sendEnabled])
+  }, [sendResult, speak, settings.sendEnabled, finger.role, finger.roleHoldProgress])
 
   const sttStatus =
     needMic && (mic.status === 'denied' || mic.status === 'error')
@@ -171,13 +196,20 @@ export default function Home() {
       </div>
 
       {settings.sendEnabled && <TrackingBadge quality={hands.trackingQuality} />}
+      {settings.sendEnabled ? (
+        <RoleBadge
+          role={finger.role}
+          holdProgress={finger.roleHoldProgress}
+          pulse={rolePulse}
+        />
+      ) : null}
 
       <CaptionBubble text={stt.text} partial={stt.partial} />
       <SignBadge
         label={
           sendResult?.display
             ? sendResult.fingers
-              ? `${sendResult.fingers} · ${sendResult.display}`
+              ? `${ROLE_LABELS[sendResult.role || finger.role] || ''} · ${sendResult.fingers} · ${sendResult.display}`
               : sendResult.display
             : null
         }
@@ -192,7 +224,11 @@ export default function Home() {
       />
       <AlertToast alert={safetyAlert} onDismiss={clearSafetyAlert} />
       {settings.safetyEnabled && obstacle.near && !safetyAlert ? (
-        <div className="pointer-events-none absolute inset-x-4 top-[7.25rem] z-20 flex justify-center">
+        <div
+          className={`pointer-events-none absolute inset-x-4 z-20 flex justify-center ${
+            settings.sendEnabled ? 'top-[10.5rem]' : 'top-[7.25rem]'
+          }`}
+        >
           <div className="rounded-full bg-[#ff3b4e]/90 px-3 py-1.5 text-sm font-semibold text-white shadow-md">
             🚧 اقترب من حاجز…
           </div>

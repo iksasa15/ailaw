@@ -35,6 +35,37 @@ export function TrackingBadge({ quality }) {
   )
 }
 
+/** شارة دور المحادثة: محامي / شخص + تقدّم تثبيت الدور */
+export function RoleBadge({ role, holdProgress = 0, pulse = false }) {
+  const isLawyer = role === 'lawyer'
+  const label = isLawyer ? '⚖️ وضع المحامي' : '👤 وضع الشخص'
+  const showingHold = holdProgress > 0.05 && holdProgress < 1
+  const seconds = Math.min(5, Math.ceil(holdProgress * 5))
+
+  return (
+    <div className="pointer-events-none absolute inset-x-4 top-[7.25rem] z-20 flex flex-col items-center gap-1.5">
+      <div
+        className={`rounded-full px-3 py-1.5 text-sm font-semibold shadow-md transition-all ${
+          isLawyer ? 'bg-[#5eb8ff] text-[#041018]' : 'bg-white/20 text-white'
+        } ${pulse ? 'sign-pulse' : ''}`}
+      >
+        {label}
+      </div>
+      {showingHold ? (
+        <div className="w-44 max-w-[70vw] overflow-hidden rounded-full bg-black/50 ring-1 ring-white/20">
+          <div
+            className="h-1.5 rounded-full bg-[#f5d76e] transition-[width] duration-100"
+            style={{ width: `${Math.round(holdProgress * 100)}%` }}
+          />
+          <p className="px-2 py-1 text-center text-[11px] font-medium text-white/85">
+            تثبيت الدور… {seconds}/5
+          </p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function HandGuide({ visible }) {
   if (!visible) return null
   return (
