@@ -11,7 +11,7 @@ import { useTts } from '../hooks/useTts'
 import { useAmbient } from '../hooks/useAmbient'
 import { useObstacleProximity } from '../hooks/useObstacleProximity'
 import { useSettings } from '../app/SettingsContext'
-import { checkHealth } from '../services/api'
+import { checkHealth, fetchLawyerScene, publishScenePhrase } from '../services/api'
 import { HandLandmarkCanvas, PermissionGate, VideoFeed } from '../components/camera/Camera'
 import {
   AlertToast,
@@ -25,7 +25,8 @@ import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
 
-export default function Home() {
+export default function Home({ lockedRole = null }) {
+  const dedicated = lockedRole === 'lawyer' || lockedRole === 'person'
   const { settings, update } = useSettings()
   const [backendWhisper, setBackendWhisper] = useState(false)
   const [pulseToken, setPulseToken] = useState(0)
@@ -34,6 +35,13 @@ export default function Home() {
   const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
+
+  // شاشة مستقلة: تفعيل الإرسال تلقائياً
+  useEffect(() => {
+    if (dedicated && !settings.sendEnabled) {
+      update({ sendEnabled: true })
+    }
+  }, [dedicated, settings.sendEnabled, update])
 
   useEffect(() => {
     let cancelled = false
@@ -52,13 +60,19 @@ export default function Home() {
   const needMic = settings.receiveEnabled || settings.safetyEnabled
   const mic = useSharedMic({ enabled: needMic })
 
-  // أمان بدون إرسال → كاميرا خلفية؛ مع الإرسال تبقى الأمامية
-  // ثبّت الاتجاه حتى لا يعيد تشغيل الكاميرا باستمرار على الجوال
-  const facingMode = settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user'
+  // شاشات مستقلة دائماً كاميرا أمامية للإشارات
+  const facingMode = dedicated
+    ? 'user'
+    : settings.sendEnabled
+      ? 'user'
+      : settings.safetyEnabled
+        ? 'environment'
+        : 'user'
+  const sendOn = dedicated ? true : settings.sendEnabled
   const camera = useCamera({ facingMode, enabled: true })
   const hands = useHands({
     videoRef: camera.videoRef,
-    enabled: settings.sendEnabled && camera.status === 'ready',
+    enabled: sendOn && camera.status === 'ready',
     pulseToken,
   })
 
@@ -78,17 +92,18 @@ export default function Home() {
 
   const arsl = useArsl({
     landmarksRef: hands.landmarksRef,
-    enabled: false, // demo path: numbered finger phrases (clearer for committee demo)
+    enabled: false,
     threshold: settings.confidence,
     trackingQuality: hands.trackingQuality,
   })
   const finger = useFingerPhrases({
     landmarksRef: hands.landmarksRef,
     allHandsRef: hands.allHandsRef,
-    enabled: settings.sendEnabled && camera.status === 'ready',
+    enabled: sendOn && camera.status === 'ready',
     trackingQuality: hands.trackingQuality,
     lawyerPhrases: settings.lawyerPhrases,
     personPhrases: settings.personPhrases,
+    lockedRole: dedicated ? lockedRole : null,
   })
   const sendResult = finger.result || arsl.result
   const { speak, unlock: unlockTts } = useTts({ cooldownMs: 1600 })
@@ -105,6 +120,34 @@ export default function Home() {
     ambient.clearAlert()
     obstacle.clearAlert()
   }
+
+  // شاشة الشخص: استقبل كلام المحامي من السيرفر للأفتار
+  useEffect(() => {
+    if (lockedRole !== 'person') return undefined
+    let cancelled = false
+    const tick = async () => {
+      try {
+        const data = await fetchLawyerScene()
+        if (cancelled || !data?.text) return
+        setLastLawyerPhrase((prev) => {
+          if (prev?.at === data.at && prev?.text === data.text) return prev
+          return {
+            fingers: data.fingers ?? null,
+            text: data.text,
+            at: data.at || Date.now(),
+          }
+        })
+      } catch {
+        /* backend offline — الشاشة تبقى تعمل محلياً */
+      }
+    }
+    tick()
+    const id = window.setInterval(tick, 1200)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [lockedRole, settings.apiBase])
 
   // نطق تحذير عند حاجز قريب
   const lastObstacleSpokenRef = useRef(0)
@@ -129,17 +172,18 @@ export default function Home() {
 
   // Reset spoken memory when send turns off or hand is lost
   useEffect(() => {
-    if (!settings.sendEnabled || hands.trackingQuality === 'lost') {
+    if (!sendOn || hands.trackingQuality === 'lost') {
       lastSpokenRef.current = ''
     }
-  }, [settings.sendEnabled, hands.trackingQuality])
+  }, [sendOn, hands.trackingQuality])
 
-  // تبديل الدور: 1×5ث محامي · 2×5ث شخص
+  // تبديل الدور: معطّل على الشاشات المستقلة
   useEffect(() => {
+    if (dedicated) return undefined
     const change = finger.roleChanged
-    if (!change?.role) return
+    if (!change?.role) return undefined
     const announce = change.role === 'lawyer' ? 'وضع المحامي' : 'وضع الشخص'
-    if (lastRoleSpokenRef.current === `${change.role}:${change.at}`) return
+    if (lastRoleSpokenRef.current === `${change.role}:${change.at}`) return undefined
     lastRoleSpokenRef.current = `${change.role}:${change.at}`
     lastSpokenRef.current = ''
     unlockTts()
@@ -148,13 +192,12 @@ export default function Home() {
     const t = setTimeout(() => setRolePulse(false), 700)
     finger.clearRoleChanged?.()
     return () => clearTimeout(t)
-  }, [finger.roleChanged, finger.clearRoleChanged, speak, unlockTts])
+  }, [dedicated, finger.roleChanged, finger.clearRoleChanged, speak, unlockTts])
 
   useEffect(() => {
     const r = sendResult
-    if (!settings.sendEnabled || !r?.accepted || !r.display) return
-    // أثناء اكتمال تثبيت الدور لا نكرر نطق الجملة فوراً بعد إعلان الدور
-    if (finger.roleHoldProgress > 0.92) return
+    if (!sendOn || !r?.accepted || !r.display) return
+    if (!dedicated && finger.roleHoldProgress > 0.92) return
     const key =
       r.fingers != null
         ? `${r.role || finger.role}:${r.fingers}:${r.display}`
@@ -163,18 +206,42 @@ export default function Home() {
     lastSpokenRef.current = key
     const spokenRole = r.role || finger.role
     if (spokenRole === 'lawyer') {
-      setLastLawyerPhrase({
+      const payload = {
         fingers: r.fingers ?? null,
         text: r.display,
         at: Date.now(),
-      })
+      }
+      setLastLawyerPhrase(payload)
+      publishScenePhrase({
+        role: 'lawyer',
+        text: r.display,
+        fingers: r.fingers ?? null,
+      }).catch(() => {})
+    } else if (spokenRole === 'person') {
+      publishScenePhrase({
+        role: 'person',
+        text: r.display,
+        fingers: r.fingers ?? null,
+      }).catch(() => {})
     }
-    speak(r.display, { force: true })
+    // على شاشة الشخص: لا ننطق صوت المحامي هنا؛ الأفتار يعرض الإشارة
+    // على شاشة المحامي أو المشتركة: ننطق العبارة
+    if (lockedRole !== 'person') {
+      speak(r.display, { force: true })
+    }
     setPulseToken((n) => n + 1)
     setBadgePulse(true)
     const t = setTimeout(() => setBadgePulse(false), 500)
     return () => clearTimeout(t)
-  }, [sendResult, speak, settings.sendEnabled, finger.role, finger.roleHoldProgress])
+  }, [
+    sendResult,
+    speak,
+    sendOn,
+    finger.role,
+    finger.roleHoldProgress,
+    dedicated,
+    lockedRole,
+  ])
 
   const sttStatus =
     needMic && (mic.status === 'denied' || mic.status === 'error')
@@ -182,22 +249,34 @@ export default function Home() {
       : stt.status
   const sttError = mic.error || stt.error
 
+  const title =
+    lockedRole === 'lawyer'
+      ? 'شاشة المحامي'
+      : lockedRole === 'person'
+        ? 'شاشة الشخص'
+        : 'النظارة الذكية'
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <PermissionGate status={camera.status} error={camera.error} onRetry={camera.start}>
         <VideoFeed videoRef={camera.videoRef} />
         <HandLandmarkCanvas canvasRef={hands.canvasRef} />
-        {settings.sendEnabled && <HandGuide visible={hands.trackingQuality === 'lost'} />}
+        {sendOn && <HandGuide visible={hands.trackingQuality === 'lost'} />}
       </PermissionGate>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
         <div>
-          <p className="text-lg font-bold text-white drop-shadow">النظارة الذكية</p>
+          <p className="text-lg font-bold text-white drop-shadow">{title}</p>
           <p className="text-xs text-white/70">
-            عدسة AR · STT: {useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}
+            {dedicated
+              ? `كاميرا هذا الجهاز · ${ROLE_LABELS[lockedRole]}`
+              : `عدسة AR · STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
           </p>
         </div>
-        <div className="pointer-events-auto flex gap-2">
+        <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+          <Link to="/screens" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
+            📱 شاشتين
+          </Link>
           <Link to="/guide" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
             📖 تعليمات
           </Link>
@@ -207,21 +286,28 @@ export default function Home() {
         </div>
       </div>
 
-      {settings.sendEnabled && <TrackingBadge quality={hands.trackingQuality} />}
-      {settings.sendEnabled ? (
+      {sendOn && <TrackingBadge quality={hands.trackingQuality} />}
+      {sendOn ? (
         <RoleBadge
           role={finger.role}
-          holdProgress={finger.roleHoldProgress}
+          holdProgress={dedicated ? 0 : finger.roleHoldProgress}
           pulse={rolePulse}
-          onToggle={() => {
-            unlockTts()
-            finger.toggleRole()
-          }}
+          onToggle={
+            dedicated
+              ? undefined
+              : () => {
+                  unlockTts()
+                  finger.toggleRole()
+                }
+          }
         />
       ) : null}
 
-      <CaptionBubble text={stt.text} partial={stt.partial} raised={settings.sendEnabled} />
-      <SignCoachAvatar visible={settings.sendEnabled} lawyerPhrase={lastLawyerPhrase} />
+      <CaptionBubble text={stt.text} partial={stt.partial} raised={sendOn} />
+      <SignCoachAvatar
+        visible={sendOn && (lockedRole === 'person' || !dedicated)}
+        lawyerPhrase={lastLawyerPhrase}
+      />
       <SignBadge
         label={
           sendResult?.display
@@ -243,7 +329,7 @@ export default function Home() {
       {settings.safetyEnabled && obstacle.near && !safetyAlert ? (
         <div
           className={`pointer-events-none absolute inset-x-4 z-20 flex justify-center ${
-            settings.sendEnabled ? 'top-[10.5rem]' : 'top-[7.25rem]'
+            sendOn ? 'top-[10.5rem]' : 'top-[7.25rem]'
           }`}
         >
           <div className="rounded-full bg-[#ff3b4e]/90 px-3 py-1.5 text-sm font-semibold text-white shadow-md">
@@ -254,10 +340,11 @@ export default function Home() {
 
       <BottomBar
         receiveOn={settings.receiveEnabled}
-        sendOn={settings.sendEnabled}
+        sendOn={sendOn}
         safetyOn={settings.safetyEnabled}
         onToggleReceive={() => update({ receiveEnabled: !settings.receiveEnabled })}
         onToggleSend={() => {
+          if (dedicated) return
           const next = !settings.sendEnabled
           if (next) unlockTts()
           update({ sendEnabled: next })

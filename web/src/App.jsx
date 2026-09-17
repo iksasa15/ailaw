@@ -5,6 +5,7 @@ import Settings from './pages/Settings'
 import About from './pages/About'
 import Guide from './pages/Guide'
 import Onboarding from './pages/Onboarding'
+import ScreenPick from './pages/ScreenPick'
 
 function Gate({ children }) {
   const { settings } = useSettings()
@@ -22,6 +23,30 @@ export default function App() {
           element={
             <Gate>
               <Home />
+            </Gate>
+          }
+        />
+        <Route
+          path="/screens"
+          element={
+            <Gate>
+              <ScreenPick />
+            </Gate>
+          }
+        />
+        <Route
+          path="/screen/lawyer"
+          element={
+            <Gate>
+              <Home lockedRole="lawyer" />
+            </Gate>
+          }
+        />
+        <Route
+          path="/screen/person"
+          element={
+            <Gate>
+              <Home lockedRole="person" />
             </Gate>
           }
         />
