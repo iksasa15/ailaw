@@ -5,12 +5,19 @@ import {
   PERSON_CLIPS,
 } from '../components/guide/GestureArt'
 import { SECTION_SVG, SvgHowToSend } from '../components/guide/GuideIllustrations'
+import {
+  LAWYER_PHRASES,
+  PERSON_PHRASES,
+  mergePhraseMap,
+} from '../hooks/useFingerPhrases'
+import { useSettings } from '../app/SettingsContext'
 
 const HOW_TO_VOCAB = [
   'فعّل زر «إرسال» من الشريط السفلي.',
+  'الدور الابتدائي: شخص 👤 — اضغط «تبديل» أو ثبّت الأصابع 5 ثوانٍ لتغيير الدور.',
   'ثبّت إصبعاً واحداً 5 ثوانٍ → وضع المحامي ⚖️',
   'ثبّت إصبعين 5 ثوانٍ → وضع الشخص 👤',
-  'بعد اختيار الدور ارفع عدد الأصابع (1–10) لتُنطق عبارة الدور.',
+  'ارفع رقم الأصابع بالترتيب (1→10) ليحكي الشخص قضيته تفصيلاً، والمحامي يرد.',
 ]
 
 const SECTIONS = [
@@ -44,11 +51,11 @@ const SECTIONS = [
     emoji: '⚖️',
     steps: [
       'اضغط زر «إرسال».',
-      'تغيير الدور: إصبع واحد لمدة 5 ثوانٍ = محامي · إصبعان لمدة 5 ثوانٍ = شخص.',
+      'تغيير الدور: زر «تبديل» أعلى الشاشة، أو إصبع واحد 5 ثوانٍ = محامي · إصبعان 5 ثوانٍ = شخص.',
       'ثم ارفع رقم الأصابع حسب عبارة الدور الحالي (1–10).',
       'تظهر الجملة في الوسط مع صوت الدور (محامي أو شخص).',
     ],
-    tip: 'ابدأ كشخص، ثم بدّل للمحامي بالتثبيت الطويل لإكمال الحوار.',
+    tip: 'الشخص يرفع 1 ثم 2 ثم 3… ليحكي التفاصيل. بدّل للمحامي ليرد بنفس الأرقام أو بالتسلسل.',
   },
   {
     id: 'safety',
@@ -73,6 +80,7 @@ const SECTIONS = [
       '«تتبع ضعيف» — اليد ظاهرة لكن تتحرك كثيراً؛ ثبّتها قليلاً.',
       '«يد متثبتة» — التتبع جاهز للتعرف على الإشارة.',
       'شارة «وضع المحامي / وضع الشخص» — الدور الحالي لعبارات القضية.',
+      'الأفتار أسفل الشاشة يشرح تقريباً إشارة الأصابع للشخص (ليس دقيقاً 100%).',
     ],
   },
   {
@@ -81,6 +89,7 @@ const SECTIONS = [
     emoji: '⚙️',
     steps: [
       'عتبة ثقة الإشارة (~0.35–0.40 للديمو): أعلى = أقل أخطاء وأصعب قبول.',
+      'قوائم الأصابع: من الإعدادات عدّل عبارات المحامي وعبارات الشخص بشكل منفصل.',
       'شفافية وحجم النص: لوضوح فقاعة الاستقبال.',
       'تثبيت PWA: لفتح التطبيق كشاشة مستقلة على الجوال.',
     ],
@@ -88,6 +97,15 @@ const SECTIONS = [
 ]
 
 export default function Guide() {
+  const { settings } = useSettings()
+  const lawyerMap = mergePhraseMap(settings.lawyerPhrases, LAWYER_PHRASES)
+  const personMap = mergePhraseMap(settings.personPhrases, PERSON_PHRASES)
+  const SCENARIO_ROWS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
+    n,
+    lawyer: lawyerMap[n],
+    person: personMap[n],
+  }))
+
   return (
     <div className="h-full overflow-y-auto bg-[#0b1220] px-4 py-6 text-white">
       <div className="mx-auto max-w-lg space-y-5 pb-10">
@@ -127,6 +145,32 @@ export default function Guide() {
               <li key={step}>{step}</li>
             ))}
           </ol>
+
+          <div className="overflow-hidden rounded-xl ring-1 ring-white/15">
+            <div className="bg-[#0b1220] px-3 py-2 text-sm font-bold text-[#3ecf8e]">
+              سيناريو القضية — الشخص يحكي تفاصيله إصبعاً بإصبع
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[20rem] text-right text-sm">
+                <thead>
+                  <tr className="bg-white/5 text-white/70">
+                    <th className="px-2 py-2 font-semibold">أصابع</th>
+                    <th className="px-2 py-2 font-semibold">⚖️ محامي</th>
+                    <th className="px-2 py-2 font-semibold">👤 شخص</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SCENARIO_ROWS.map((row) => (
+                    <tr key={row.n} className="border-t border-white/10 text-white/90">
+                      <td className="px-2 py-2 font-bold text-[#3ecf8e]">{row.n}</td>
+                      <td className="px-2 py-2">{row.lawyer}</td>
+                      <td className="px-2 py-2">{row.person}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           <div className="space-y-3">
             <h3 className="text-base font-bold text-white">👤 عبارات الشخص</h3>

@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { LAWYER_PHRASES, PERSON_PHRASES, mergePhraseMap } from '../hooks/useFingerPhrases'
 
 const SettingsContext = createContext(null)
+
+const PHRASE_PACK = 'case-story-v1'
 
 const DEFAULTS = {
   apiBase: '',
@@ -12,13 +15,31 @@ const DEFAULTS = {
   sendEnabled: true,
   safetyEnabled: true,
   onboarded: false,
+  phrasePack: PHRASE_PACK,
+  lawyerPhrases: { ...LAWYER_PHRASES },
+  personPhrases: { ...PERSON_PHRASES },
 }
 
 function load() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('sg-settings') || '{}') }
+    const raw = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('sg-settings') || '{}') }
+    const packChanged = raw.phrasePack !== PHRASE_PACK
+    return {
+      ...raw,
+      phrasePack: PHRASE_PACK,
+      lawyerPhrases: packChanged
+        ? { ...LAWYER_PHRASES }
+        : mergePhraseMap(raw.lawyerPhrases, LAWYER_PHRASES),
+      personPhrases: packChanged
+        ? { ...PERSON_PHRASES }
+        : mergePhraseMap(raw.personPhrases, PERSON_PHRASES),
+    }
   } catch {
-    return { ...DEFAULTS }
+    return {
+      ...DEFAULTS,
+      lawyerPhrases: { ...LAWYER_PHRASES },
+      personPhrases: { ...PERSON_PHRASES },
+    }
   }
 }
 
@@ -39,7 +60,13 @@ export function SettingsProvider({ children }) {
     () => ({
       settings,
       update: (patch) => setSettings((s) => ({ ...s, ...patch })),
-      reset: () => setSettings({ ...DEFAULTS }),
+      reset: () =>
+        setSettings({
+          ...DEFAULTS,
+          phrasePack: PHRASE_PACK,
+          lawyerPhrases: { ...LAWYER_PHRASES },
+          personPhrases: { ...PERSON_PHRASES },
+        }),
     }),
     [settings],
   )

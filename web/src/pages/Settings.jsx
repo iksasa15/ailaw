@@ -2,6 +2,41 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useSettings } from '../app/SettingsContext'
 import { checkHealth, getApiBase, setApiBase } from '../services/api'
+import { LAWYER_PHRASES, PERSON_PHRASES } from '../hooks/useFingerPhrases'
+
+function PhraseEditor({ title, emoji, phrases, onChange, onReset }) {
+  return (
+    <section className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold">
+          <span aria-hidden>{emoji} </span>
+          {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-lg bg-white/10 px-2.5 py-1 text-xs text-white/80"
+        >
+          افتراضي
+        </button>
+      </div>
+      <p className="text-xs text-white/55">عدّل النص لكل رقم أصابع (1–10) — يُحفظ ويعمل فوراً في الإرسال.</p>
+      <div className="space-y-2">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+          <label key={n} className="flex items-center gap-2">
+            <span className="w-7 shrink-0 text-center text-sm font-bold text-[#3ecf8e]">{n}</span>
+            <input
+              className="min-h-11 w-full rounded-xl border border-white/15 bg-[#0b1220] px-3 text-sm text-white"
+              value={phrases?.[n] ?? phrases?.[String(n)] ?? ''}
+              onChange={(e) => onChange(n, e.target.value)}
+              placeholder={`عبارة رقم ${n}`}
+            />
+          </label>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export default function Settings() {
   const { settings, update, reset } = useSettings()
@@ -36,9 +71,15 @@ export default function Settings() {
     setDeferredPrompt(null)
   }
 
+  function patchPhrase(roleKey, n, value) {
+    const current = { ...(settings[roleKey] || {}) }
+    current[n] = value
+    update({ [roleKey]: current })
+  }
+
   return (
     <div className="h-full overflow-y-auto bg-[#0b1220] px-4 py-6 text-white">
-      <div className="mx-auto max-w-lg space-y-5">
+      <div className="mx-auto max-w-lg space-y-5 pb-10">
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">⚙️ الإعدادات</h1>
           <div className="flex gap-2">
@@ -72,6 +113,22 @@ export default function Settings() {
             </p>
           )}
         </label>
+
+        <PhraseEditor
+          title="قائمة المحامي"
+          emoji="⚖️"
+          phrases={settings.lawyerPhrases}
+          onChange={(n, value) => patchPhrase('lawyerPhrases', n, value)}
+          onReset={() => update({ lawyerPhrases: { ...LAWYER_PHRASES } })}
+        />
+
+        <PhraseEditor
+          title="قائمة الشخص"
+          emoji="👤"
+          phrases={settings.personPhrases}
+          onChange={(n, value) => patchPhrase('personPhrases', n, value)}
+          onReset={() => update({ personPhrases: { ...PERSON_PHRASES } })}
+        />
 
         <label className="block space-y-2">
           <span className="text-sm text-white/70">حجم النص ({settings.fontScale.toFixed(1)})</span>

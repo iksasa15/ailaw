@@ -1,8 +1,12 @@
-export function CaptionBubble({ text, partial }) {
+export function CaptionBubble({ text, partial, raised = false }) {
   const content = text || partial
   if (!content) return null
   return (
-    <div className="pointer-events-none absolute inset-x-4 bottom-28 z-20">
+    <div
+      className={`pointer-events-none absolute inset-x-4 z-20 ${
+        raised ? 'bottom-44' : 'bottom-28'
+      }`}
+    >
       <div
         className="mx-auto max-w-xl rounded-2xl px-4 py-3 text-center caption-text font-semibold text-white"
         style={{ background: 'var(--caption-bg)' }}
@@ -35,8 +39,8 @@ export function TrackingBadge({ quality }) {
   )
 }
 
-/** شارة دور المحادثة: محامي / شخص + تقدّم تثبيت الدور */
-export function RoleBadge({ role, holdProgress = 0, pulse = false }) {
+/** شارة دور المحادثة: محامي / شخص + زر تبديل + تقدّم تثبيت الدور */
+export function RoleBadge({ role, holdProgress = 0, pulse = false, onToggle }) {
   const isLawyer = role === 'lawyer'
   const label = isLawyer ? '⚖️ وضع المحامي' : '👤 وضع الشخص'
   const showingHold = holdProgress > 0.05 && holdProgress < 1
@@ -44,12 +48,23 @@ export function RoleBadge({ role, holdProgress = 0, pulse = false }) {
 
   return (
     <div className="pointer-events-none absolute inset-x-4 top-[7.25rem] z-20 flex flex-col items-center gap-1.5">
-      <div
-        className={`rounded-full px-3 py-1.5 text-sm font-semibold shadow-md transition-all ${
-          isLawyer ? 'bg-[#5eb8ff] text-[#041018]' : 'bg-white/20 text-white'
-        } ${pulse ? 'sign-pulse' : ''}`}
-      >
-        {label}
+      <div className="pointer-events-auto flex items-center gap-2">
+        <div
+          className={`rounded-full px-3 py-1.5 text-sm font-semibold shadow-md transition-all ${
+            isLawyer ? 'bg-[#5eb8ff] text-[#041018]' : 'bg-white/20 text-white'
+          } ${pulse ? 'sign-pulse' : ''}`}
+        >
+          {label}
+        </div>
+        {onToggle ? (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="min-h-9 rounded-full bg-[#3ecf8e] px-3 py-1.5 text-sm font-bold text-[#062016] shadow-md"
+          >
+            🔄 تبديل
+          </button>
+        ) : null}
       </div>
       {showingHold ? (
         <div className="w-44 max-w-[70vw] overflow-hidden rounded-full bg-black/50 ring-1 ring-white/20">

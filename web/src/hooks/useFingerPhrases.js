@@ -1,30 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-/** عبارات دور المحامي — سيناريو قضية */
+/** عبارات دور المحامي — حوار قضية متسلسل */
 export const LAWYER_PHRASES = {
-  1: 'أنا محاميك',
-  2: 'ما هي المشكلة؟',
-  3: 'هل لديك أدلة؟',
-  4: 'سأدافع عنك',
-  5: 'وقّع هنا من فضلك',
-  6: 'مقبول قانونياً',
-  7: 'مرفوض',
-  8: 'نحتاج شهوداً',
-  9: 'الجلسة مؤجلة',
-  10: 'القضية انتهت',
+  1: 'أنا محاميك، تفضّل',
+  2: 'ما تفاصيل القضية؟',
+  3: 'متى حدث ذلك؟',
+  4: 'هل لديك شهود؟',
+  5: 'أين الدليل؟',
+  6: 'سأراجع أوراقك',
+  7: 'لا تخف، سأدافع عنك',
+  8: 'نحتاج مستندات إضافية',
+  9: 'وقّع التوكيل من فضلك',
+  10: 'القضية تحت المتابعة',
 }
 
-/** عبارات دور الشخص / الموكل */
+/** عبارات دور الشخص — يحكي قضيته إصبعاً بإصبع */
 export const PERSON_PHRASES = {
-  1: 'أحتاج محامياً',
-  2: 'هذه قضيتي',
-  3: 'اتُهمت ظلماً',
-  4: 'لدي دليل',
-  5: 'أوافق',
-  6: 'نعم',
-  7: 'لا أوافق',
-  8: 'ساعدني من فضلك',
-  9: 'أنا قلق',
+  1: 'عندي قضية',
+  2: 'اتُهمت ظلماً',
+  3: 'حدث ذلك الأسبوع الماضي',
+  4: 'لدي شهود',
+  5: 'عندي دليل صورة',
+  6: 'أحتاج محامياً',
+  7: 'أنا خائف من النتيجة',
+  8: 'لم أفعل شيئاً خطأ',
+  9: 'ساعدني من فضلك',
   10: 'شكراً لك',
 }
 
@@ -36,8 +36,21 @@ export const ROLE_LABELS = {
   person: 'شخص',
 }
 
-export function phrasesForRole(role) {
-  return role === 'lawyer' ? LAWYER_PHRASES : PERSON_PHRASES
+/** دمج تعديلات المستخدم مع الافتراضي (1–10) */
+export function mergePhraseMap(custom, defaults = PERSON_PHRASES) {
+  const out = { ...defaults }
+  if (!custom || typeof custom !== 'object') return out
+  for (let i = 1; i <= 10; i += 1) {
+    const raw = custom[i] ?? custom[String(i)]
+    if (typeof raw === 'string' && raw.trim()) out[i] = raw.trim()
+  }
+  return out
+}
+
+export function phrasesForRole(role, lawyerMap, personMap) {
+  return role === 'lawyer'
+    ? mergePhraseMap(lawyerMap, LAWYER_PHRASES)
+    : mergePhraseMap(personMap, PERSON_PHRASES)
 }
 
 const ROLE_HOLD_MS = 5000
@@ -97,22 +110,28 @@ export function useFingerPhrases({
   intervalMs = 120,
   stableNeed = 8,
   roleHoldMs = ROLE_HOLD_MS,
+  lawyerPhrases,
+  personPhrases,
 } = {}) {
   const [result, setResult] = useState(null)
   const [role, setRole] = useState('person')
-  const [roleHoldProgress, setRoleHoldProgress] = useState(0) // 0..1 while holding 1 or 2
-  const [roleChanged, setRoleChanged] = useState(null) // { role, at } once per switch
+  const [roleHoldProgress, setRoleHoldProgress] = useState(0)
+  const [roleChanged, setRoleChanged] = useState(null)
 
   const qualityRef = useRef(trackingQuality)
   const roleRef = useRef(role)
+  const lawyerRef = useRef(lawyerPhrases)
+  const personRef = useRef(personPhrases)
   const streakRef = useRef({ count: 0, value: -1 })
   const lastAcceptedRef = useRef(null)
-  const roleHoldStartRef = useRef(null) // timestamp when started holding 1 or 2 locked
+  const roleHoldStartRef = useRef(null)
   const roleHoldFingersRef = useRef(0)
-  const roleSwitchDoneRef = useRef(false) // one switch per continuous hold
+  const roleSwitchDoneRef = useRef(false)
 
   qualityRef.current = trackingQuality
   roleRef.current = role
+  lawyerRef.current = lawyerPhrases
+  personRef.current = personPhrases
 
   useEffect(() => {
     if (trackingQuality === 'lost') {
@@ -160,7 +179,7 @@ export function useFingerPhrases({
       }
 
       const locked = qualityRef.current === 'locked'
-      const map = phrasesForRole(roleRef.current)
+      const map = phrasesForRole(roleRef.current, lawyerRef.current, personRef.current)
       const phrase = map[fingers]
       const need = locked ? stableNeed : stableNeed + 4
 
@@ -233,12 +252,32 @@ export function useFingerPhrases({
 
   const clearRoleChanged = useCallback(() => setRoleChanged(null), [])
 
+  const setRoleManual = useCallback((next) => {
+    if (next !== 'lawyer' && next !== 'person') return
+    if (roleRef.current === next) return
+    roleRef.current = next
+    lastAcceptedRef.current = null
+    roleHoldStartRef.current = null
+    roleSwitchDoneRef.current = false
+    setRoleHoldProgress(0)
+    setRole(next)
+    setResult(null)
+    setRoleChanged({ role: next, at: Date.now() })
+  }, [])
+
+  const toggleRole = useCallback(() => {
+    const next = roleRef.current === 'lawyer' ? 'person' : 'lawyer'
+    setRoleManual(next)
+  }, [setRoleManual])
+
   return {
     result,
     role,
     roleHoldProgress,
     roleChanged,
     clearRoleChanged,
-    phrases: phrasesForRole(role),
+    setRoleManual,
+    toggleRole,
+    phrases: phrasesForRole(role, lawyerPhrases, personPhrases),
   }
 }

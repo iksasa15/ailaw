@@ -21,6 +21,7 @@ import {
   SignBadge,
   TrackingBadge,
 } from '../components/overlay/Overlay'
+import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
 
@@ -85,6 +86,8 @@ export default function Home() {
     allHandsRef: hands.allHandsRef,
     enabled: settings.sendEnabled && camera.status === 'ready',
     trackingQuality: hands.trackingQuality,
+    lawyerPhrases: settings.lawyerPhrases,
+    personPhrases: settings.personPhrases,
   })
   const sendResult = finger.result || arsl.result
   const { speak, unlock: unlockTts } = useTts({ cooldownMs: 1600 })
@@ -201,10 +204,20 @@ export default function Home() {
           role={finger.role}
           holdProgress={finger.roleHoldProgress}
           pulse={rolePulse}
+          onToggle={() => {
+            unlockTts()
+            finger.toggleRole()
+          }}
         />
       ) : null}
 
-      <CaptionBubble text={stt.text} partial={stt.partial} />
+      <CaptionBubble text={stt.text} partial={stt.partial} raised={settings.sendEnabled} />
+      <SignCoachAvatar
+        visible={settings.sendEnabled}
+        role={finger.role}
+        phrases={finger.role === 'lawyer' ? settings.lawyerPhrases : settings.personPhrases}
+        activeFingers={sendResult?.fingers ?? null}
+      />
       <SignBadge
         label={
           sendResult?.display
