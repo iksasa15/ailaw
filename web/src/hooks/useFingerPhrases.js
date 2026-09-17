@@ -112,14 +112,17 @@ export function useFingerPhrases({
   roleHoldMs = ROLE_HOLD_MS,
   lawyerPhrases,
   personPhrases,
+  lockedRole = null, // 'lawyer' | 'person' | null — شاشة مستقلة بدون تبديل
 } = {}) {
+  const initialRole = lockedRole === 'lawyer' || lockedRole === 'person' ? lockedRole : 'person'
   const [result, setResult] = useState(null)
-  const [role, setRole] = useState('person')
+  const [role, setRole] = useState(initialRole)
   const [roleHoldProgress, setRoleHoldProgress] = useState(0)
   const [roleChanged, setRoleChanged] = useState(null)
 
   const qualityRef = useRef(trackingQuality)
   const roleRef = useRef(role)
+  const lockedRef = useRef(lockedRole)
   const lawyerRef = useRef(lawyerPhrases)
   const personRef = useRef(personPhrases)
   const streakRef = useRef({ count: 0, value: -1 })
@@ -130,8 +133,18 @@ export function useFingerPhrases({
 
   qualityRef.current = trackingQuality
   roleRef.current = role
+  lockedRef.current = lockedRole
   lawyerRef.current = lawyerPhrases
   personRef.current = personPhrases
+
+  useEffect(() => {
+    if (lockedRole === 'lawyer' || lockedRole === 'person') {
+      roleRef.current = lockedRole
+      setRole(lockedRole)
+      lastAcceptedRef.current = null
+      setRoleHoldProgress(0)
+    }
+  }, [lockedRole])
 
   useEffect(() => {
     if (trackingQuality === 'lost') {
@@ -183,9 +196,9 @@ export function useFingerPhrases({
       const phrase = map[fingers]
       const need = locked ? stableNeed : stableNeed + 4
 
-      // --- Role hold: 1 → lawyer, 2 → person (5s while locked) ---
+      // --- Role hold: فقط إذا الدور غير مقفول على شاشة مستقلة ---
       const roleCandidate = fingers === 1 ? 'lawyer' : fingers === 2 ? 'person' : null
-      if (locked && roleCandidate && streak.value === fingers) {
+      if (!lockedRef.current && locked && roleCandidate && streak.value === fingers) {
         if (roleHoldFingersRef.current !== fingers) {
           roleHoldFingersRef.current = fingers
           roleHoldStartRef.current = Date.now()
@@ -253,6 +266,7 @@ export function useFingerPhrases({
   const clearRoleChanged = useCallback(() => setRoleChanged(null), [])
 
   const setRoleManual = useCallback((next) => {
+    if (lockedRef.current) return
     if (next !== 'lawyer' && next !== 'person') return
     if (roleRef.current === next) return
     roleRef.current = next
@@ -266,6 +280,7 @@ export function useFingerPhrases({
   }, [])
 
   const toggleRole = useCallback(() => {
+    if (lockedRef.current) return
     const next = roleRef.current === 'lawyer' ? 'person' : 'lawyer'
     setRoleManual(next)
   }, [setRoleManual])
@@ -278,6 +293,7 @@ export function useFingerPhrases({
     clearRoleChanged,
     setRoleManual,
     toggleRole,
+    lockedRole: lockedRole || null,
     phrases: phrasesForRole(role, lawyerPhrases, personPhrases),
   }
 }

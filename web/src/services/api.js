@@ -51,3 +51,19 @@ export async function classifyAmbient(blob) {
   if (!res.ok) throw new Error('ambient failed')
   return res.json()
 }
+
+export async function publishScenePhrase({ role, text, fingers }) {
+  const res = await fetch(`${getApiBase()}/scene/phrase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, text, fingers }),
+  })
+  if (!res.ok) throw new Error('scene publish failed')
+  return res.json()
+}
+
+export async function fetchLawyerScene() {
+  const res = await fetch(`${getApiBase()}/scene/lawyer`)
+  if (!res.ok) throw new Error('scene lawyer failed')
+  return res.json()
+}

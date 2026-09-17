@@ -31,6 +31,7 @@ export default function Home() {
   const [pulseToken, setPulseToken] = useState(0)
   const [badgePulse, setBadgePulse] = useState(false)
   const [rolePulse, setRolePulse] = useState(false)
+  const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
 
@@ -160,6 +161,14 @@ export default function Home() {
         : r.display
     if (lastSpokenRef.current === key) return
     lastSpokenRef.current = key
+    const spokenRole = r.role || finger.role
+    if (spokenRole === 'lawyer') {
+      setLastLawyerPhrase({
+        fingers: r.fingers ?? null,
+        text: r.display,
+        at: Date.now(),
+      })
+    }
     speak(r.display, { force: true })
     setPulseToken((n) => n + 1)
     setBadgePulse(true)
@@ -212,12 +221,7 @@ export default function Home() {
       ) : null}
 
       <CaptionBubble text={stt.text} partial={stt.partial} raised={settings.sendEnabled} />
-      <SignCoachAvatar
-        visible={settings.sendEnabled}
-        role={finger.role}
-        phrases={finger.role === 'lawyer' ? settings.lawyerPhrases : settings.personPhrases}
-        activeFingers={sendResult?.fingers ?? null}
-      />
+      <SignCoachAvatar visible={settings.sendEnabled} lawyerPhrase={lastLawyerPhrase} />
       <SignBadge
         label={
           sendResult?.display
