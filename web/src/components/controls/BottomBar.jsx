@@ -13,9 +13,11 @@ export function BottomBar({
   receiveOn,
   sendOn,
   safetyOn,
+  translateOn = true,
   onToggleReceive,
   onToggleSend,
   onToggleSafety,
+  onToggleTranslate,
   cameraFacing = 'user',
   onFlipCamera,
   sttStatus,
@@ -49,6 +51,7 @@ export function BottomBar({
         {btn(receiveOn, onToggleReceive, 'استقبال')}
         {!dedicated ? btn(sendOn, onToggleSend, 'إرسال') : null}
         {btn(safetyOn, onToggleSafety, 'أمان')}
+        {onToggleTranslate ? btn(translateOn, onToggleTranslate, 'ترجمة') : null}
         {onFlipCamera ? btn(isBack, onFlipCamera, isBack ? 'خلفية' : 'أمامية', false, 'blue') : null}
         <button
           type="button"

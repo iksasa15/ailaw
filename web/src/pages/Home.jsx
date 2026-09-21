@@ -37,6 +37,7 @@ export default function Home({ lockedRole = null }) {
     dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
   )
   const [localLawyerPhrase, setLocalLawyerPhrase] = useState(null)
+  const [translateVisible, setTranslateVisible] = useState(true)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
   const lastRemoteSpokenRef = useRef('')
@@ -375,8 +376,9 @@ export default function Home({ lockedRole = null }) {
       ) : null}
       <SignCoachAvatar
         visible={
-          lockedRole === 'person' ||
-          (!dedicated && (finger.role === 'person' || Boolean(lastLawyerPhrase?.text)))
+          translateVisible &&
+          (lockedRole === 'person' ||
+            (!dedicated && (finger.role === 'person' || Boolean(lastLawyerPhrase?.text))))
         }
         lawyerPhrase={lastLawyerPhrase}
       />
@@ -415,6 +417,7 @@ export default function Home({ lockedRole = null }) {
         receiveOn={settings.receiveEnabled}
         sendOn={sendOn}
         safetyOn={settings.safetyEnabled}
+        translateOn={translateVisible}
         onToggleReceive={() => update({ receiveEnabled: !settings.receiveEnabled })}
         onToggleSend={() => {
           if (dedicated) return
@@ -427,6 +430,7 @@ export default function Home({ lockedRole = null }) {
           const next = !settings.safetyEnabled
           update({ safetyEnabled: next })
         }}
+        onToggleTranslate={() => setTranslateVisible((v) => !v)}
         cameraFacing={cameraFacing}
         onFlipCamera={() =>
           setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
