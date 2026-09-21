@@ -38,6 +38,7 @@ export default function Home({ lockedRole = null }) {
   const [cameraFacing, setCameraFacing] = useState(() =>
     dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
   )
+  const [localLawyerPhrase, setLocalLawyerPhrase] = useState(null)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
   const lastRemoteSpokenRef = useRef('')
@@ -151,14 +152,14 @@ export default function Home({ lockedRole = null }) {
   )
 
   const scene = useSceneSocket({
-    enabled: dedicated && Boolean(settings.roomId),
+    enabled: Boolean(settings.roomId) && (dedicated || settings.receiveEnabled),
     room: settings.roomId || '',
-    role: lockedRole,
+    role: lockedRole || null,
     onRemotePhrase,
   })
   sceneMarkRef.current = scene.markLocalPublish
 
-  const lastLawyerPhrase = scene.lawyerPhrase
+  const lastLawyerPhrase = scene.lawyerPhrase || localLawyerPhrase
   const remotePersonPhrase = scene.personPhrase
   const syncState = scene.syncState
 
@@ -218,6 +219,13 @@ export default function Home({ lockedRole = null }) {
     const spokenRole = r.role || finger.role
     const room = settings.roomId || undefined
     if (spokenRole === 'lawyer' || spokenRole === 'person') {
+      if (spokenRole === 'lawyer') {
+        setLocalLawyerPhrase({
+          fingers: r.fingers ?? null,
+          text: r.display,
+          at: Date.now(),
+        })
+      }
       publishScenePhrase({
         role: spokenRole,
         text: r.display,
@@ -242,6 +250,46 @@ export default function Home({ lockedRole = null }) {
     finger.roleHoldProgress,
     dedicated,
     lockedRole,
+    settings.roomId,
+  ])
+
+  // بث كلام المحامي (STT) لغرفة الجلسة → أفتار الإشارة عند الشخص
+  const lastPublishedSttRef = useRef('')
+  useEffect(() => {
+    const isLawyerTalking =
+      lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer' && settings.receiveEnabled)
+    if (!isLawyerTalking) return undefined
+    const raw = (stt.text || '').trim()
+    if (!raw || raw.length < 2) return undefined
+    // Take the latest sentence/chunk (caption accumulates)
+    const parts = raw.split(/\s+/).filter(Boolean)
+    const snippet = parts.slice(-12).join(' ')
+    if (!snippet || snippet === lastPublishedSttRef.current) return undefined
+
+    const t = window.setTimeout(() => {
+      if (snippet === lastPublishedSttRef.current) return
+      lastPublishedSttRef.current = snippet
+      setLocalLawyerPhrase({
+        fingers: null,
+        text: snippet,
+        at: Date.now(),
+      })
+      publishScenePhrase({
+        role: 'lawyer',
+        text: snippet,
+        fingers: null,
+        room: settings.roomId || undefined,
+      })
+        .then(() => sceneMarkRef.current?.())
+        .catch(() => {})
+    }, 800)
+    return () => window.clearTimeout(t)
+  }, [
+    stt.text,
+    lockedRole,
+    dedicated,
+    finger.role,
+    settings.receiveEnabled,
     settings.roomId,
   ])
 
@@ -357,7 +405,10 @@ export default function Home({ lockedRole = null }) {
         </div>
       ) : null}
       <SignCoachAvatar
-        visible={sendOn && (lockedRole === 'person' || !dedicated)}
+        visible={
+          lockedRole === 'person' ||
+          (!dedicated && (finger.role === 'person' || Boolean(lastLawyerPhrase?.text)))
+        }
         lawyerPhrase={lastLawyerPhrase}
       />
       <SignBadge

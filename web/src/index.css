@@ -117,6 +117,192 @@ body {
   animation: gestureSmoke 2s ease-in-out infinite;
 }
 
+/* Sign-language interpreter — whole-figure motions per step */
+.signer-motion-idle {
+  animation: signerIdleFig 2.4s ease-in-out infinite;
+}
+.signer-motion-bob {
+  animation: signerBob 0.85s ease-in-out infinite;
+}
+.signer-motion-sway {
+  animation: signerSway 0.9s ease-in-out infinite;
+}
+.signer-motion-tap {
+  animation: signerTap 0.7s ease-in-out infinite;
+}
+.signer-motion-sweep {
+  animation: signerSweep 1s ease-in-out infinite;
+}
+.signer-motion-fan {
+  animation: signerFan 0.95s ease-in-out infinite;
+}
+.signer-motion-scratch {
+  animation: signerScratch 0.75s ease-in-out infinite;
+}
+
+@keyframes signerIdleFig {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+@keyframes signerBob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.03);
+  }
+}
+@keyframes signerSway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+@keyframes signerTap {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  55% {
+    transform: translateY(2px);
+  }
+}
+@keyframes signerSweep {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(6px) rotate(6deg);
+  }
+}
+@keyframes signerFan {
+  0%,
+  100% {
+    transform: scaleX(1) scaleY(1);
+  }
+  50% {
+    transform: scaleX(1.08) scaleY(0.96);
+  }
+}
+@keyframes signerScratch {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(3px, 2px) rotate(3deg);
+  }
+  75% {
+    transform: translate(-2px, 3px) rotate(-2deg);
+  }
+}
+
+/* legacy arm classes kept for safety */
+.signer-arm-right {
+  transform-origin: 76px 80px;
+}
+.signer-arm-idle {
+  animation: signerIdle 2.4s ease-in-out infinite;
+}
+.signer-arm-wave {
+  animation: signerWave 0.9s ease-in-out infinite;
+}
+.signer-arm-point {
+  animation: signerPoint 1s ease-in-out infinite;
+}
+.signer-arm-reach {
+  animation: signerReach 1.1s ease-in-out infinite;
+}
+.signer-arm-shake {
+  animation: signerShake 0.7s ease-in-out infinite;
+}
+.signer-arm-pulse {
+  animation: signerPulse 0.95s ease-in-out infinite;
+}
+.signer-arm-nod {
+  animation: signerNod 1.05s ease-in-out infinite;
+}
+
+@keyframes signerIdle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+}
+@keyframes signerWave {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
+}
+@keyframes signerPoint {
+  0%,
+  100% {
+    transform: rotate(-8deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(12deg) translate(4px, -6px);
+  }
+}
+@keyframes signerReach {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(10deg);
+  }
+}
+@keyframes signerShake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-6deg);
+  }
+  25% {
+    transform: translateX(-5px) rotate(8deg);
+  }
+  75% {
+    transform: translateX(5px) rotate(-10deg);
+  }
+}
+@keyframes signerPulse {
+  0%,
+  100% {
+    transform: scale(0.94) rotate(-4deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(8deg);
+  }
+}
+@keyframes signerNod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(4deg);
+  }
+}
+
 @keyframes gestureWave {
   0%,
   100% {
@@ -210,7 +396,34 @@ body {
   .gesture-pulse,
   .gesture-shake,
   .gesture-sleep,
-  .gesture-smoke {
+  .gesture-smoke,
+  .signer-arm-idle,
+  .signer-arm-wave,
+  .signer-arm-point,
+  .signer-arm-reach,
+  .signer-arm-shake,
+  .signer-arm-pulse,
+  .signer-arm-nod,
+  .signer-motion-idle,
+  .signer-motion-bob,
+  .signer-motion-sway,
+  .signer-motion-tap,
+  .signer-motion-sweep,
+  .signer-motion-fan,
+  .signer-motion-scratch {
     animation: none;
   }
+}
+
+/* CWASA 3D signing avatar — constrain inside our coach card */
+.CWASAAvatar {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+}
+.CWASAAvatar canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  display: block;
 }
