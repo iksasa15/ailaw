@@ -414,16 +414,3 @@ body {
     animation: none;
   }
 }
-
-/* CWASA 3D signing avatar — constrain inside our coach card */
-.CWASAAvatar {
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden;
-}
-.CWASAAvatar canvas {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100%;
-  display: block;
-}

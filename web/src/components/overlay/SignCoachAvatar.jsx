@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { buildSigmlForPhrase } from '../../lib/sigmlLexicon'
-import { initCwasaAvatar, playSigml, stopSigml } from '../../lib/cwasa'
 import { LAWYER_PHRASES } from '../../hooks/useFingerPhrases'
 
+/** أوضاع يد مختلفة بصرياً لكل خطوة إشارة */
 const POSES = {
   open: {
     right: 'M76 82 Q92 78 98 58',
@@ -60,55 +59,87 @@ const POSES = {
     left: 'M44 82 Q32 70 26 52',
     leftHand: { cx: 24, cy: 46 },
   },
+  think: {
+    right: 'M76 82 Q85 55 78 36',
+    hand: { cx: 76, cy: 30 },
+    fingers: 'M72 22 L70 14 M78 20 L80 12',
+    left: 'M44 82 Q36 95 30 112',
+    leftHand: { cx: 28, cy: 116 },
+  },
+  greet: {
+    right: 'M76 82 Q95 50 105 28',
+    hand: { cx: 108, cy: 24 },
+    fingers: 'M104 14 L106 6 M100 16 L98 8 M112 16 L118 10',
+    left: 'M44 82 Q32 92 28 110',
+    leftHand: { cx: 26, cy: 114 },
+  },
 }
 
-const PHRASE_STEPS = {
-  1: [
-    { label: 'أنا', pose: 'chest', motion: 'bob' },
-    { label: 'محاميك', pose: 'open', motion: 'sway' },
-    { label: 'تفضّل', pose: 'bothOut', motion: 'fan' },
-  ],
-  2: [
-    { label: 'اسأل', pose: 'pointUp', motion: 'tap' },
-    { label: 'تفاصيل', pose: 'pointSide', motion: 'sweep' },
-    { label: 'القضية', pose: 'bothUp', motion: 'bob' },
-  ],
-  3: [
-    { label: 'متى', pose: 'pointUp', motion: 'tap' },
-    { label: 'حدث', pose: 'pointSide', motion: 'sweep' },
-  ],
-  4: [
-    { label: 'شهود', pose: 'bothUp', motion: 'fan' },
-    { label: 'معك؟', pose: 'pointSide', motion: 'tap' },
-  ],
-  5: [
-    { label: 'أين', pose: 'pointUp', motion: 'tap' },
-    { label: 'الدليل', pose: 'bothOut', motion: 'sweep' },
-  ],
-  6: [
-    { label: 'أوراقك', pose: 'write', motion: 'scratch' },
-    { label: 'أراجع', pose: 'open', motion: 'sway' },
-  ],
-  7: [
-    { label: 'لا تخف', pose: 'protect', motion: 'fan' },
-    { label: 'أدافع', pose: 'chest', motion: 'bob' },
-  ],
-  8: [
-    { label: 'مستندات', pose: 'write', motion: 'scratch' },
-    { label: 'إضافية', pose: 'bothOut', motion: 'fan' },
-  ],
-  9: [
-    { label: 'وقّع', pose: 'write', motion: 'scratch' },
-    { label: 'من فضلك', pose: 'bothOut', motion: 'fan' },
-  ],
-  10: [
-    { label: 'متابعة', pose: 'pointSide', motion: 'sweep' },
-    { label: 'القضية', pose: 'chest', motion: 'bob' },
-  ],
+const WORD_SIGNS = {
+  أنا: { label: 'أنا', pose: 'chest', motion: 'bob' },
+  محامي: { label: 'محامي', pose: 'think', motion: 'sway' },
+  محاميك: { label: 'محاميك', pose: 'think', motion: 'sway' },
+  تفضل: { label: 'تفضّل', pose: 'bothOut', motion: 'fan' },
+  تفضّل: { label: 'تفضّل', pose: 'bothOut', motion: 'fan' },
+  اسأل: { label: 'اسأل', pose: 'pointUp', motion: 'tap' },
+  ما: { label: 'ما؟', pose: 'open', motion: 'bob' },
+  تفاصيل: { label: 'تفاصيل', pose: 'pointSide', motion: 'sweep' },
+  قضية: { label: 'قضية', pose: 'chest', motion: 'bob' },
+  القضية: { label: 'قضية', pose: 'chest', motion: 'bob' },
+  متى: { label: 'متى', pose: 'pointUp', motion: 'tap' },
+  حدث: { label: 'حدث', pose: 'pointSide', motion: 'sweep' },
+  ذلك: { label: 'ذلك', pose: 'pointSide', motion: 'tap' },
+  هل: { label: 'هل', pose: 'open', motion: 'bob' },
+  لديك: { label: 'لديك', pose: 'bothOut', motion: 'fan' },
+  شهود: { label: 'شهود', pose: 'bothUp', motion: 'fan' },
+  أين: { label: 'أين', pose: 'pointUp', motion: 'tap' },
+  الدليل: { label: 'دليل', pose: 'bothOut', motion: 'sweep' },
+  دليل: { label: 'دليل', pose: 'bothOut', motion: 'sweep' },
+  سأراجع: { label: 'أراجع', pose: 'think', motion: 'sway' },
+  أوراقك: { label: 'أوراق', pose: 'write', motion: 'scratch' },
+  أوراق: { label: 'أوراق', pose: 'write', motion: 'scratch' },
+  مستندات: { label: 'مستندات', pose: 'write', motion: 'scratch' },
+  لا: { label: 'لا', pose: 'pointSide', motion: 'sweep' },
+  تخف: { label: 'لا تخف', pose: 'protect', motion: 'fan' },
+  سأدافع: { label: 'أدافع', pose: 'protect', motion: 'bob' },
+  عنك: { label: 'عنك', pose: 'chest', motion: 'bob' },
+  نحتاج: { label: 'نحتاج', pose: 'bothOut', motion: 'fan' },
+  إضافية: { label: 'إضافية', pose: 'open', motion: 'bob' },
+  وقع: { label: 'وقّع', pose: 'write', motion: 'scratch' },
+  وقّع: { label: 'وقّع', pose: 'write', motion: 'scratch' },
+  التوكيل: { label: 'توكيل', pose: 'write', motion: 'scratch' },
+  فضلك: { label: 'من فضلك', pose: 'bothOut', motion: 'fan' },
+  تحت: { label: 'تحت', pose: 'pointSide', motion: 'tap' },
+  المتابعة: { label: 'متابعة', pose: 'pointSide', motion: 'sweep' },
+  متابعة: { label: 'متابعة', pose: 'pointSide', motion: 'sweep' },
+  مرحبا: { label: 'مرحبا', pose: 'greet', motion: 'fan' },
+  مرحباً: { label: 'مرحبا', pose: 'greet', motion: 'fan' },
+  السلام: { label: 'سلام', pose: 'greet', motion: 'fan' },
+  عليكم: { label: 'عليكم', pose: 'bothOut', motion: 'fan' },
+  شكرا: { label: 'شكراً', pose: 'chest', motion: 'bob' },
+  شكراً: { label: 'شكراً', pose: 'chest', motion: 'bob' },
+  مساعدة: { label: 'مساعدة', pose: 'protect', motion: 'fan' },
+  ساعدني: { label: 'ساعدني', pose: 'protect', motion: 'bob' },
+  نعم: { label: 'نعم', pose: 'pointUp', motion: 'tap' },
+  أهلا: { label: 'أهلاً', pose: 'greet', motion: 'fan' },
+  أهلاً: { label: 'أهلاً', pose: 'greet', motion: 'fan' },
 }
 
-const CYCLE = ['open', 'pointUp', 'chest', 'pointSide', 'bothOut', 'bothUp', 'write', 'protect']
-const MOTIONS = ['bob', 'sway', 'tap', 'sweep', 'fan', 'scratch']
+const PHRASE_PACKS = {
+  1: [WORD_SIGNS['أنا'], WORD_SIGNS['محاميك'], WORD_SIGNS['تفضّل']],
+  2: [WORD_SIGNS['اسأل'], WORD_SIGNS['تفاصيل'], WORD_SIGNS['قضية']],
+  3: [WORD_SIGNS['متى'], WORD_SIGNS['حدث']],
+  4: [WORD_SIGNS['هل'], WORD_SIGNS['شهود'], WORD_SIGNS['لديك']],
+  5: [WORD_SIGNS['أين'], WORD_SIGNS['دليل']],
+  6: [WORD_SIGNS['سأراجع'], WORD_SIGNS['أوراقك']],
+  7: [WORD_SIGNS['تخف'], WORD_SIGNS['سأدافع'], WORD_SIGNS['عنك']],
+  8: [WORD_SIGNS['نحتاج'], WORD_SIGNS['مستندات'], WORD_SIGNS['إضافية']],
+  9: [WORD_SIGNS['وقّع'], WORD_SIGNS['التوكيل'], WORD_SIGNS['فضلك']],
+  10: [WORD_SIGNS['قضية'], WORD_SIGNS['متابعة']],
+}
+
+const FALLBACK_POSES = ['open', 'pointUp', 'chest', 'pointSide', 'bothOut', 'bothUp', 'write', 'protect', 'greet', 'think']
+const FALLBACK_MOTIONS = ['bob', 'sway', 'tap', 'sweep', 'fan', 'scratch']
 
 function normalize(text) {
   return String(text || '')
@@ -117,29 +148,38 @@ function normalize(text) {
     .trim()
 }
 
-function stepsFromPhrase(lawyerPhrase) {
+/** حوّل نص الكلام إلى تسلسل إشارات */
+export function speechToSignSteps(lawyerPhrase) {
   if (!lawyerPhrase?.text && !(lawyerPhrase?.fingers >= 1)) return null
+
   const fingers = Number(lawyerPhrase.fingers)
-  if (fingers >= 1 && fingers <= 10 && PHRASE_STEPS[fingers]) return PHRASE_STEPS[fingers]
-
-  const raw = normalize(lawyerPhrase?.text)
-  for (let i = 1; i <= 10; i += 1) {
-    if (normalize(LAWYER_PHRASES[i]) === raw && PHRASE_STEPS[i]) return PHRASE_STEPS[i]
+  if (fingers >= 1 && fingers <= 10 && PHRASE_PACKS[fingers]) {
+    return PHRASE_PACKS[fingers].filter(Boolean)
   }
-  const words = raw.split(' ').filter(Boolean).slice(0, 6)
-  if (!words.length) return null
-  const base = words.length >= 3 ? words : [...words, ...words, ...words].slice(0, 3)
-  return base.map((label, i) => ({
-    label,
-    pose: CYCLE[i % CYCLE.length],
-    motion: MOTIONS[i % MOTIONS.length],
-  }))
-}
 
-function isMobileDevice() {
-  if (typeof navigator === 'undefined') return true
-  const ua = navigator.userAgent || ''
-  return /iPhone|iPad|iPod|Android/i.test(ua) || (navigator.maxTouchPoints > 1 && /Mac/.test(ua))
+  const raw = normalize(lawyerPhrase.text)
+  if (!raw) return null
+
+  for (let i = 1; i <= 10; i += 1) {
+    if (normalize(LAWYER_PHRASES[i]) === raw && PHRASE_PACKS[i]) {
+      return PHRASE_PACKS[i].filter(Boolean)
+    }
+  }
+
+  const words = raw.split(' ').filter(Boolean).slice(0, 8)
+  const steps = []
+  words.forEach((w, i) => {
+    if (WORD_SIGNS[w]) {
+      steps.push(WORD_SIGNS[w])
+    } else {
+      steps.push({
+        label: w,
+        pose: FALLBACK_POSES[i % FALLBACK_POSES.length],
+        motion: FALLBACK_MOTIONS[i % FALLBACK_MOTIONS.length],
+      })
+    }
+  })
+  return steps.length ? steps : null
 }
 
 function SignerFigure({ pose = 'open', motion = 'bob', active = false, stepKey = 0 }) {
@@ -148,16 +188,12 @@ function SignerFigure({ pose = 'open', motion = 'bob', active = false, stepKey =
 
   return (
     <div
-      className={`relative flex h-[8rem] w-[6.75rem] shrink-0 items-end justify-center overflow-hidden rounded-2xl bg-[#152033] ring-2 ${
+      className={`relative flex h-[8.5rem] w-[7rem] shrink-0 items-end justify-center overflow-hidden rounded-2xl bg-[#152033] ring-2 ${
         active ? 'ring-[#3ecf8e]/70' : 'ring-white/15'
       }`}
       aria-hidden
     >
-      <svg
-        key={`${stepKey}-${pose}`}
-        viewBox="0 0 130 150"
-        className={`h-full w-full ${motionClass}`}
-      >
+      <svg key={`${stepKey}-${pose}`} viewBox="0 0 130 150" className={`h-full w-full ${motionClass}`}>
         <ellipse cx="60" cy="122" rx="30" ry="20" fill="#1e3a5f" />
         <rect x="40" y="74" width="40" height="50" rx="16" fill="#244a73" />
         <circle cx="60" cy="42" r="22" fill="#f0c9a0" />
@@ -180,17 +216,13 @@ function SignerFigure({ pose = 'open', motion = 'bob', active = false, stepKey =
 }
 
 /**
- * أفتار ترجمة المحامي:
- * - على الجوال: أفتار خفيف متعدد الأوضاع (آمن لـ Safari)
- * - على الكمبيوتر: يمكن تفعيل CWASA ثلاثي الأبعاد يدوياً
+ * يحوّل كلام المحامي (STT أو أصابع) إلى تسلسل لغة إشارة على شاشة الشخص.
+ * خفيف وآمن للجوال — بدون CWASA.
  */
 export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
   const [stepIdx, setStepIdx] = useState(0)
-  const [want3d, setWant3d] = useState(false)
-  const [cwasaStatus, setCwasaStatus] = useState('idle')
-  const mobile = useMemo(() => isMobileDevice(), [])
 
-  const steps = useMemo(() => stepsFromPhrase(lawyerPhrase), [lawyerPhrase])
+  const steps = useMemo(() => speechToSignSteps(lawyerPhrase), [lawyerPhrase])
   const hasLawyer = Boolean(steps?.length)
   const current = hasLawyer ? steps[stepIdx] || steps[0] : null
 
@@ -199,124 +231,65 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
     setStepIdx(0)
     const id = window.setInterval(() => {
       setStepIdx((i) => (i + 1) % steps.length)
-    }, 900)
+    }, 850)
     return () => window.clearInterval(id)
   }, [visible, steps, lawyerPhrase?.text, lawyerPhrase?.fingers, lawyerPhrase?.at])
-
-  // CWASA فقط بطلب صريح وعلى غير الجوال — تجنّب انهيار Safari
-  useEffect(() => {
-    if (!visible || !want3d || mobile) return undefined
-    let cancelled = false
-    const host = document.getElementById('cwasa-host')
-    if (!host) return undefined
-    host.innerHTML = `
-      <div class="CWASAAvatar av0" style="width:100%;height:100%"></div>
-      <div class="SToCA" style="display:none"></div>
-    `
-    setCwasaStatus('loading')
-    initCwasaAvatar()
-      .then(() => {
-        if (cancelled) return
-        setCwasaStatus('ready')
-        const sigml = buildSigmlForPhrase({
-          text: lawyerPhrase?.text,
-          fingers: lawyerPhrase?.fingers,
-        })
-        if (sigml) playSigml(sigml)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCwasaStatus('error')
-          setWant3d(false)
-        }
-      })
-    return () => {
-      cancelled = true
-      stopSigml()
-    }
-  }, [visible, want3d, mobile, lawyerPhrase?.text, lawyerPhrase?.fingers, lawyerPhrase?.at])
 
   if (!visible) return null
 
   return (
     <div className="pointer-events-none absolute inset-x-3 bottom-[7.5rem] z-[25] flex justify-center">
-      <div className="w-full max-w-lg rounded-2xl bg-[#0b1220]/94 px-3 py-3 ring-1 ring-[#3ecf8e]/35 shadow-xl backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl bg-[#0b1220]/95 px-3 py-3 ring-1 ring-[#3ecf8e]/40 shadow-xl backdrop-blur-sm">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] font-bold text-[#3ecf8e]">أفتار الإشارة · ترجمة المحامي</p>
+          <p className="text-[11px] font-bold text-[#3ecf8e]">ترجمة → لغة إشارة</p>
           {hasLawyer ? (
             <p className="text-[11px] text-white/55">
-              خطوة {stepIdx + 1}/{steps.length}
+              {stepIdx + 1}/{steps.length}
+              {lawyerPhrase?.fingers ? ` · أصابع` : ' · من الكلام'}
             </p>
           ) : (
             <p className="text-[11px] text-white/45">بانتظار كلام المحامي</p>
           )}
         </div>
 
-        {want3d && !mobile ? (
-          <div
-            id="cwasa-host"
-            className="mb-2 h-[240px] w-full overflow-hidden rounded-xl bg-[#152033]"
-          />
-        ) : null}
-
         <div className="flex items-center gap-3">
-          {!(want3d && cwasaStatus === 'ready') ? (
-            <SignerFigure
-              pose={current?.pose || 'open'}
-              motion={current?.motion || 'bob'}
-              active={hasLawyer}
-              stepKey={stepIdx}
-            />
-          ) : null}
+          <SignerFigure
+            pose={current?.pose || 'open'}
+            motion={current?.motion || 'bob'}
+            active={hasLawyer}
+            stepKey={stepIdx}
+          />
           <div className="min-w-0 flex-1 text-right">
             {hasLawyer ? (
               <>
-                <p className="text-base font-bold leading-6 text-white">{lawyerPhrase.text}</p>
-                {current ? (
-                  <p className="mt-1.5 text-sm font-semibold text-[#3ecf8e]">
-                    إشارة: {current.label}
-                  </p>
-                ) : null}
-                {steps.length > 1 ? (
-                  <div className="mt-2 flex flex-wrap justify-end gap-1.5">
-                    {steps.map((s, i) => (
-                      <span
-                        key={`${s.label}-${i}`}
-                        className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
-                          i === stepIdx
-                            ? 'bg-[#3ecf8e]/25 text-white ring-1 ring-[#3ecf8e]'
-                            : 'bg-white/5 text-white/50'
-                        }`}
-                      >
-                        {s.label}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                <p className="text-[11px] font-semibold text-white/50">المحامي قال</p>
+                <p className="mt-0.5 text-base font-bold leading-6 text-white">{lawyerPhrase.text}</p>
+                <p className="mt-2 text-sm font-semibold text-[#3ecf8e]">
+                  إشارة الآن: {current?.label}
+                </p>
+                <div className="mt-2 flex flex-wrap justify-end gap-1.5">
+                  {steps.map((s, i) => (
+                    <span
+                      key={`${s.label}-${i}`}
+                      className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                        i === stepIdx
+                          ? 'bg-[#3ecf8e]/25 text-white ring-1 ring-[#3ecf8e]'
+                          : 'bg-white/5 text-white/45'
+                      }`}
+                    >
+                      {s.label}
+                    </span>
+                  ))}
+                </div>
               </>
             ) : (
               <p className="text-sm leading-6 text-white/75">
-                عندما يتكلم <strong className="text-white">المحامي</strong> يترجم الأفتار كلامه
-                بإشارات متتابعة.
+                تكلّم في جوال <strong className="text-white">المحامي</strong> — هنا يتحول كلامك
+                إلى إشارات متتابعة للشخص.
               </p>
             )}
           </div>
         </div>
-
-        {!mobile ? (
-          <div className="pointer-events-auto mt-2 flex justify-end">
-            <button
-              type="button"
-              className="rounded-lg bg-white/10 px-2.5 py-1 text-[11px] text-white/80"
-              onClick={() => setWant3d((v) => !v)}
-            >
-              {want3d ? 'إغلاق الأفتار 3D' : 'تجربة أفتار 3D (كمبيوتر)'}
-            </button>
-          </div>
-        ) : null}
-        {cwasaStatus === 'error' ? (
-          <p className="mt-1 text-[11px] text-amber-200/80">تعذر تحميل الأفتار ثلاثي الأبعاد.</p>
-        ) : null}
       </div>
     </div>
   )
