@@ -21,6 +21,7 @@ import {
   SignBadge,
   TrackingBadge,
 } from '../components/overlay/Overlay'
+import { SyncBadge } from '../components/overlay/SyncBadge'
 import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'

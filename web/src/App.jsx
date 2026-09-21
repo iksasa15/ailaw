@@ -6,6 +6,7 @@ import About from './pages/About'
 import Guide from './pages/Guide'
 import Onboarding from './pages/Onboarding'
 import ScreenPick from './pages/ScreenPick'
+import PairJoin from './pages/PairJoin'
 
 function Gate({ children }) {
   const { settings } = useSettings()
@@ -18,6 +19,7 @@ export default function App() {
     <SettingsProvider>
       <Routes>
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/pair" element={<PairJoin />} />
         <Route
           path="/"
           element={
