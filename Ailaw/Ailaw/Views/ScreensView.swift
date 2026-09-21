@@ -83,5 +83,3 @@ struct ScreensView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
-
-extension UserRole: Hashable {}

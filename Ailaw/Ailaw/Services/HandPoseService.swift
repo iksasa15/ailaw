@@ -128,8 +128,14 @@ final class HandPoseService {
             .ringMCP, .ringPIP, .ringDIP, .ringTip,
             .littleMCP, .littlePIP, .littleDIP, .littleTip,
         ]
-        return order.compactMap { name in
-            guard let p = all[name], p.confidence > 0.2 else { return nil }
+        let wristPt = all[.wrist]
+        let fallback = HandLandmark(
+            x: Double(wristPt?.location.x ?? 0.5),
+            y: Double(1 - (wristPt?.location.y ?? 0.5)),
+            z: 0
+        )
+        return order.map { name in
+            guard let p = all[name], p.confidence > 0.1 else { return fallback }
             // Vision y grows up; web MediaPipe y grows down — flip for distance heuristics.
             return HandLandmark(x: Double(p.location.x), y: Double(1 - p.location.y), z: 0)
         }

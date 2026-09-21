@@ -86,9 +86,10 @@
 				};
 			};
 			buildConfigurationList = E262F8FE3061CE3C007E31BB /* Build configuration list for PBXProject "Ailaw" */;
-			developmentRegion = en;
+			developmentRegion = ar;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				ar,
 				en,
 				Base,
 			);

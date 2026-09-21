@@ -1,80 +1,48 @@
-//
-//  ContentView.swift
-//  Ailaw
-//
-//  Created by Ahmed on 10/04/1448 AH.
-//
-
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Environment(AppSettings.self) private var settings
+    @State private var tab: AppTab = .lens
+
+    enum AppTab: Hashable {
+        case lens, screens, guide, about, settings
+    }
 
     var body: some View {
-        NavigationViewWrapper {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        }
-    }
+        Group {
+            if settings.onboarded {
+                TabView(selection: $tab) {
+                    HomeView()
+                        .tabItem { Label("العدسة", systemImage: "eyeglasses") }
+                        .tag(AppTab.lens)
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+                    ScreensView()
+                        .tabItem { Label("شاشتين", systemImage: "rectangle.split.2x1") }
+                        .tag(AppTab.screens)
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+                    GuideView()
+                        .tabItem { Label("تعليمات", systemImage: "book") }
+                        .tag(AppTab.guide)
+
+                    AboutView()
+                        .tabItem { Label("عن المشروع", systemImage: "info.circle") }
+                        .tag(AppTab.about)
+
+                    SettingsView()
+                        .tabItem { Label("إعدادات", systemImage: "gearshape") }
+                        .tag(AppTab.settings)
+                }
+                .tint(AppTheme.accent)
+            } else {
+                OnboardingView()
             }
         }
-    }
-}
-
-fileprivate struct NavigationViewWrapper<Content: View>: View {
-    let content: () -> Content
-
-    var body: some View {
-#if os(macOS)
-        NavigationSplitView {
-            content()
-        } detail: {
-            Text("Select an item")
-        }
-#else
-        content()
-#endif
+        .environment(\.layoutDirection, .rightToLeft)
+        .preferredColorScheme(.dark)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .environment(AppSettings())
 }
