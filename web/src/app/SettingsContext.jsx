@@ -3,7 +3,7 @@ import { LAWYER_PHRASES, PERSON_PHRASES, mergePhraseMap } from '../hooks/useFing
 
 const SettingsContext = createContext(null)
 
-const PHRASE_PACK = 'case-story-v2'
+const PHRASE_PACK = 'accident-case-v1'
 
 const DEFAULTS = {
   apiBase: '',

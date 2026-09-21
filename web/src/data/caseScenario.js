@@ -1,30 +1,29 @@
 /**
- * سيناريو واقعي: استشارة قضية بين محامٍ وموكّل.
- * النص مطابق لجدول العبارات الحقيقي (محامي ↔ شخص).
+ * سيناريو جديد: استشارة قضية حادث مروري بين محامٍ وموكّل.
  */
 export const CASE_SCENARIO = [
-  { role: 'lawyer', fingers: 1, text: 'أنا محاميك، تفضّل' },
-  { role: 'person', fingers: 1, text: 'عندي قضية' },
-  { role: 'lawyer', fingers: 2, text: 'ما تفاصيل القضية؟' },
-  { role: 'person', fingers: 2, text: 'اتُهمت ظلماً' },
-  { role: 'lawyer', fingers: 3, text: 'متى حدث ذلك؟' },
-  { role: 'person', fingers: 3, text: 'حدث ذلك الأسبوع الماضي' },
-  { role: 'lawyer', fingers: 4, text: 'هل لديك شهود؟' },
-  { role: 'person', fingers: 4, text: 'لدي شهود' },
-  { role: 'lawyer', fingers: 5, text: 'أين الدليل؟' },
-  { role: 'person', fingers: 5, text: 'عندي دليل صورة' },
-  { role: 'lawyer', fingers: 6, text: 'سأراجع أوراقك' },
-  { role: 'person', fingers: 6, text: 'أحتاج محامياً' },
-  { role: 'lawyer', fingers: 7, text: 'لا تخف، سأدافع عنك' },
-  { role: 'person', fingers: 7, text: 'أنا خائف من النتيجة' },
-  { role: 'lawyer', fingers: 8, text: 'نحتاج مستندات إضافية' },
-  { role: 'person', fingers: 8, text: 'لم أفعل شيئاً خطأ' },
-  { role: 'lawyer', fingers: 9, text: 'وقّع التوكيل من فضلك' },
-  { role: 'person', fingers: 9, text: 'ساعدني من فضلك' },
-  { role: 'lawyer', fingers: 10, text: 'القضية تحت المتابعة' },
-  { role: 'person', fingers: 10, text: 'شكراً لك' },
+  { role: 'lawyer', fingers: 1, text: 'السلام عليكم، أنا محاميك' },
+  { role: 'person', fingers: 1, text: 'تعرضت لحادث سيارة' },
+  { role: 'lawyer', fingers: 2, text: 'ماذا حدث بالضبط؟' },
+  { role: 'person', fingers: 2, text: 'اصطدم بي من الخلف' },
+  { role: 'lawyer', fingers: 3, text: 'أين وقع الحادث؟' },
+  { role: 'person', fingers: 3, text: 'الحادث عند الإشارة' },
+  { role: 'lawyer', fingers: 4, text: 'هل لديك تقرير شرطة؟' },
+  { role: 'person', fingers: 4, text: 'معي تقرير المرور' },
+  { role: 'lawyer', fingers: 5, text: 'من كان يقود السيارة؟' },
+  { role: 'person', fingers: 5, text: 'أنا كنت أقود' },
+  { role: 'lawyer', fingers: 6, text: 'هل أصيب أحد؟' },
+  { role: 'person', fingers: 6, text: 'أصبت في رقبتي' },
+  { role: 'lawyer', fingers: 7, text: 'سنطالب بالتعويض' },
+  { role: 'person', fingers: 7, text: 'أريد تعويضاً عادلاً' },
+  { role: 'lawyer', fingers: 8, text: 'أحضر أوراق التأمين' },
+  { role: 'person', fingers: 8, text: 'التأمين رفض الدفع' },
+  { role: 'lawyer', fingers: 9, text: 'لا تتحدث مع الطرف الآخر' },
+  { role: 'person', fingers: 9, text: 'الطرف الآخر يهددني' },
+  { role: 'lawyer', fingers: 10, text: 'سأتابع القضية غداً' },
+  { role: 'person', fingers: 10, text: 'أعتمد عليك' },
 ]
 
-export const SCENARIO_TITLE = 'جلسة استشارة قضية'
+export const SCENARIO_TITLE = 'جلسة حادث مروري'
 export const SCENARIO_SUBTITLE =
-  'حوار حقيقي متبادل بين المحامي والشخص — نفس عبارات الأصابع 1 إلى 10'
+  'سيناريو جديد: محامٍ يستمع لموكّل تعرّض لحادث ويطلب تعويضاً'
