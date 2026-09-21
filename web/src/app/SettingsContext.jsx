@@ -76,7 +76,7 @@ export function SettingsProvider({ children }) {
     document.documentElement.style.setProperty('--font-scale', String(settings.fontScale))
     document.documentElement.style.setProperty(
       '--caption-bg',
-      `rgba(0,0,0,${settings.overlayOpacity})`,
+      `rgba(21,32,51,${settings.overlayOpacity})`,
     )
   }, [settings])
 

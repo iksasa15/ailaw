@@ -10,11 +10,11 @@ const HAND_EDGES = [
 ]
 
 const FINGER_COLORS = {
-  thumb: '#f5d76e',
-  index: '#3ecf8e',
-  middle: '#5eb8ff',
-  ring: '#c084fc',
-  pinky: '#fb7185',
+  thumb: '#E8A078',
+  index: '#C45C26',
+  middle: '#2F6FED',
+  ring: '#7B8FA8',
+  pinky: '#D64545',
   palm: '#94a3b8',
 }
 
