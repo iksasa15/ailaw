@@ -22,15 +22,27 @@ export function useSttSocket({
   const wsRef = useRef(null)
   const recorderRef = useRef(null)
   const ownStreamRef = useRef(null)
+  const streamRef = useRef(stream)
   const enabledRef = useRef(enabled)
   const languageRef = useRef(language)
+  const chunkMsRef = useRef(chunkMs)
   const retryRef = useRef(0)
   const startRef = useRef(null)
+  const intentionalCloseRef = useRef(false)
+  const retryTimerRef = useRef(0)
+  const generationRef = useRef(0)
 
+  streamRef.current = stream
   enabledRef.current = enabled
   languageRef.current = language
+  chunkMsRef.current = chunkMs
 
   const cleanupMedia = useCallback(() => {
+    intentionalCloseRef.current = true
+    if (retryTimerRef.current) {
+      window.clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = 0
+    }
     if (recorderRef.current && recorderRef.current.state !== 'inactive') {
       try {
         recorderRef.current.stop()
@@ -39,7 +51,6 @@ export function useSttSocket({
       }
     }
     recorderRef.current = null
-    // Only stop tracks we opened ourselves — never stop a shared stream
     ownStreamRef.current?.getTracks().forEach((t) => t.stop())
     ownStreamRef.current = null
     try {
@@ -51,17 +62,21 @@ export function useSttSocket({
   }, [])
 
   const stop = useCallback(() => {
+    generationRef.current += 1
     cleanupMedia()
     setStatus('idle')
+    setError(null)
   }, [cleanupMedia])
 
   const start = useCallback(async () => {
+    const gen = ++generationRef.current
     cleanupMedia()
+    intentionalCloseRef.current = false
     setError(null)
     setStatus('connecting')
 
     try {
-      let audioStream = stream
+      let audioStream = streamRef.current
       if (audioStream?.active) {
         audioStream = audioStream.clone()
         ownStreamRef.current = audioStream
@@ -77,7 +92,13 @@ export function useSttSocket({
         ownStreamRef.current = audioStream
       }
 
-      const ws = new WebSocket(`${getWsBase()}/ws/stt`)
+      if (gen !== generationRef.current || !enabledRef.current) {
+        cleanupMedia()
+        return
+      }
+
+      const wsUrl = `${getWsBase()}/ws/stt`
+      const ws = new WebSocket(wsUrl)
       ws.binaryType = 'arraybuffer'
       wsRef.current = ws
 
@@ -91,11 +112,35 @@ export function useSttSocket({
           clearTimeout(t)
           reject(new Error('فشل الاتصال بـ WebSocket — تحقق من عنوان Backend'))
         }
+        ws.onclose = () => {
+          clearTimeout(t)
+          reject(new Error('فشل الاتصال بـ WebSocket — تحقق من عنوان Backend'))
+        }
       })
 
-      if (!enabledRef.current) {
+      if (gen !== generationRef.current || !enabledRef.current) {
         cleanupMedia()
         return
+      }
+
+      // Clear handshake handlers; attach runtime handlers
+      ws.onclose = () => {
+        if (intentionalCloseRef.current) return
+        if (!enabledRef.current) return
+        if (gen !== generationRef.current) return
+        setStatus('error')
+        setError('انقطع اتصال الاستقبال')
+        if (retryRef.current < 3) {
+          retryRef.current += 1
+          retryTimerRef.current = window.setTimeout(() => {
+            if (enabledRef.current && gen === generationRef.current) {
+              startRef.current?.()
+            }
+          }, 1500)
+        }
+      }
+      ws.onerror = () => {
+        /* onclose handles retry */
       }
 
       ws.send(JSON.stringify({ type: 'config', language: languageRef.current }))
@@ -110,19 +155,6 @@ export function useSttSocket({
           }
         } catch {
           /* ignore */
-        }
-      }
-
-      ws.onclose = () => {
-        if (!enabledRef.current) return
-        setStatus('error')
-        setError('انقطع اتصال الاستقبال')
-        // Auto-retry a few times
-        if (retryRef.current < 3) {
-          retryRef.current += 1
-          setTimeout(() => {
-            if (enabledRef.current) startRef.current?.()
-          }, 1200)
         }
       }
 
@@ -143,16 +175,23 @@ export function useSttSocket({
         setError('تعذر تسجيل الصوت')
       }
 
-      // timeslice keeps sending complete blobs without restarting the recorder
-      recorder.start(chunkMs)
+      recorder.start(chunkMsRef.current)
       retryRef.current = 0
       setStatus('listening')
     } catch (err) {
+      if (gen !== generationRef.current) return
       cleanupMedia()
+      intentionalCloseRef.current = false
       setStatus('error')
       setError(err?.message || 'تعذر تشغيل الاستقبال')
+      if (enabledRef.current && retryRef.current < 3) {
+        retryRef.current += 1
+        retryTimerRef.current = window.setTimeout(() => {
+          if (enabledRef.current) startRef.current?.()
+        }, 1500)
+      }
     }
-  }, [chunkMs, cleanupMedia, stream])
+  }, [cleanupMedia])
 
   startRef.current = start
 
@@ -160,9 +199,11 @@ export function useSttSocket({
     if (enabled) start()
     else stop()
     return () => {
+      generationRef.current += 1
       cleanupMedia()
     }
-  }, [enabled, stream, start, stop, cleanupMedia])
+    // Reconnect only when receive toggles — stream identity must not thrash the socket
+  }, [enabled, start, stop, cleanupMedia])
 
   const clearText = useCallback(() => {
     setText('')

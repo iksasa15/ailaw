@@ -46,13 +46,22 @@ function load() {
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(load)
 
-  // HTTPS page + http:// API = mixed content (WS/fetch fail). Force Vite /api proxy.
+  // HTTPS page must use same-origin /api proxy (mixed content + WSS / no TLS on :8000).
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.location.protocol !== 'https:') return
     const proxy = `${window.location.origin}/api`
     const stored = (localStorage.getItem('apiBase') || settings.apiBase || '').replace(/\/$/, '')
-    if (!stored || stored.startsWith('http://')) {
+    let force = !stored || stored.startsWith('http://')
+    if (!force && stored) {
+      try {
+        const u = new URL(stored, window.location.origin)
+        force = u.origin !== window.location.origin || u.port === '8000'
+      } catch {
+        force = true
+      }
+    }
+    if (force) {
       localStorage.setItem('apiBase', proxy)
       setSettings((s) => (s.apiBase === proxy ? s : { ...s, apiBase: proxy }))
     }

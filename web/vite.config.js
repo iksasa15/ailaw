@@ -58,9 +58,14 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
         ws: true,
         secure: false,
+        // Keep WS upgrade stable under short-lived client reconnects
+        timeout: 0,
+        proxyTimeout: 0,
         configure: (proxy) => {
           proxy.on('error', (err) => {
-            console.warn('[vite api proxy]', err?.message || err)
+            const msg = err?.message || String(err)
+            if (msg.includes('ECONNRESET') || msg.includes('EPIPE')) return
+            console.warn('[vite api proxy]', msg)
           })
         },
       },

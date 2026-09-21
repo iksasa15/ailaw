@@ -23,15 +23,31 @@ function defaultApiBase() {
 }
 
 /**
- * On HTTPS pages, never use raw http:// API (mixed content blocks fetch/WebSocket).
- * Auto-upgrade to the Vite /api proxy instead.
+ * On HTTPS pages, always use the Vite same-origin /api proxy.
+ * Direct http:// backend = mixed content; direct https://:8000 = no TLS on FastAPI.
  */
+function shouldForceProxy(url) {
+  if (typeof window === 'undefined' || window.location.protocol !== 'https:') return false
+  if (!url) return true
+  if (isInsecureHttp(url)) return true
+  try {
+    const u = new URL(url, window.location.origin)
+    // Anything not same-origin /api (e.g. https://host:8000) breaks WSS on phones
+    if (u.origin !== window.location.origin) return true
+    if (!u.pathname.replace(/\/$/, '').endsWith('/api') && u.pathname.replace(/\/$/, '') !== '/api') {
+      return u.port === '8000' || u.pathname === '' || u.pathname === '/'
+    }
+  } catch {
+    return true
+  }
+  return false
+}
+
 export function getApiBase() {
   const stored = (localStorage.getItem('apiBase') || '').replace(/\/$/, '')
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    if (!stored || isInsecureHttp(stored)) {
+    if (shouldForceProxy(stored)) {
       const proxy = proxyApiBase()
-      // Persist so Settings / pairing show the working URL
       if (stored !== proxy) {
         try {
           localStorage.setItem('apiBase', proxy)
@@ -47,7 +63,7 @@ export function getApiBase() {
 
 export function setApiBase(url) {
   let next = String(url || '').trim().replace(/\/$/, '')
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && isInsecureHttp(next)) {
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && shouldForceProxy(next)) {
     next = proxyApiBase()
   }
   localStorage.setItem('apiBase', next)
