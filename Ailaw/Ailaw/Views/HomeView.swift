@@ -43,8 +43,8 @@ struct HomeView: View {
                 receiveOn = settings.receiveEnabled
                 sendOn = lockedRole != nil ? true : settings.sendEnabled
                 safetyOn = settings.safetyEnabled
-                vm.onAppear()
             }
+            model?.onAppear()
         }
         .onDisappear {
             model?.onDisappear()

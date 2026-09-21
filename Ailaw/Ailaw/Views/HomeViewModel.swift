@@ -116,7 +116,8 @@ final class HomeViewModel {
     private func startFingerTicker() {
         fingerTimer?.invalidate()
         fingerTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.phrases.tick(fingers: self.hands.fingerCount, quality: self.hands.quality)
             }

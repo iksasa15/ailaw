@@ -65,9 +65,7 @@ final class STTService {
         recognitionTask = nil
         isListening = false
         mode = "idle"
-        chunkLock.lock()
         pcmBuffer = Data()
-        chunkLock.unlock()
     }
 
     private func requestMic() async -> Bool {
@@ -173,7 +171,7 @@ final class STTService {
 
     private func runAppleSpeech(recognizer: SFSpeechRecognizer) throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth])
+        try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
         try session.setActive(true, options: .notifyOthersOnDeactivation)
 
         let engine = AVAudioEngine()
@@ -211,7 +209,7 @@ final class STTService {
     private func startPCMCapture(onChunk: @escaping (Data) -> Void) {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
 
             let engine = AVAudioEngine()

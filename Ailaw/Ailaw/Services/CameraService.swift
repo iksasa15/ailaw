@@ -2,7 +2,7 @@ import AVFoundation
 import Combine
 import UIKit
 
-enum CameraFacing {
+enum CameraFacing: Sendable, Equatable {
     case front
     case back
 }
@@ -27,11 +27,12 @@ final class CameraService: NSObject {
             permissionGranted = true
             start(facing: facing)
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                Task { @MainActor in
-                    self?.permissionGranted = granted
-                    if granted { self?.start(facing: facing) }
-                    else { self?.errorMessage = "لم يتم السماح بالكاميرا" }
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.permissionGranted = granted
+                    if granted { self.start(facing: facing) }
+                    else { self.errorMessage = "لم يتم السماح بالكاميرا" }
                 }
             }
         default:
