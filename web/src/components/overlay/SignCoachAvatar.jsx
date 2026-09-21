@@ -1,153 +1,84 @@
 import { useEffect, useMemo, useState } from 'react'
-
-/** تسلسل إشارة تقريبي لكل عبارة محامي — موجّه ليفهمه الشخص */
-export const LAWYER_SIGN_SEQ = {
-  1: [
-    { emoji: '👔', label: 'محامي' },
-    { emoji: '🫵', label: 'أنا لك' },
-    { emoji: '🙏', label: 'تفضّل احكِ' },
-  ],
-  2: [
-    { emoji: '❓', label: 'اسأل' },
-    { emoji: '📋', label: 'تفاصيل' },
-    { emoji: '⚖️', label: 'قضيتك' },
-  ],
-  3: [
-    { emoji: '🕐', label: 'متى؟' },
-    { emoji: '📅', label: 'الوقت' },
-    { emoji: '👇', label: 'صار' },
-  ],
-  4: [
-    { emoji: '❓', label: 'هل' },
-    { emoji: '👀', label: 'شهود' },
-    { emoji: '👥', label: 'معك؟' },
-  ],
-  5: [
-    { emoji: '❓', label: 'أين' },
-    { emoji: '🧾', label: 'دليل' },
-    { emoji: '📷', label: 'إثبات؟' },
-  ],
-  6: [
-    { emoji: '👀', label: 'أقرأ' },
-    { emoji: '📄', label: 'أوراقك' },
-    { emoji: '✅', label: 'حسناً' },
-  ],
-  7: [
-    { emoji: '🤲', label: 'لا تخف' },
-    { emoji: '🛡️', label: 'أحميك' },
-    { emoji: '🫵', label: 'أدافع عنك' },
-  ],
-  8: [
-    { emoji: '📎', label: 'نحتاج' },
-    { emoji: '📄', label: 'أوراق' },
-    { emoji: '➕', label: 'زيادة' },
-  ],
-  9: [
-    { emoji: '✍️', label: 'اكتب' },
-    { emoji: '📝', label: 'توقيع' },
-    { emoji: '🙏', label: 'من فضلك' },
-  ],
-  10: [
-    { emoji: '⚖️', label: 'قضية' },
-    { emoji: '🔄', label: 'متابعة' },
-    { emoji: '✅', label: 'مستمرة' },
-  ],
-}
-
-const FALLBACK_SIGNS = [
-  { emoji: '👐', label: 'إشارة' },
-  { emoji: '💬', label: 'معنى' },
-  { emoji: '👀', label: 'انظر' },
-]
-
-function signsForLawyerPhrase(fingers, text) {
-  const n = Number(fingers)
-  if (n >= 1 && n <= 10 && LAWYER_SIGN_SEQ[n]) return LAWYER_SIGN_SEQ[n]
-  if (!text) return FALLBACK_SIGNS
-  const parts = String(text)
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 4)
-  if (!parts.length) return FALLBACK_SIGNS
-  const icons = ['🖐️', '👀', '💬', '✅', '🙏']
-  return parts.map((label, i) => ({ emoji: icons[i % icons.length], label }))
-}
+import { LAWYER_PHRASES } from '../../hooks/useFingerPhrases'
 
 /**
- * أفتار أسفل الشاشة للشخص الأصم:
- * يترجم كلام المحامي إلى لغة إشارة تقريبية يفهمها.
+ * أفتار أسفل الشاشة للشخص:
+ * يعرض عبارة المحامي كنص واضح مع خطوات إشارة مختصرة.
  */
 export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
-  const [signIdx, setSignIdx] = useState(0)
+  const [stepIdx, setStepIdx] = useState(0)
 
-  const signSeq = useMemo(() => {
+  const steps = useMemo(() => {
     if (!lawyerPhrase?.text && !(lawyerPhrase?.fingers >= 1)) return null
-    return signsForLawyerPhrase(lawyerPhrase.fingers, lawyerPhrase.text)
+    const n = Number(lawyerPhrase.fingers)
+    const mapped =
+      n >= 1 && n <= 10 ? LAWYER_PHRASES[n] : null
+    const main = lawyerPhrase.text || mapped
+    if (!main) return null
+    const words = String(main)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 4)
+    if (words.length <= 1) return [{ label: main }]
+    return words.map((label) => ({ label }))
   }, [lawyerPhrase])
 
   useEffect(() => {
-    if (!visible || !signSeq?.length) return undefined
-    setSignIdx(0)
+    if (!visible || !steps?.length) return undefined
+    setStepIdx(0)
     const id = window.setInterval(() => {
-      setSignIdx((i) => (i + 1) % signSeq.length)
-    }, 900)
+      setStepIdx((i) => (i + 1) % steps.length)
+    }, 1100)
     return () => window.clearInterval(id)
-  }, [visible, signSeq, lawyerPhrase?.text, lawyerPhrase?.fingers, lawyerPhrase?.at])
+  }, [visible, steps, lawyerPhrase?.text, lawyerPhrase?.fingers, lawyerPhrase?.at])
 
   if (!visible) return null
 
-  const hasLawyer = Boolean(signSeq?.length)
-  const current = hasLawyer ? signSeq[signIdx] || signSeq[0] : null
+  const hasLawyer = Boolean(steps?.length)
+  const current = hasLawyer ? steps[stepIdx] || steps[0] : null
+  const fingers = lawyerPhrase?.fingers
 
   return (
     <div className="pointer-events-none absolute inset-x-3 bottom-[7.75rem] z-[25] flex justify-center">
       <div className="w-full max-w-lg rounded-2xl bg-[#0b1220]/92 px-3 py-3 ring-1 ring-[#3ecf8e]/30 shadow-xl backdrop-blur-sm">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] font-bold text-[#3ecf8e]">
-            👤 للشخص · لغة إشارة (تقريبي)
-          </p>
+          <p className="text-[11px] font-bold text-[#3ecf8e]">للشخص · ترجمة المحامي</p>
           {hasLawyer ? (
-            <p className="truncate text-[11px] text-white/55">المحامي قال</p>
+            <p className="truncate text-[11px] text-white/55">
+              {fingers ? `${fingers} أصابع` : 'عبارة'}
+            </p>
           ) : (
             <p className="text-[11px] text-white/45">بانتظار كلام المحامي</p>
           )}
         </div>
 
         {hasLawyer ? (
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl bg-[#152033] ring-2 ring-[#3ecf8e]/50">
-              <span className="text-4xl leading-none gesture-nod" aria-hidden>
-                {current.emoji}
-              </span>
-            </div>
-
-            <div className="min-w-0 flex-1 text-right">
-              <p className="text-base font-bold leading-6 text-white">{current.label}</p>
-              <p className="mt-1 line-clamp-2 text-xs text-white/70">{lawyerPhrase.text}</p>
+          <div className="text-right">
+            <p className="text-lg font-bold leading-7 text-white">{lawyerPhrase.text}</p>
+            {current && steps.length > 1 ? (
+              <p className="mt-2 text-sm font-semibold text-[#3ecf8e]">{current.label}</p>
+            ) : null}
+            {steps.length > 1 ? (
               <div className="mt-2 flex flex-wrap justify-end gap-1.5">
-                {signSeq.map((s, i) => (
+                {steps.map((s, i) => (
                   <span
                     key={`${s.label}-${i}`}
-                    className={`rounded-lg px-1.5 py-0.5 text-lg leading-none ${
-                      i === signIdx ? 'bg-[#3ecf8e]/25 ring-1 ring-[#3ecf8e]' : 'bg-white/5 opacity-50'
+                    className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                      i === stepIdx
+                        ? 'bg-[#3ecf8e]/25 text-white ring-1 ring-[#3ecf8e]'
+                        : 'bg-white/5 text-white/50'
                     }`}
-                    aria-hidden
                   >
-                    {s.emoji}
+                    {s.label}
                   </span>
                 ))}
               </div>
-            </div>
+            ) : null}
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-2xl bg-[#152033] text-4xl ring-1 ring-white/15">
-              🖐️
-            </div>
-            <p className="flex-1 text-right text-sm leading-6 text-white/75">
-              عندما يتكلم <strong className="text-white">المحامي</strong> تظهر هنا إشارة يفهمها الشخص.
-            </p>
-          </div>
+          <p className="text-sm leading-6 text-white/75">
+            عندما يرسل <strong className="text-white">المحامي</strong> عبارة تظهر هنا بوضوح للشخص.
+          </p>
         )}
       </div>
     </div>

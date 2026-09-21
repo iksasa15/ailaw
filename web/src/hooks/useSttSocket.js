@@ -12,7 +12,7 @@ function pickMime() {
 export function useSttSocket({
   enabled = false,
   language = 'ar',
-  chunkMs = 1800,
+  chunkMs = 1200,
   stream = null,
 } = {}) {
   const [text, setText] = useState('')

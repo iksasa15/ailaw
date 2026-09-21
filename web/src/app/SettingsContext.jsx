@@ -7,6 +7,7 @@ const PHRASE_PACK = 'case-story-v1'
 
 const DEFAULTS = {
   apiBase: '',
+  roomId: '',
   language: 'ar',
   fontScale: 1,
   overlayOpacity: 0.55,
@@ -14,6 +15,7 @@ const DEFAULTS = {
   receiveEnabled: true,
   sendEnabled: true,
   safetyEnabled: true,
+  arslEnabled: false,
   onboarded: false,
   phrasePack: PHRASE_PACK,
   lawyerPhrases: { ...LAWYER_PHRASES },
@@ -70,6 +72,7 @@ export function SettingsProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('sg-settings', JSON.stringify(settings))
     if (settings.apiBase) localStorage.setItem('apiBase', settings.apiBase)
+    if (settings.roomId) localStorage.setItem('roomId', settings.roomId)
     document.documentElement.style.setProperty('--font-scale', String(settings.fontScale))
     document.documentElement.style.setProperty(
       '--caption-bg',

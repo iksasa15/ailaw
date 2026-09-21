@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCamera } from '../hooks/useCamera'
 import { useHands } from '../hooks/useHands'
@@ -10,8 +10,9 @@ import { useFingerPhrases } from '../hooks/useFingerPhrases'
 import { useTts } from '../hooks/useTts'
 import { useAmbient } from '../hooks/useAmbient'
 import { useObstacleProximity } from '../hooks/useObstacleProximity'
+import { useSceneSocket } from '../hooks/useSceneSocket'
 import { useSettings } from '../app/SettingsContext'
-import { checkHealth, fetchLawyerScene, fetchPersonScene, publishScenePhrase } from '../services/api'
+import { checkHealth, makeLocalRoomId, publishScenePhrase } from '../services/api'
 import { HandLandmarkCanvas, PermissionGate, VideoFeed } from '../components/camera/Camera'
 import {
   AlertToast,
@@ -33,19 +34,22 @@ export default function Home({ lockedRole = null }) {
   const [pulseToken, setPulseToken] = useState(0)
   const [badgePulse, setBadgePulse] = useState(false)
   const [rolePulse, setRolePulse] = useState(false)
-  const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
-  const [remotePersonPhrase, setRemotePersonPhrase] = useState(null)
-  const lastRemotePersonSpokenRef = useRef('')
-  const [syncState, setSyncState] = useState('waiting')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [cameraFacing, setCameraFacing] = useState(() =>
     dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
   )
-  const lastSceneSyncRef = useRef(0)
-  const lastBackendOkRef = useRef(0)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
+  const lastRemoteSpokenRef = useRef('')
+  const sceneMarkRef = useRef(null)
 
-  // شاشة مستقلة: تفعيل الإرسال تلقائياً
+  // Ensure a room id exists for dedicated screens
+  useEffect(() => {
+    if (!dedicated) return
+    if (settings.roomId) return
+    update({ roomId: makeLocalRoomId() })
+  }, [dedicated, settings.roomId, update])
+
   useEffect(() => {
     if (dedicated && !settings.sendEnabled) {
       update({ sendEnabled: true })
@@ -70,8 +74,7 @@ export default function Home({ lockedRole = null }) {
   const mic = useSharedMic({ enabled: needMic })
 
   const sendOn = dedicated ? true : settings.sendEnabled
-  const facingMode = cameraFacing
-  const camera = useCamera({ facingMode, enabled: true })
+  const camera = useCamera({ facingMode: cameraFacing, enabled: true })
   const hands = useHands({
     videoRef: camera.videoRef,
     enabled: sendOn && camera.status === 'ready',
@@ -84,6 +87,7 @@ export default function Home({ lockedRole = null }) {
   const sttWs = useSttSocket({
     enabled: useWs && mic.status === 'ready',
     language: settings.language,
+    chunkMs: 1200,
     stream: mic.stream,
   })
   const sttBrowser = useBrowserStt({
@@ -94,8 +98,8 @@ export default function Home({ lockedRole = null }) {
 
   const arsl = useArsl({
     landmarksRef: hands.landmarksRef,
-    enabled: false,
-    threshold: settings.confidence,
+    enabled: Boolean(settings.arslEnabled) && sendOn && camera.status === 'ready',
+    threshold: Math.max(0.45, settings.confidence),
     trackingQuality: hands.trackingQuality,
   })
   const finger = useFingerPhrases({
@@ -106,8 +110,16 @@ export default function Home({ lockedRole = null }) {
     lawyerPhrases: settings.lawyerPhrases,
     personPhrases: settings.personPhrases,
     lockedRole: dedicated ? lockedRole : null,
+    stableNeed: 10,
   })
-  const sendResult = finger.result || arsl.result
+  // Finger phrases win; ARSL only as high-confidence supplement when no finger accept
+  const sendResult =
+    finger.result?.accepted
+      ? finger.result
+      : settings.arslEnabled && arsl.result?.accepted && (arsl.result.confidence || 0) >= 0.45
+        ? arsl.result
+        : finger.result || (settings.arslEnabled ? arsl.result : null)
+
   const { speak, unlock: unlockTts } = useTts({ cooldownMs: 1600 })
   const ambient = useAmbient({
     enabled: settings.safetyEnabled && mic.status === 'ready',
@@ -123,89 +135,33 @@ export default function Home({ lockedRole = null }) {
     obstacle.clearAlert()
   }
 
-  // شاشات مستقلة: مؤشر المزامنة
-  useEffect(() => {
-    if (!dedicated) return undefined
-    const id = window.setInterval(() => {
-      const now = Date.now()
-      const phraseFresh = now - lastSceneSyncRef.current < 2500
-      const backendFresh = now - lastBackendOkRef.current < 4000
-      if (phraseFresh) setSyncState('synced')
-      else if (backendFresh) setSyncState('waiting')
-      else setSyncState('offline')
-    }, 500)
-    return () => window.clearInterval(id)
-  }, [dedicated])
-
-  // شاشة الشخص: استقبل كلام المحامي من السيرفر للأفتار
-  useEffect(() => {
-    if (lockedRole !== 'person') return undefined
-    let cancelled = false
-    const tick = async () => {
-      try {
-        const data = await fetchLawyerScene()
-        if (cancelled) return
-        lastBackendOkRef.current = Date.now()
-        if (!data?.text) return
-        lastSceneSyncRef.current = Date.now()
-        setLastLawyerPhrase((prev) => {
-          if (prev?.at === data.at && prev?.text === data.text) return prev
-          return {
-            fingers: data.fingers ?? null,
-            text: data.text,
-            at: data.at || Date.now(),
-          }
-        })
-      } catch {
-        /* backend offline */
+  const onRemotePhrase = useCallback(
+    (phrase) => {
+      if (!phrase?.text || !phrase?.role) return
+      // Remote person → lawyer speaks; remote lawyer → person sees coach (no TTS on person)
+      if (lockedRole === 'lawyer' && phrase.role === 'person') {
+        const key = `${phrase.at || ''}:${phrase.text}`
+        if (lastRemoteSpokenRef.current === key) return
+        lastRemoteSpokenRef.current = key
+        unlockTts()
+        speak(phrase.text, { force: true })
       }
-    }
-    tick()
-    const id = window.setInterval(tick, 1200)
-    return () => {
-      cancelled = true
-      window.clearInterval(id)
-    }
-  }, [lockedRole, settings.apiBase])
+    },
+    [lockedRole, speak, unlockTts],
+  )
 
-  // شاشة المحامي: استقبل عبارات الشخص (إشارات) + نبض الصحة
-  useEffect(() => {
-    if (lockedRole !== 'lawyer') return undefined
-    let cancelled = false
-    const tick = async () => {
-      try {
-        const data = await fetchPersonScene()
-        if (cancelled) return
-        lastBackendOkRef.current = Date.now()
-        if (!data?.text) return
-        lastSceneSyncRef.current = Date.now()
-        const key = `${data.at || ''}:${data.text}`
-        setRemotePersonPhrase((prev) => {
-          if (prev?.at === data.at && prev?.text === data.text) return prev
-          return {
-            fingers: data.fingers ?? null,
-            text: data.text,
-            at: data.at || Date.now(),
-          }
-        })
-        if (lastRemotePersonSpokenRef.current !== key) {
-          lastRemotePersonSpokenRef.current = key
-          unlockTts()
-          speak(data.text, { force: true })
-        }
-      } catch {
-        /* offline */
-      }
-    }
-    tick()
-    const id = window.setInterval(tick, 1200)
-    return () => {
-      cancelled = true
-      window.clearInterval(id)
-    }
-  }, [lockedRole, settings.apiBase, speak, unlockTts])
+  const scene = useSceneSocket({
+    enabled: dedicated && Boolean(settings.roomId),
+    room: settings.roomId || '',
+    role: lockedRole,
+    onRemotePhrase,
+  })
+  sceneMarkRef.current = scene.markLocalPublish
 
-  // نطق تحذير عند حاجز قريب
+  const lastLawyerPhrase = scene.lawyerPhrase
+  const remotePersonPhrase = scene.personPhrase
+  const syncState = scene.syncState
+
   const lastObstacleSpokenRef = useRef(0)
   useEffect(() => {
     if (!obstacle.alert || obstacle.alert.kind !== 'obstacle') return
@@ -215,7 +171,6 @@ export default function Home({ lockedRole = null }) {
     speak('احذر، حاجز قريب', { force: true })
   }, [obstacle.alert, speak, unlockTts])
 
-  // Mobile browsers block TTS until a tap — unlock on first interaction
   useEffect(() => {
     const onFirst = () => unlockTts()
     window.addEventListener('pointerdown', onFirst, { once: true })
@@ -226,14 +181,12 @@ export default function Home({ lockedRole = null }) {
     }
   }, [unlockTts])
 
-  // Reset spoken memory when send turns off or hand is lost
   useEffect(() => {
     if (!sendOn || hands.trackingQuality === 'lost') {
       lastSpokenRef.current = ''
     }
   }, [sendOn, hands.trackingQuality])
 
-  // تبديل الدور: معطّل على الشاشات المستقلة
   useEffect(() => {
     if (dedicated) return undefined
     const change = finger.roleChanged
@@ -253,7 +206,9 @@ export default function Home({ lockedRole = null }) {
   useEffect(() => {
     const r = sendResult
     if (!sendOn || !r?.accepted || !r.display) return
-    if (!dedicated && finger.roleHoldProgress > 0.92) return
+    if (!dedicated && finger.roleHoldProgress > 0.15 && (r.fingers === 1 || r.fingers === 2)) {
+      return
+    }
     const key =
       r.fingers != null
         ? `${r.role || finger.role}:${r.fingers}:${r.display}`
@@ -261,37 +216,17 @@ export default function Home({ lockedRole = null }) {
     if (lastSpokenRef.current === key) return
     lastSpokenRef.current = key
     const spokenRole = r.role || finger.role
-    if (spokenRole === 'lawyer') {
-      const payload = {
-        fingers: r.fingers ?? null,
-        text: r.display,
-        at: Date.now(),
-      }
-      setLastLawyerPhrase(payload)
+    const room = settings.roomId || undefined
+    if (spokenRole === 'lawyer' || spokenRole === 'person') {
       publishScenePhrase({
-        role: 'lawyer',
+        role: spokenRole,
         text: r.display,
         fingers: r.fingers ?? null,
+        room,
       })
-        .then(() => {
-          lastSceneSyncRef.current = Date.now()
-          lastBackendOkRef.current = Date.now()
-        })
-        .catch(() => {})
-    } else if (spokenRole === 'person') {
-      publishScenePhrase({
-        role: 'person',
-        text: r.display,
-        fingers: r.fingers ?? null,
-      })
-        .then(() => {
-          lastSceneSyncRef.current = Date.now()
-          lastBackendOkRef.current = Date.now()
-        })
+        .then(() => sceneMarkRef.current?.())
         .catch(() => {})
     }
-    // على شاشة الشخص: لا ننطق صوت المحامي هنا؛ الأفتار يعرض الإشارة
-    // على شاشة المحامي أو المشتركة: ننطق العبارة
     if (lockedRole !== 'person') {
       speak(r.display, { force: true })
     }
@@ -307,6 +242,7 @@ export default function Home({ lockedRole = null }) {
     finger.roleHoldProgress,
     dedicated,
     lockedRole,
+    settings.roomId,
   ])
 
   const sttStatus =
@@ -335,8 +271,8 @@ export default function Home({ lockedRole = null }) {
           <p className="text-lg font-bold text-white drop-shadow">{title}</p>
           <p className="text-xs text-white/70">
             {dedicated
-              ? `كاميرا هذا الجهاز · ${ROLE_LABELS[lockedRole]}`
-              : `عدسة AR · STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
+              ? `${ROLE_LABELS[lockedRole]}${settings.roomId ? ` · ${settings.roomId}` : ''}`
+              : `STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
           </p>
           {dedicated ? (
             <div className="mt-2">
@@ -344,44 +280,63 @@ export default function Home({ lockedRole = null }) {
             </div>
           ) : null}
         </div>
-        <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+        <div className="pointer-events-auto relative">
           <button
             type="button"
-            onClick={() =>
-              setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
-            }
-            className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white"
-            title="تبديل الكاميرا"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="rounded-lg bg-black/45 px-3 py-2 text-sm font-semibold text-white"
           >
-            {cameraFacing === 'user' ? '📷 خلفية' : '🤳 أمامية'}
+            المزيد
           </button>
-          <Link to="/screens" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
-            📱 شاشتين
-          </Link>
-          <Link to="/guide" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
-            📖 تعليمات
-          </Link>
-          <Link to="/about" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
-            ℹ️ عن المشروع
-          </Link>
+          {menuOpen ? (
+            <div className="absolute left-0 top-full mt-2 min-w-[10rem] overflow-hidden rounded-xl bg-[#0b1220]/95 ring-1 ring-white/15 shadow-xl">
+              <Link
+                to="/screens"
+                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+              >
+                شاشتين
+              </Link>
+              <Link
+                to="/guide"
+                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+              >
+                تعليمات
+              </Link>
+              <Link
+                to="/settings"
+                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+              >
+                إعدادات
+              </Link>
+              <Link
+                to="/about"
+                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+              >
+                عن المشروع
+              </Link>
+            </div>
+          ) : null}
         </div>
       </div>
 
       {sendOn && <TrackingBadge quality={hands.trackingQuality} />}
-      {sendOn ? (
+      {sendOn && !dedicated ? (
         <RoleBadge
           role={finger.role}
-          holdProgress={dedicated ? 0 : finger.roleHoldProgress}
+          holdProgress={finger.roleHoldProgress}
           pulse={rolePulse}
-          onToggle={
-            dedicated
-              ? undefined
-              : () => {
-                  unlockTts()
-                  finger.toggleRole()
-                }
-          }
+          onToggle={() => {
+            unlockTts()
+            finger.toggleRole()
+          }}
         />
+      ) : null}
+      {sendOn && dedicated ? (
+        <RoleBadge role={lockedRole} holdProgress={0} pulse={false} onToggle={undefined} />
       ) : null}
 
       <CaptionBubble text={stt.text} partial={stt.partial} raised={sendOn} />
@@ -392,7 +347,7 @@ export default function Home({ lockedRole = null }) {
           }`}
         >
           <div className="mx-auto max-w-xl rounded-2xl border border-[#3ecf8e]/40 bg-[#0d2a1c]/95 px-4 py-3 text-center shadow-lg">
-            <p className="mb-1 text-xs font-semibold text-[#3ecf8e]">👤 الشخص بالإشارة</p>
+            <p className="mb-1 text-xs font-semibold text-[#3ecf8e]">الشخص بالإشارة</p>
             <p className="text-lg font-bold text-white">
               {remotePersonPhrase.fingers
                 ? `${remotePersonPhrase.fingers} أصابع · ${remotePersonPhrase.text}`
@@ -404,7 +359,8 @@ export default function Home({ lockedRole = null }) {
       <SignCoachAvatar
         visible={sendOn && (lockedRole === 'person' || !dedicated)}
         lawyerPhrase={lastLawyerPhrase}
-      />      <SignBadge
+      />
+      <SignBadge
         label={
           sendResult?.display
             ? sendResult.fingers
@@ -429,12 +385,13 @@ export default function Home({ lockedRole = null }) {
           }`}
         >
           <div className="rounded-full bg-[#ff3b4e]/90 px-3 py-1.5 text-sm font-semibold text-white shadow-md">
-            🚧 اقترب من حاجز…
+            اقترب من حاجز…
           </div>
         </div>
       ) : null}
 
       <BottomBar
+        dedicated={dedicated}
         receiveOn={settings.receiveEnabled}
         sendOn={sendOn}
         safetyOn={settings.safetyEnabled}
@@ -444,7 +401,6 @@ export default function Home({ lockedRole = null }) {
           const next = !settings.sendEnabled
           if (next) unlockTts()
           update({ sendEnabled: next })
-          // عند تفعيل الإرسال نفضّل الأمامية للإشارات؛ عند الإيقاف للخلفية للأمان
           setCameraFacing(next ? 'user' : settings.safetyEnabled ? 'environment' : 'user')
         }}
         onToggleSafety={() => {

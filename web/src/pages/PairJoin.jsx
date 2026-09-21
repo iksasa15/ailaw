@@ -13,9 +13,12 @@ export default function PairJoin() {
   useEffect(() => {
     const api = params.get('api') || ''
     const role = params.get('role') || 'person'
+    const room = params.get('room') || ''
     const invite =
       parsePairInvite(window.location.href) ||
-      (api ? { api: api.replace(/\/$/, ''), role } : null)
+      (api
+        ? { api: api.replace(/\/$/, ''), role, room: room || null }
+        : null)
 
     if (!invite?.api || (invite.role !== 'lawyer' && invite.role !== 'person')) {
       setError('رابط الدعوة غير صالح')

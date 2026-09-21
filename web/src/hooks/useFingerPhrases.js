@@ -194,10 +194,11 @@ export function useFingerPhrases({
       const locked = qualityRef.current === 'locked'
       const map = phrasesForRole(roleRef.current, lawyerRef.current, personRef.current)
       const phrase = map[fingers]
-      const need = locked ? stableNeed : stableNeed + 4
 
       // --- Role hold: فقط إذا الدور غير مقفول على شاشة مستقلة ---
+      // أثناء تثبيت الدور (1 أو 2 أصابع) لا نقبل عبارة قصيرة لتفادي التعارض
       const roleCandidate = fingers === 1 ? 'lawyer' : fingers === 2 ? 'person' : null
+      let roleHolding = false
       if (!lockedRef.current && locked && roleCandidate && streak.value === fingers) {
         if (roleHoldFingersRef.current !== fingers) {
           roleHoldFingersRef.current = fingers
@@ -208,6 +209,7 @@ export function useFingerPhrases({
         const elapsed = Date.now() - started
         const progress = Math.min(1, elapsed / roleHoldMs)
         setRoleHoldProgress(progress)
+        roleHolding = progress > 0.08 && progress < 1
 
         if (!roleSwitchDoneRef.current && elapsed >= roleHoldMs) {
           roleSwitchDoneRef.current = true
@@ -218,6 +220,7 @@ export function useFingerPhrases({
             setRoleChanged({ role: roleCandidate, at: Date.now() })
           }
           setRoleHoldProgress(0)
+          roleHolding = false
         }
       } else {
         roleHoldStartRef.current = null
@@ -227,7 +230,8 @@ export function useFingerPhrases({
       }
 
       // --- Phrase accept (current role map) ---
-      if (phrase && streak.count >= need) {
+      const phraseNeed = locked ? stableNeed : stableNeed + 4
+      if (phrase && !roleHolding && streak.count >= phraseNeed) {
         const next = {
           fingers,
           display: phrase,

@@ -43,13 +43,16 @@ async def ws_stt(websocket: WebSocket):
             elif "bytes" in message and message["bytes"] is not None:
                 chunk = message["bytes"]
                 buffer.extend(chunk)
-                # Auto-flush when buffer grows large enough (~64KB heuristic)
-                if len(buffer) >= 48_000:
+                # Auto-flush sooner for lower latency (~1–1.5s of webm)
+                if len(buffer) >= 28_000:
                     data = bytes(buffer)
                     buffer.clear()
                     await websocket.send_json({"type": "partial", "text": "جاري التحويل…"})
                     result = await asyncio.to_thread(transcribe_bytes, data, language)
                     text = result.get("text", "")
+                    if text:
+                        # Show decoded text ASAP as a soft partial before final settles
+                        await websocket.send_json({"type": "partial", "text": text})
                     await websocket.send_json(
                         {
                             "type": "final",

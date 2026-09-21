@@ -121,24 +121,41 @@ export async function classifyAmbient(blob) {
   return res.json()
 }
 
-export async function publishScenePhrase({ role, text, fingers }) {
+export async function publishScenePhrase({ role, text, fingers, room }) {
   const res = await fetch(`${getApiBase()}/scene/phrase`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role, text, fingers }),
+    body: JSON.stringify({ role, text, fingers, room: room || undefined }),
   })
   if (!res.ok) throw new Error('scene publish failed')
   return res.json()
 }
 
-export async function fetchLawyerScene() {
-  const res = await fetch(`${getApiBase()}/scene/lawyer`)
+export async function fetchLawyerScene(room) {
+  const q = room ? `?room=${encodeURIComponent(room)}` : ''
+  const res = await fetch(`${getApiBase()}/scene/lawyer${q}`)
   if (!res.ok) throw new Error('scene lawyer failed')
   return res.json()
 }
 
-export async function fetchPersonScene() {
-  const res = await fetch(`${getApiBase()}/scene/person`)
+export async function fetchPersonScene(room) {
+  const q = room ? `?room=${encodeURIComponent(room)}` : ''
+  const res = await fetch(`${getApiBase()}/scene/person${q}`)
   if (!res.ok) throw new Error('scene person failed')
   return res.json()
+}
+
+export async function createSceneRoom() {
+  const res = await fetch(`${getApiBase()}/scene/room`, { method: 'POST' })
+  if (!res.ok) throw new Error('scene room failed')
+  return res.json()
+}
+
+/** Local fallback room id when backend create fails. */
+export function makeLocalRoomId() {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let out = ''
+  const bytes = crypto.getRandomValues(new Uint8Array(8))
+  for (let i = 0; i < 8; i += 1) out += alphabet[bytes[i] % alphabet.length]
+  return out
 }

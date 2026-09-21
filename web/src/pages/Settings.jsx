@@ -173,6 +173,24 @@ export default function Settings() {
           />
         </label>
 
+        <label className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <span className="text-sm text-white/80">
+            التعرف بالذكاء (ARSL) — تجريبي، الأصابع تبقى الأساس
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(settings.arslEnabled)}
+            onChange={(e) => update({ arslEnabled: e.target.checked })}
+            className="h-5 w-5 accent-[#3ecf8e]"
+          />
+        </label>
+
+        {settings.roomId ? (
+          <p className="rounded-xl bg-white/5 px-3 py-2 text-xs text-white/55" dir="ltr">
+            roomId: {settings.roomId}
+          </p>
+        ) : null}
+
         {deferredPrompt && (
           <button
             type="button"

@@ -3,18 +3,29 @@ export function CaptionBubble({ text, partial, raised = false }) {
   if (!content) return null
   return (
     <div
-      className={`pointer-events-none absolute inset-x-4 z-20 ${
+      className={`pointer-events-none absolute inset-x-3 z-20 ${
         raised ? 'bottom-44' : 'bottom-28'
       }`}
     >
       <div
-        className="mx-auto max-w-xl rounded-2xl px-4 py-3 text-center caption-text font-semibold text-white"
-        style={{ background: 'var(--caption-bg)' }}
+        className="mx-auto max-w-xl rounded-2xl px-4 py-3.5 text-center shadow-lg ring-1 ring-white/10"
+        style={{ background: 'var(--caption-bg, rgba(0,0,0,0.72))' }}
       >
-        {text}
-        {partial && !text && <span className="opacity-80">{partial}</span>}
-        {partial && text ? (
-          <span className="mt-1 block text-base font-normal opacity-70">{partial}</span>
+        {text ? (
+          <p
+            className="font-bold leading-snug text-white"
+            style={{ fontSize: 'calc(1.25rem * var(--font-scale, 1))' }}
+          >
+            {text}
+          </p>
+        ) : null}
+        {partial ? (
+          <p
+            className={`leading-snug text-white/80 ${text ? 'mt-1.5' : 'font-semibold'}`}
+            style={{ fontSize: text ? 'calc(0.95rem * var(--font-scale, 1))' : 'calc(1.15rem * var(--font-scale, 1))' }}
+          >
+            {partial}
+          </p>
         ) : null}
       </div>
     </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import jsQR from 'jsqr'
 import { useSettings } from '../app/SettingsContext'
-import { checkHealth, getApiBase, setApiBase } from '../services/api'
+import { checkHealth, createSceneRoom, getApiBase, makeLocalRoomId, setApiBase } from '../services/api'
 import {
   applyPairInvite,
   makeAilawPairURL,
@@ -30,8 +30,13 @@ export default function ScreenPick() {
   const fileInputRef = useRef(null)
 
   const guestRole = hostRole === 'lawyer' ? 'person' : hostRole === 'person' ? 'lawyer' : null
-  const webInvite = guestRole ? makeWebPairURL(settings.apiBase || getApiBase(), guestRole) : ''
-  const ailawInvite = guestRole ? makeAilawPairURL(settings.apiBase || getApiBase(), guestRole) : ''
+  const roomId = settings.roomId || ''
+  const webInvite = guestRole
+    ? makeWebPairURL(settings.apiBase || getApiBase(), guestRole, roomId)
+    : ''
+  const ailawInvite = guestRole
+    ? makeAilawPairURL(settings.apiBase || getApiBase(), guestRole, roomId)
+    : ''
 
   const runHealth = useCallback(async () => {
     setChecking(true)
@@ -69,6 +74,14 @@ export default function ScreenPick() {
       setApiBase(cleaned)
       update({ apiBase: cleaned })
     }
+    let room = settings.roomId
+    try {
+      const created = await createSceneRoom()
+      if (created?.room) room = created.room
+    } catch {
+      room = makeLocalRoomId()
+    }
+    update({ roomId: room })
     setHostRole(role)
     await runHealth()
   }
@@ -310,6 +323,11 @@ export default function ScreenPick() {
               <p className="mt-1 text-sm text-white/65">
                 أرِ هذا الرمز لجوال {guestRole === 'person' ? 'الشخص' : 'المحامي'}
               </p>
+              {roomId ? (
+                <p className="mt-1 text-xs text-white/45" dir="ltr">
+                  غرفة الجلسة: {roomId}
+                </p>
+              ) : null}
             </div>
             <img
               src={qrImageURL(webInvite, 240)}
