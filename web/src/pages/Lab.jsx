@@ -105,7 +105,8 @@ export default function Lab() {
             <p className="text-sm text-[#3ecf8e]">تجربة على جهاز واحد</p>
             <h1 className="mt-1 text-2xl font-bold">محامي + أفتار الإشارة</h1>
             <p className="mt-2 text-sm leading-6 text-white/65">
-              تكلّم أو اكتب كمحامي — الأفتار يترجم فوراً للغة الإشارة بدون جوالين.
+              تكلّم أو اختر عبارة — الأفتار يعرض <strong className="text-white">إشارات مرئية</strong> حقيقية
+              (صور إشارة) وليس أرقام أصابع.
             </p>
           </div>
           <Link
@@ -195,7 +196,7 @@ export default function Lab() {
         </section>
 
         <section className="rounded-2xl bg-white/5 p-3 ring-1 ring-[#3ecf8e]/25">
-          <h2 className="mb-2 px-1 text-base font-bold">الأفتار (الشخص)</h2>
+          <h2 className="mb-2 px-1 text-base font-bold">الأفتار · لغة إشارة مرئية</h2>
           <SignCoachAvatar visible lawyerPhrase={lawyerPhrase} mode="panel" />
         </section>
 
