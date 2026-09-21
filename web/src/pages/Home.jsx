@@ -34,6 +34,9 @@ export default function Home({ lockedRole = null }) {
   const [badgePulse, setBadgePulse] = useState(false)
   const [rolePulse, setRolePulse] = useState(false)
   const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
+  const [syncState, setSyncState] = useState('waiting')
+  const lastSceneSyncRef = useRef(0)
+  const lastBackendOkRef = useRef(0)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
 
@@ -122,6 +125,20 @@ export default function Home({ lockedRole = null }) {
     obstacle.clearAlert()
   }
 
+  // شاشات مستقلة: مؤشر المزامنة
+  useEffect(() => {
+    if (!dedicated) return undefined
+    const id = window.setInterval(() => {
+      const now = Date.now()
+      const phraseFresh = now - lastSceneSyncRef.current < 2500
+      const backendFresh = now - lastBackendOkRef.current < 4000
+      if (phraseFresh) setSyncState('synced')
+      else if (backendFresh) setSyncState('waiting')
+      else setSyncState('offline')
+    }, 500)
+    return () => window.clearInterval(id)
+  }, [dedicated])
+
   // شاشة الشخص: استقبل كلام المحامي من السيرفر للأفتار
   useEffect(() => {
     if (lockedRole !== 'person') return undefined
@@ -129,7 +146,10 @@ export default function Home({ lockedRole = null }) {
     const tick = async () => {
       try {
         const data = await fetchLawyerScene()
-        if (cancelled || !data?.text) return
+        if (cancelled) return
+        lastBackendOkRef.current = Date.now()
+        if (!data?.text) return
+        lastSceneSyncRef.current = Date.now()
         setLastLawyerPhrase((prev) => {
           if (prev?.at === data.at && prev?.text === data.text) return prev
           return {
@@ -139,11 +159,31 @@ export default function Home({ lockedRole = null }) {
           }
         })
       } catch {
-        /* backend offline — الشاشة تبقى تعمل محلياً */
+        /* backend offline */
       }
     }
     tick()
     const id = window.setInterval(tick, 1200)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [lockedRole, settings.apiBase])
+
+  // شاشة المحامي: نبض صحة الخادم للمزامنة
+  useEffect(() => {
+    if (lockedRole !== 'lawyer') return undefined
+    let cancelled = false
+    const tick = async () => {
+      try {
+        await checkHealth()
+        if (!cancelled) lastBackendOkRef.current = Date.now()
+      } catch {
+        /* offline */
+      }
+    }
+    tick()
+    const id = window.setInterval(tick, 2500)
     return () => {
       cancelled = true
       window.clearInterval(id)
@@ -217,13 +257,23 @@ export default function Home({ lockedRole = null }) {
         role: 'lawyer',
         text: r.display,
         fingers: r.fingers ?? null,
-      }).catch(() => {})
+      })
+        .then(() => {
+          lastSceneSyncRef.current = Date.now()
+          lastBackendOkRef.current = Date.now()
+        })
+        .catch(() => {})
     } else if (spokenRole === 'person') {
       publishScenePhrase({
         role: 'person',
         text: r.display,
         fingers: r.fingers ?? null,
-      }).catch(() => {})
+      })
+        .then(() => {
+          lastSceneSyncRef.current = Date.now()
+          lastBackendOkRef.current = Date.now()
+        })
+        .catch(() => {})
     }
     // على شاشة الشخص: لا ننطق صوت المحامي هنا؛ الأفتار يعرض الإشارة
     // على شاشة المحامي أو المشتركة: ننطق العبارة
@@ -273,6 +323,11 @@ export default function Home({ lockedRole = null }) {
               ? `كاميرا هذا الجهاز · ${ROLE_LABELS[lockedRole]}`
               : `عدسة AR · STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
           </p>
+          {dedicated ? (
+            <div className="mt-2">
+              <SyncBadge state={syncState} />
+            </div>
+          ) : null}
         </div>
         <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
           <Link to="/screens" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
