@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { resolveSignClips } from '../../data/signLexicon'
 
 /**
- * أفتار ترجمة بلغة إشارة مرئية (صور إشارات) — ليس عدّ أصابع.
+ * مترجم إشارة مرئي — صور/مقاطع متتابعة، ليس عدّ أصابع.
  * mode: overlay | panel
  */
 export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = 'overlay' }) {
@@ -24,12 +24,12 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
 
   const stage = (
     <div
-      className={`overflow-hidden rounded-2xl bg-[#0b1220] ring-1 ring-[#3ecf8e]/35 shadow-xl ${
+      className={`overflow-hidden rounded-2xl bg-[rgba(21,32,51,0.92)] ring-1 ring-[rgba(196,92,38,0.35)] shadow-xl ${
         mode === 'panel' ? 'w-full' : 'w-full max-w-lg backdrop-blur-sm'
       }`}
     >
       <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
-        <p className="text-[11px] font-bold text-[#3ecf8e]">أفتار لغة الإشارة</p>
+        <p className="text-[11px] font-bold text-[#E8A078]">مترجم الإشارة</p>
         {hasSign ? (
           <p className="text-[11px] text-white/55">
             إشارة {stepIdx + 1} من {clips.length}
@@ -39,7 +39,7 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
         )}
       </div>
 
-      <div className={`relative bg-[#152033] ${mode === 'panel' ? 'aspect-[4/3]' : 'aspect-[5/4]'}`}>
+      <div className={`relative bg-[#1a2740] ${mode === 'panel' ? 'aspect-[4/3]' : 'aspect-[5/4]'}`}>
         {hasSign && current ? (
           <img
             key={`${current.src}-${stepIdx}`}
@@ -49,7 +49,7 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#1e3a5f] text-4xl text-[#3ecf8e]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#243552] text-3xl text-[#E8A078]">
               ◌
             </div>
             <p className="text-sm text-white/60">سيظهر هنا مترجم الإشارة</p>
@@ -74,9 +74,7 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
                     key={`${c.label}-${i}`}
                     type="button"
                     className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                      i === stepIdx
-                        ? 'bg-[#3ecf8e] text-[#062016]'
-                        : 'bg-white/10 text-white/70'
+                      i === stepIdx ? 'bg-[var(--accent)] text-white' : 'bg-white/10 text-white/70'
                     }`}
                     onClick={() => setStepIdx(i)}
                   >
@@ -88,8 +86,8 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
           </>
         ) : (
           <p className="text-sm leading-6 text-white/75">
-            عندما يتكلم أو يرسل المحامي عبارة، تُعرض هنا <strong className="text-white">إشارات مرئية</strong>{' '}
-            متتابعة — وليست أرقام أصابع.
+            عندما يتكلم أو يرسل المحامي عبارة، تُعرض هنا{' '}
+            <strong className="text-white">إشارات مرئية</strong> متتابعة.
           </p>
         )}
       </div>
@@ -101,7 +99,7 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
   }
 
   return (
-    <div className="pointer-events-auto absolute inset-x-3 bottom-[7.25rem] z-[25] flex justify-center">
+    <div className="pointer-events-auto absolute inset-x-3 bottom-[6.5rem] z-[25] flex justify-center">
       {stage}
     </div>
   )

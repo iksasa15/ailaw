@@ -7,12 +7,9 @@ import { useBrowserStt } from '../hooks/useBrowserStt'
 import { useTts } from '../hooks/useTts'
 import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
 import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
+import { PageHeader } from '../components/layout/PageHeader'
 import { checkHealth } from '../services/api'
 
-/**
- * صفحة تجربة على جهاز واحد:
- * محامي (مايك / نص / عبارات جاهزة) → أفتار لغة إشارة.
- */
 export default function Lab() {
   const { settings } = useSettings()
   const [draft, setDraft] = useState('')
@@ -68,7 +65,6 @@ export default function Lab() {
     [speak, unlock],
   )
 
-  // بث آخر كلام من المايك للأفتار
   useEffect(() => {
     if (!listening) return
     const raw = (stt.text || '').trim()
@@ -98,29 +94,17 @@ export default function Lab() {
               : 'متوقف'
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0b1220] text-white">
-      <div className="mx-auto flex min-h-full max-w-3xl flex-col gap-4 px-4 py-5 pb-10">
-        <header className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm text-[#3ecf8e]">تجربة على جهاز واحد</p>
-            <h1 className="mt-1 text-2xl font-bold">محامي + أفتار الإشارة</h1>
-            <p className="mt-2 text-sm leading-6 text-white/65">
-              تكلّم أو اختر عبارة — الأفتار يعرض <strong className="text-white">إشارات مرئية</strong> حقيقية
-              (صور إشارة) وليس أرقام أصابع.
-            </p>
-          </div>
-          <Link
-            to="/"
-            className="shrink-0 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white"
-          >
-            العدسة
-          </Link>
-        </header>
+    <div className="h-full overflow-y-auto px-4 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <div className="mx-auto flex min-h-full max-w-md flex-col gap-4">
+        <PageHeader
+          title="المعمل"
+          subtitle="محامي + مترجم إشارة على جهاز واحد"
+        />
 
-        <section className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+        <section className="app-surface rounded-2xl p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-base font-bold">المحامي</h2>
-            <span className="text-xs text-white/50">الاستقبال: {sttLabel}</span>
+            <h2 className="text-base font-bold text-[var(--ink)]">المحامي</h2>
+            <span className="text-xs text-[var(--muted)]">الاستقبال: {sttLabel}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -131,9 +115,7 @@ export default function Lab() {
                 setListening((v) => !v)
               }}
               className={`min-h-11 rounded-xl px-4 text-sm font-bold ${
-                listening
-                  ? 'bg-[#ff3b4e] text-white'
-                  : 'bg-[#3ecf8e] text-[#062016]'
+                listening ? 'bg-[var(--danger)] text-white' : 'btn-primary'
               }`}
             >
               {listening ? 'إيقاف المايك' : 'تفعيل المايك'}
@@ -146,22 +128,22 @@ export default function Lab() {
                 setLawyerPhrase(null)
                 setDraft('')
               }}
-              className="min-h-11 rounded-xl bg-white/10 px-4 text-sm font-semibold"
+              className="min-h-11 rounded-xl bg-white/80 px-4 text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--ring)]"
             >
               مسح
             </button>
           </div>
 
           {(stt.text || stt.partial) && listening ? (
-            <p className="mt-3 rounded-xl bg-black/30 px-3 py-2 text-sm text-white/80">
+            <p className="mt-3 rounded-xl bg-[var(--ink)]/5 px-3 py-2 text-sm text-[var(--ink)]">
               {stt.text || <span className="opacity-70">{stt.partial}</span>}
             </p>
           ) : null}
 
           <label className="mt-4 block space-y-2">
-            <span className="text-sm text-white/70">أو اكتب عبارة المحامي</span>
+            <span className="text-sm text-[var(--muted)]">أو اكتب عبارة المحامي</span>
             <textarea
-              className="min-h-[5rem] w-full rounded-xl border border-white/15 bg-[#0b1220] px-3 py-3 text-sm text-white"
+              className="min-h-[5rem] w-full rounded-xl border border-[var(--ring)] bg-white px-3 py-3 text-sm text-[var(--ink)]"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="مثال: أنا محاميك، تفضّل"
@@ -170,12 +152,12 @@ export default function Lab() {
           <button
             type="button"
             onClick={() => pushPhrase(draft)}
-            className="mt-2 min-h-11 w-full rounded-xl bg-[#5eb8ff] font-bold text-[#041018]"
+            className="btn-secondary mt-2 min-h-11 w-full rounded-xl"
           >
-            أرسل للأفتار
+            أرسل للمترجم
           </button>
 
-          <p className="mt-4 text-xs font-semibold text-white/55">عبارات جاهزة</p>
+          <p className="mt-4 text-xs font-semibold text-[var(--muted)]">عبارات جاهزة</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {Object.entries(LAWYER_PHRASES).map(([n, text]) => (
               <button
@@ -187,7 +169,7 @@ export default function Lab() {
                   unlock()
                   speak(text, { force: true })
                 }}
-                className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90"
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] ring-1 ring-[var(--ring)]"
               >
                 {n}. {text}
               </button>
@@ -195,19 +177,17 @@ export default function Lab() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white/5 p-3 ring-1 ring-[#3ecf8e]/25">
-          <h2 className="mb-2 px-1 text-base font-bold">الأفتار · لغة إشارة مرئية</h2>
+        <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(196,92,38,0.25)]">
+          <h2 className="mb-2 px-1 text-base font-bold text-[var(--ink)]">مترجم الإشارة</h2>
           <SignCoachAvatar visible lawyerPhrase={lawyerPhrase} mode="panel" />
         </section>
 
-        <div className="flex flex-wrap gap-2 text-sm">
-          <Link to="/screens" className="rounded-xl bg-white/10 px-4 py-2.5 font-semibold">
-            شاشتين (جلسة حقيقية)
-          </Link>
-          <Link to="/guide" className="rounded-xl bg-white/10 px-4 py-2.5 font-semibold">
-            تعليمات
-          </Link>
-        </div>
+        <Link
+          to="/screens"
+          className="rounded-xl bg-white/80 px-4 py-2.5 text-center text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--ring)]"
+        >
+          جلسة بجهازين
+        </Link>
       </div>
     </div>
   )
