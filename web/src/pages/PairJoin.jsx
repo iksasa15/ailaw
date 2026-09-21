@@ -16,9 +16,7 @@ export default function PairJoin() {
     const room = params.get('room') || ''
     const invite =
       parsePairInvite(window.location.href) ||
-      (api
-        ? { api: api.replace(/\/$/, ''), role, room: room || null }
-        : null)
+      (api ? { api: api.replace(/\/$/, ''), role, room: room || null } : null)
 
     if (!invite?.api || (invite.role !== 'lawyer' && invite.role !== 'person')) {
       setError('رابط الدعوة غير صالح')
@@ -30,10 +28,10 @@ export default function PairJoin() {
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 bg-[#0b1220] px-6 text-white">
-        <p className="text-[#ff3b4e]">{error}</p>
-        <a href="/screens" className="rounded-xl bg-[#3ecf8e] px-4 py-3 font-bold text-[#062016]">
-          العودة لشاشتين
+      <div className="app-bg flex h-full flex-col items-center justify-center gap-4 px-6">
+        <p className="font-semibold text-[var(--danger)]">{error}</p>
+        <a href="/screens" className="btn-primary rounded-xl px-4 py-3">
+          العودة للجلسة
         </a>
       </div>
     )
@@ -41,7 +39,7 @@ export default function PairJoin() {
 
   if (!target) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#0b1220] text-white">
+      <div className="app-bg flex h-full items-center justify-center text-[var(--ink)]">
         جاري الانضمام…
       </div>
     )

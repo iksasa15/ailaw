@@ -11,10 +11,11 @@ import {
   mergePhraseMap,
 } from '../hooks/useFingerPhrases'
 import { useSettings } from '../app/SettingsContext'
+import { PageHeader } from '../components/layout/PageHeader'
 
 const HOW_TO_VOCAB = [
   'فعّل زر «إرسال» من الشريط السفلي.',
-  'الدور الابتدائي: شخص 👤 — اضغط «تبديل» أو ثبّت الأصابع 5 ثوانٍ لتغيير الدور.',
+  'الدور الابتدائي: شخص — اضغط «تبديل» أو ثبّت الأصابع 5 ثوانٍ لتغيير الدور.',
   'ثبّت إصبعاً واحداً 5 ثوانٍ → وضع المحامي ⚖️',
   'ثبّت إصبعين 5 ثوانٍ → وضع الشخص 👤',
   'ارفع رقم الأصابع بالترتيب (1→10) ليحكي الشخص قضيته تفصيلاً، والمحامي يرد.',
@@ -107,62 +108,54 @@ export default function Guide() {
   }))
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0b1220] px-4 py-6 text-white">
+    <div className="h-full overflow-y-auto  px-4 py-6 text-[var(--ink)]">
       <div className="mx-auto max-w-lg space-y-5 pb-10">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm text-[#3ecf8e]">النظارة الذكية</p>
-            <h1 className="text-2xl font-bold">📖 تعليمات الاستخدام</h1>
-          </div>
-          <Link to="/" className="shrink-0 rounded-lg bg-white/10 px-3 py-2 text-sm">
-            👓 العدسة
-          </Link>
-        </div>
+        <PageHeader title="التعليمات" subtitle="كيف تستخدم العدسة والإشارات" backTo="/more" />
 
-        <p className="leading-7 text-white/80">
+        <p className="leading-7 text-[var(--ink)]/80">
           سيناريو قضية: بدّل الدور بالتثبيت 5 ثوانٍ، ثم تحدّث بعبارات الأصابع.
         </p>
 
         <section
           id="vocab"
-          className="space-y-4 rounded-2xl border border-[#3ecf8e]/35 bg-[#3ecf8e]/8 p-4"
+          className="space-y-4 rounded-2xl border border-[rgba(196,92,38,0.35)] bg-[var(--accent)]/8 p-4"
         >
           <div>
-            <p className="text-xs font-semibold text-[#3ecf8e]">⚖️ إرسال · قضية</p>
+            <p className="text-xs font-semibold text-[var(--accent)]">إرسال · قضية</p>
             <h2 className="mt-1 text-xl font-bold">محامي ↔ شخص (1 → 10)</h2>
-            <p className="mt-2 text-sm leading-7 text-white/75">
-              <strong className="text-white">1 إصبع × 5 ثوانٍ</strong> = محامي ·{' '}
-              <strong className="text-white">2 أصابع × 5 ثوانٍ</strong> = شخص.
+            <p className="mt-2 text-sm leading-7 text-[var(--ink)]/75">
+              <strong className="text-[var(--ink)]">1 إصبع × 5 ثوانٍ</strong> = محامي ·{' '}
+              <strong className="text-[var(--ink)]">2 أصابع × 5 ثوانٍ</strong> = شخص.
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
+          <div className="overflow-hidden rounded-xl ring-1 ring-[var(--ring)]">
             <SvgHowToSend />
           </div>
 
-          <ol className="list-decimal space-y-2 pr-5 text-sm leading-7 text-white/85">
+          <ol className="list-decimal space-y-2 pr-5 text-sm leading-7 text-[var(--ink)]/85">
             {HOW_TO_VOCAB.map((step) => (
               <li key={step}>{step}</li>
             ))}
           </ol>
 
           <div className="overflow-hidden rounded-xl ring-1 ring-white/15">
-            <div className="bg-[#0b1220] px-3 py-2 text-sm font-bold text-[#3ecf8e]">
+            <div className=" px-3 py-2 text-sm font-bold text-[var(--accent)]">
               سيناريو القضية — الشخص يحكي تفاصيله إصبعاً بإصبع
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[20rem] text-right text-sm">
                 <thead>
-                  <tr className="bg-white/5 text-white/70">
+                  <tr className="app-surface text-[var(--ink)]/70">
                     <th className="px-2 py-2 font-semibold">أصابع</th>
-                    <th className="px-2 py-2 font-semibold">⚖️ محامي</th>
-                    <th className="px-2 py-2 font-semibold">👤 شخص</th>
+                    <th className="px-2 py-2 font-semibold">محامي</th>
+                    <th className="px-2 py-2 font-semibold">شخص</th>
                   </tr>
                 </thead>
                 <tbody>
                   {SCENARIO_ROWS.map((row) => (
-                    <tr key={row.n} className="border-t border-white/10 text-white/90">
-                      <td className="px-2 py-2 font-bold text-[#3ecf8e]">{row.n}</td>
+                    <tr key={row.n} className="border-t border-white/10 text-[var(--ink)]/90">
+                      <td className="px-2 py-2 font-bold text-[var(--accent)]">{row.n}</td>
                       <td className="px-2 py-2">{row.lawyer}</td>
                       <td className="px-2 py-2">{row.person}</td>
                     </tr>
@@ -173,20 +166,20 @@ export default function Guide() {
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-base font-bold text-white">👤 عبارات الشخص</h3>
+            <h3 className="text-base font-bold text-[var(--ink)]">عبارات الشخص</h3>
             {PERSON_CLIPS.map((clip) => (
               <GestureClipCard key={`person-${clip.number}-${clip.display}`} clip={clip} />
             ))}
           </div>
 
           <div className="space-y-3 pt-2">
-            <h3 className="text-base font-bold text-white">⚖️ عبارات المحامي</h3>
+            <h3 className="text-base font-bold text-[var(--ink)]">عبارات المحامي</h3>
             {LAWYER_CLIPS.map((clip) => (
               <GestureClipCard key={`lawyer-${clip.number}-${clip.display}`} clip={clip} />
             ))}
           </div>
 
-          <p className="text-xs leading-5 text-white/50">
+          <p className="text-xs leading-5 text-[var(--ink)]/50">
             ملاحظة: لـ 6–10 استخدم يدين ومجموع الأصابع. العبارات حسب الدور الظاهر أعلى الشاشة.
           </p>
         </section>
@@ -194,32 +187,29 @@ export default function Guide() {
         {SECTIONS.map((section) => {
           const Illust = SECTION_SVG[section.id]
           return (
-            <section key={section.id} className="space-y-3 border-t border-white/10 pt-4">
+            <section key={section.id} className="app-surface space-y-3 rounded-2xl p-4">
               <div className="flex flex-wrap items-baseline gap-2">
-                <h2 className="text-lg font-semibold">
-                  {section.emoji ? <span aria-hidden>{section.emoji} </span> : null}
-                  {section.title}
-                </h2>
+                <h2 className="text-lg font-semibold">{section.title}</h2>
                 {section.accent ? (
-                  <span className="rounded-md bg-[#3ecf8e]/20 px-2 py-0.5 text-xs font-semibold text-[#3ecf8e]">
+                  <span className="rounded-md bg-[var(--accent)]/20 px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
                     {section.accent}
                   </span>
                 ) : null}
               </div>
 
               {Illust ? (
-                <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
+                <div className="overflow-hidden rounded-xl ring-1 ring-[var(--ring)]">
                   <Illust />
                 </div>
               ) : null}
 
-              <ol className="list-decimal space-y-2 pr-5 text-sm leading-7 text-white/80">
+              <ol className="list-decimal space-y-2 pr-5 text-sm leading-7 text-[var(--ink)]/80">
                 {section.steps.map((step) => (
                   <li key={step}>{step}</li>
                 ))}
               </ol>
               {section.tip ? (
-                <p className="text-sm text-white/55">ملاحظة: {section.tip}</p>
+                <p className="text-sm text-[var(--ink)]/55">ملاحظة: {section.tip}</p>
               ) : null}
             </section>
           )
@@ -228,21 +218,21 @@ export default function Guide() {
         <div className="flex flex-wrap gap-2 pt-2">
           <Link
             to="/"
-            className="min-h-11 rounded-xl bg-[#3ecf8e] px-4 py-2 text-sm font-semibold text-[#062016]"
+            className="min-h-11 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
           >
-            👓 ابدأ على العدسة
+            العدسة
           </Link>
           <a
             href="#vocab"
-            className="flex min-h-11 items-center rounded-xl bg-white/10 px-4 py-2 text-sm text-white"
+            className="flex min-h-11 items-center rounded-xl bg-white/80 px-4 py-2 text-sm text-[var(--ink)]"
           >
-            🖐️ المقاطع
+            المقاطع
           </a>
           <Link
             to="/settings"
-            className="min-h-11 rounded-xl bg-white/10 px-4 py-2 text-sm text-white"
+            className="min-h-11 rounded-xl bg-white/80 px-4 py-2 text-sm text-[var(--ink)]"
           >
-            ⚙️ الإعدادات
+            الإعدادات
           </Link>
         </div>
       </div>

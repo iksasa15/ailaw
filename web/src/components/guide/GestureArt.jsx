@@ -49,14 +49,14 @@ export function GestureArt({ name, number, emoji }) {
   const face = emoji || clip?.emoji || FINGER_EMOJI[n] || '✋'
   return (
     <div
-      className="flex h-full min-h-[9rem] w-full flex-col items-center justify-center gap-2 bg-[#152033] gesture-nod"
+      className="flex h-full min-h-[9rem] w-full flex-col items-center justify-center gap-2 bg-[#dfe7ef] gesture-nod"
       role="img"
       aria-label={name || `إشارة ${n}`}
     >
       <span className="text-6xl leading-none" aria-hidden>
         {face}
       </span>
-      <span className="rounded-full bg-[#3ecf8e]/20 px-3 py-0.5 text-sm font-bold text-[#3ecf8e]">
+      <span className="rounded-full bg-[rgba(196,92,38,0.15)] px-3 py-0.5 text-sm font-bold text-[var(--accent)]">
         {n}
       </span>
     </div>
@@ -65,24 +65,23 @@ export function GestureArt({ name, number, emoji }) {
 
 export function GestureClipCard({ clip }) {
   const twoHands = clip.number > 5
-  const roleTag = clip.role === 'lawyer' ? '⚖️ محامي' : '👤 شخص'
+  const roleTag = clip.role === 'lawyer' ? 'محامي' : 'شخص'
   return (
-    <article className="overflow-hidden rounded-2xl bg-[#0b1220]/80 ring-1 ring-white/10">
+    <article className="overflow-hidden rounded-2xl app-surface ring-1 ring-[var(--ring)]">
       <div className="relative aspect-[16/10] w-full overflow-hidden">
         <GestureArt name={clip.display} number={clip.number} emoji={clip.emoji} />
-        <span className="absolute right-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white/90">
+        <span className="absolute right-2 top-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white">
           {roleTag} · رقم {clip.number}
         </span>
-        <span className="absolute bottom-2 left-2 rounded-md bg-[#3ecf8e] px-2 py-0.5 text-[11px] font-bold text-[#062016]">
+        <span className="absolute bottom-2 left-2 rounded-md bg-[var(--accent)] px-2 py-0.5 text-[11px] font-bold text-white">
           {twoHands ? `${clip.number} · يدين` : `${clip.number} أصابع`}
         </span>
       </div>
       <div className="space-y-2 px-3 py-3">
-        <h3 className="text-lg font-bold text-[#3ecf8e]">
-          <span aria-hidden>{clip.emoji} </span>
+        <h3 className="text-lg font-bold text-[var(--accent)]">
           {clip.number} — {clip.display}
         </h3>
-        <ol className="list-decimal space-y-1.5 pr-5 text-sm leading-6 text-white/80">
+        <ol className="list-decimal space-y-1.5 pr-5 text-sm leading-6 text-[var(--muted)]">
           {clip.how.map((step) => (
             <li key={step}>{step}</li>
           ))}

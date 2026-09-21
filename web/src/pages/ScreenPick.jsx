@@ -235,28 +235,28 @@ export default function ScreenPick() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0b1220] px-4 py-8 text-white">
-      <div className="mx-auto flex max-w-lg flex-col gap-5 pb-10">
+    <div className="h-full overflow-y-auto px-4 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))] text-[var(--ink)]">
+      <div className="mx-auto flex max-w-md flex-col gap-5">
         <div>
-          <p className="text-sm text-[#3ecf8e]">النظارة الذكية · قضية</p>
-          <h1 className="mt-1 text-2xl font-bold">ربط جوالين</h1>
-          <p className="mt-2 text-sm leading-7 text-white/70">
+          <p className="font-brand text-sm font-semibold text-[var(--accent)]">النظارة الذكية</p>
+          <h1 className="mt-1 text-2xl font-bold">جلسة جوالين</h1>
+          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
             جوال للمحامي وجوال للشخص — نفس الواي فاي ونفس الخادم.
           </p>
         </div>
 
-        <section className="space-y-3 rounded-2xl bg-white/5 p-4">
+        <section className="space-y-3 rounded-2xl app-surface p-4">
           <h2 className="text-base font-bold">ثلاث خطوات</h2>
           <Step n={1} text="شغّل الـ Backend والجوالان على نفس الواي فاي." />
           <Step n={2} text="اضغط «ابدأ الجلسة» — يظهر QR. أرِه لجوال الشخص." />
           <Step n={3} text="بعد ما ينضم الطرف الآخر، اضغط «ادخل شاشتي» وابدأ." />
         </section>
 
-        <section className="space-y-3 rounded-2xl bg-white/5 p-4">
+        <section className="space-y-3 rounded-2xl app-surface p-4">
           <label className="block space-y-2">
-            <span className="text-sm text-white/70">عنوان الخادم (API)</span>
+            <span className="text-sm text-[var(--ink)]/70">عنوان الخادم (API)</span>
             <input
-              className="w-full rounded-xl border border-white/15 bg-[#0b1220] px-3 py-3 text-sm"
+              className="w-full rounded-xl border border-[var(--ring)] bg-white px-3 py-3 text-sm"
               value={apiDraft}
               onChange={(e) => setApiDraft(e.target.value)}
               placeholder="http://192.168.x.x:8000"
@@ -267,25 +267,25 @@ export default function ScreenPick() {
             type="button"
             disabled={checking}
             onClick={saveAndCheck}
-            className="min-h-11 w-full rounded-xl bg-white/10 font-semibold text-white disabled:opacity-60"
+            className="min-h-11 w-full rounded-xl bg-white/80 font-semibold text-[var(--ink)] disabled:opacity-60"
           >
             {checking ? 'جاري الفحص…' : 'حفظ وفحص الاتصال'}
           </button>
-          <p className="flex items-center gap-2 text-sm text-white/70">
+          <p className="flex items-center gap-2 text-sm text-[var(--ink)]/70">
             <span
               className={`inline-block h-2.5 w-2.5 rounded-full ${
-                healthOK === true ? 'bg-[#3ecf8e]' : healthOK === false ? 'bg-[#ff3b4e]' : 'bg-white/30'
+                healthOK === true ? 'bg-[var(--accent)]' : healthOK === false ? 'bg-[var(--danger)]' : 'bg-white/30'
               }`}
             />
             {healthDetail}
           </p>
           {(apiDraft.includes('localhost') || apiDraft.includes('127.0.0.1')) && (
-            <p className="text-xs font-medium text-amber-300">
+            <p className="text-xs font-medium text-amber-700">
               تنبيه: على الجوال استخدم IP الماك (مثل 192.168.x.x) وليس localhost.
             </p>
           )}
           {typeof window !== 'undefined' && window.location.protocol === 'https:' && (
-            <p className="text-xs text-white/55">
+            <p className="text-xs text-[var(--ink)]/55">
               على HTTPS يمكنك وضع:{' '}
               <span dir="ltr">{`${window.location.origin}/api`}</span>
             </p>
@@ -297,7 +297,7 @@ export default function ScreenPick() {
             <button
               type="button"
               onClick={() => startSession('lawyer')}
-              className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#5eb8ff] p-6 text-[#041018] shadow-lg"
+              className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[var(--accent-2)] p-6 text-white shadow-lg"
             >
               <span className="text-4xl" aria-hidden>
                 ⚖️
@@ -308,23 +308,23 @@ export default function ScreenPick() {
             <button
               type="button"
               onClick={() => startSession('person')}
-              className="w-full rounded-xl bg-[#3ecf8e]/20 py-3 text-sm font-semibold text-[#3ecf8e]"
+              className="w-full rounded-xl bg-[var(--accent)]/20 py-3 text-sm font-semibold text-[var(--accent)]"
             >
               ابدأ كشخص (دعوة المحامي بـ QR)
             </button>
           </section>
         ) : (
-          <section className="flex flex-col items-center gap-4 rounded-2xl bg-white/5 p-5 ring-2 ring-[#3ecf8e]/50">
+          <section className="flex flex-col items-center gap-4 rounded-2xl app-surface p-5 ring-1 ring-[rgba(196,92,38,0.35)]">
             <div className="w-full text-center">
-              <p className="text-sm text-[#3ecf8e]">الجلسة نشطة</p>
+              <p className="text-sm text-[var(--accent)]">الجلسة نشطة</p>
               <h2 className="mt-1 text-xl font-bold">
                 أنت: {hostRole === 'lawyer' ? '⚖️ المحامي' : '👤 الشخص'}
               </h2>
-              <p className="mt-1 text-sm text-white/65">
+              <p className="mt-1 text-sm text-[var(--ink)]/65">
                 أرِ هذا الرمز لجوال {guestRole === 'person' ? 'الشخص' : 'المحامي'}
               </p>
               {roomId ? (
-                <p className="mt-1 text-xs text-white/45" dir="ltr">
+                <p className="mt-1 text-xs text-[var(--ink)]/45" dir="ltr">
                   غرفة الجلسة: {roomId}
                 </p>
               ) : null}
@@ -336,40 +336,40 @@ export default function ScreenPick() {
               width={240}
               height={240}
             />
-            <p className="break-all text-center text-[11px] text-white/50" dir="ltr">
+            <p className="break-all text-center text-[11px] text-[var(--ink)]/50" dir="ltr">
               {webInvite}
             </p>
             <button
               type="button"
               onClick={copyInvite}
-              className="min-h-11 w-full rounded-xl bg-white/10 text-sm font-bold"
+              className="min-h-11 w-full rounded-xl bg-white/80 text-sm font-bold"
             >
               {copied ? 'تم النسخ ✓' : 'نسخ رابط الدعوة'}
             </button>
             <button
               type="button"
               onClick={enterMyScreen}
-              className="min-h-12 w-full rounded-xl bg-[#3ecf8e] text-base font-bold text-[#062016]"
+              className="min-h-12 w-full rounded-xl bg-[var(--accent)] text-base font-bold text-white"
             >
               ادخل شاشتي الآن
             </button>
             <button
               type="button"
               onClick={endSession}
-              className="text-sm text-white/50 underline"
+              className="text-sm text-[var(--ink)]/50 underline"
             >
               إنهاء الجلسة / إخفاء QR
             </button>
           </section>
         )}
 
-        <section className="space-y-3 rounded-2xl bg-white/5 p-4">
+        <section className="space-y-3 rounded-2xl app-surface p-4">
           <h2 className="text-base font-bold">أو انضم لجلسة جاهزة</h2>
           {!scanning ? (
             <button
               type="button"
               onClick={startScan}
-              className="min-h-11 w-full rounded-xl bg-[#3ecf8e] font-bold text-[#062016]"
+              className="min-h-11 w-full rounded-xl bg-[var(--accent)] font-bold text-white"
             >
               مسح رمز الدعوة QR
             </button>
@@ -381,8 +381,8 @@ export default function ScreenPick() {
                 muted
                 playsInline
               />
-              <p className="text-center text-xs text-white/60">وجّه الكاميرا نحو رمز QR…</p>
-              <button type="button" onClick={stopScan} className="min-h-10 w-full rounded-xl bg-white/10 text-sm">
+              <p className="text-center text-xs text-[var(--ink)]/60">وجّه الكاميرا نحو رمز QR…</p>
+              <button type="button" onClick={stopScan} className="min-h-10 w-full rounded-xl bg-white/80 text-sm">
                 إيقاف المسح
               </button>
             </div>
@@ -391,7 +391,7 @@ export default function ScreenPick() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="min-h-11 w-full rounded-xl bg-white/10 text-sm font-semibold"
+            className="min-h-11 w-full rounded-xl bg-white/80 text-sm font-semibold"
           >
             رفع صورة QR من المعرض
           </button>
@@ -404,7 +404,7 @@ export default function ScreenPick() {
             onChange={onPickQrFile}
           />
           <input
-            className="w-full rounded-xl border border-white/15 bg-[#0b1220] px-3 py-3 text-sm"
+            className="w-full rounded-xl border border-[var(--ring)] bg-white px-3 py-3 text-sm"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             placeholder="الصق رابط الدعوة أو عنوان API"
@@ -413,21 +413,21 @@ export default function ScreenPick() {
           <button
             type="button"
             onClick={() => applyJoin(pasteText)}
-            className="min-h-11 w-full rounded-xl bg-white/10 text-sm font-semibold"
+            className="min-h-11 w-full rounded-xl bg-white/80 text-sm font-semibold"
           >
             تطبيق والانضمام
           </button>
-          {joinError && <p className="text-sm text-[#ff3b4e]">{joinError}</p>}
+          {joinError && <p className="text-sm text-[var(--danger)]">{joinError}</p>}
         </section>
 
-        <Link to="/lab" className="rounded-xl bg-[#3ecf8e]/20 px-4 py-3 text-center text-sm font-bold text-[#3ecf8e]">
+        <Link to="/lab" className="rounded-xl bg-[var(--accent)]/20 px-4 py-3 text-center text-sm font-bold text-[var(--accent)]">
           تجربة محامي + أفتار (جهاز واحد)
         </Link>
-        <Link to="/" className="rounded-xl bg-white/10 px-4 py-3 text-center text-sm text-white">
+        <Link to="/" className="rounded-xl bg-white/80 px-4 py-3 text-center text-sm text-[var(--ink)]">
           العدسة المشتركة (تبديل الأدوار على جهاز واحد)
         </Link>
-        <Link to="/guide" className="text-center text-sm text-white/50">
-          📖 تعليمات
+        <Link to="/guide" className="text-center text-sm text-[var(--muted)]">
+          التعليمات
         </Link>
       </div>
     </div>
@@ -437,10 +437,10 @@ export default function ScreenPick() {
 function Step({ n, text }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3ecf8e] text-xs font-bold text-[#062016]">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-white">
         {n}
       </span>
-      <p className="text-sm leading-6 text-white/70">{text}</p>
+      <p className="text-sm leading-6 text-[var(--ink)]/70">{text}</p>
     </div>
   )
 }

@@ -72,7 +72,7 @@ export function SvgBadges() {
         { e: '🤏', t: 'ضعيف' },
         { e: '✋', t: 'متثبتة' },
       ].map((b) => (
-        <div key={b.t} className="flex flex-col items-center gap-1 rounded-lg bg-[#0b1220] px-1 py-3">
+        <div key={b.t} className="flex flex-col items-center gap-1 rounded-lg bg-[#dfe7ef] px-1 py-3">
           <span className="text-3xl" aria-hidden>
             {b.e}
           </span>
