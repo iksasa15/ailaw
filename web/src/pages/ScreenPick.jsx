@@ -61,13 +61,25 @@ export default function ScreenPick() {
     await runHealth()
   }
 
-  function showInviteFor(role) {
+  async function startSession(role = 'lawyer') {
+    setJoinError(null)
+    stopScan()
+    const cleaned = apiDraft.trim().replace(/\/$/, '')
+    if (cleaned) {
+      setApiBase(cleaned)
+      update({ apiBase: cleaned })
+    }
     setHostRole(role)
+    await runHealth()
   }
 
-  function openAs(role) {
-    setHostRole(role)
-    navigate(role === 'lawyer' ? '/screen/lawyer' : '/screen/person')
+  function endSession() {
+    setHostRole(null)
+  }
+
+  function enterMyScreen() {
+    if (!hostRole) return
+    navigate(hostRole === 'lawyer' ? '/screen/lawyer' : '/screen/person')
   }
 
   function copyInvite() {
@@ -222,9 +234,9 @@ export default function ScreenPick() {
 
         <section className="space-y-3 rounded-2xl bg-white/5 p-4">
           <h2 className="text-base font-bold">ثلاث خطوات</h2>
-          <Step n={1} text="شغّل الـ Backend على الماك والجوالان على نفس الواي فاي." />
-          <Step n={2} text="على جوال المحامي: افحص الاتصال ثم «عرض دعوة QR» وأرِ الرمز للطرف الآخر." />
-          <Step n={3} text="على جوال الشخص: امسح الدعوة أو الصق الرابط — تُفتح شاشته تلقائياً." />
+          <Step n={1} text="شغّل الـ Backend والجوالان على نفس الواي فاي." />
+          <Step n={2} text="اضغط «ابدأ الجلسة» — يظهر QR. أرِه لجوال الشخص." />
+          <Step n={3} text="بعد ما ينضم الطرف الآخر، اضغط «ادخل شاشتي» وابدأ." />
         </section>
 
         <section className="space-y-3 rounded-2xl bg-white/5 p-4">
@@ -242,7 +254,7 @@ export default function ScreenPick() {
             type="button"
             disabled={checking}
             onClick={saveAndCheck}
-            className="min-h-11 w-full rounded-xl bg-[#3ecf8e] font-bold text-[#062016] disabled:opacity-60"
+            className="min-h-11 w-full rounded-xl bg-white/10 font-semibold text-white disabled:opacity-60"
           >
             {checking ? 'جاري الفحص…' : 'حفظ وفحص الاتصال'}
           </button>
@@ -261,71 +273,53 @@ export default function ScreenPick() {
           )}
           {typeof window !== 'undefined' && window.location.protocol === 'https:' && (
             <p className="text-xs text-white/55">
-              على HTTPS يمكنك ترك العنوان فارغاً أو وضع:{' '}
+              على HTTPS يمكنك وضع:{' '}
               <span dir="ltr">{`${window.location.origin}/api`}</span>
             </p>
           )}
         </section>
 
-        <div className="grid gap-2">
-          <button
-            type="button"
-            onClick={() => openAs('lawyer')}
-            className="flex flex-col gap-2 rounded-2xl bg-[#5eb8ff]/15 p-5 text-right ring-1 ring-[#5eb8ff]/40"
-          >
-            <span className="text-3xl" aria-hidden>
-              ⚖️
-            </span>
-            <span className="text-xl font-bold">أنا المحامي</span>
-            <span className="text-sm text-white/70">يفتح شاشة المحامي</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => showInviteFor('lawyer')}
-            className="rounded-xl bg-[#5eb8ff]/20 py-2.5 text-sm font-semibold text-[#5eb8ff]"
-          >
-            عرض دعوة QR للشخص
-          </button>
-        </div>
-
-        <div className="grid gap-2">
-          <button
-            type="button"
-            onClick={() => openAs('person')}
-            className="flex flex-col gap-2 rounded-2xl bg-[#3ecf8e]/15 p-5 text-right ring-1 ring-[#3ecf8e]/40"
-          >
-            <span className="text-3xl" aria-hidden>
-              👤
-            </span>
-            <span className="text-xl font-bold">أنا الشخص</span>
-            <span className="text-sm text-white/70">يفتح شاشة الشخص</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => showInviteFor('person')}
-            className="rounded-xl bg-[#3ecf8e]/20 py-2.5 text-sm font-semibold text-[#3ecf8e]"
-          >
-            عرض دعوة QR للمحامي
-          </button>
-        </div>
-
-        {guestRole && (
-          <section className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 p-4">
-            <h2 className="w-full text-base font-bold">
-              دعوة الطرف الآخر ({guestRole === 'person' ? 'شخص' : 'محامي'})
-            </h2>
+        {!hostRole ? (
+          <section className="space-y-3">
+            <button
+              type="button"
+              onClick={() => startSession('lawyer')}
+              className="flex w-full flex-col items-center gap-2 rounded-2xl bg-[#5eb8ff] p-6 text-[#041018] shadow-lg"
+            >
+              <span className="text-4xl" aria-hidden>
+                ⚖️
+              </span>
+              <span className="text-xl font-bold">ابدأ الجلسة</span>
+              <span className="text-sm opacity-80">يظهر رمز QR لدعوة جوال الشخص</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => startSession('person')}
+              className="w-full rounded-xl bg-[#3ecf8e]/20 py-3 text-sm font-semibold text-[#3ecf8e]"
+            >
+              ابدأ كشخص (دعوة المحامي بـ QR)
+            </button>
+          </section>
+        ) : (
+          <section className="flex flex-col items-center gap-4 rounded-2xl bg-white/5 p-5 ring-2 ring-[#3ecf8e]/50">
+            <div className="w-full text-center">
+              <p className="text-sm text-[#3ecf8e]">الجلسة نشطة</p>
+              <h2 className="mt-1 text-xl font-bold">
+                أنت: {hostRole === 'lawyer' ? '⚖️ المحامي' : '👤 الشخص'}
+              </h2>
+              <p className="mt-1 text-sm text-white/65">
+                أرِ هذا الرمز لجوال {guestRole === 'person' ? 'الشخص' : 'المحامي'}
+              </p>
+            </div>
             <img
-              src={qrImageURL(webInvite, 220)}
-              alt="رمز دعوة QR"
+              src={qrImageURL(webInvite, 240)}
+              alt="رمز دعوة الجلسة"
               className="rounded-2xl bg-white p-3"
-              width={220}
-              height={220}
+              width={240}
+              height={240}
             />
-            <p className="break-all text-center text-[11px] text-white/55" dir="ltr">
+            <p className="break-all text-center text-[11px] text-white/50" dir="ltr">
               {webInvite}
-            </p>
-            <p className="break-all text-center text-[11px] text-white/40" dir="ltr">
-              تطبيق iOS: {ailawInvite}
             </p>
             <button
               type="button"
@@ -334,11 +328,25 @@ export default function ScreenPick() {
             >
               {copied ? 'تم النسخ ✓' : 'نسخ رابط الدعوة'}
             </button>
+            <button
+              type="button"
+              onClick={enterMyScreen}
+              className="min-h-12 w-full rounded-xl bg-[#3ecf8e] text-base font-bold text-[#062016]"
+            >
+              ادخل شاشتي الآن
+            </button>
+            <button
+              type="button"
+              onClick={endSession}
+              className="text-sm text-white/50 underline"
+            >
+              إنهاء الجلسة / إخفاء QR
+            </button>
           </section>
         )}
 
         <section className="space-y-3 rounded-2xl bg-white/5 p-4">
-          <h2 className="text-base font-bold">الانضمام من جهاز آخر</h2>
+          <h2 className="text-base font-bold">أو انضم لجلسة جاهزة</h2>
           {!scanning ? (
             <button
               type="button"
@@ -355,13 +363,13 @@ export default function ScreenPick() {
                 muted
                 playsInline
               />
-              <canvas ref={canvasRef} className="hidden" />
               <p className="text-center text-xs text-white/60">وجّه الكاميرا نحو رمز QR…</p>
               <button type="button" onClick={stopScan} className="min-h-10 w-full rounded-xl bg-white/10 text-sm">
                 إيقاف المسح
               </button>
             </div>
           )}
+          <canvas ref={canvasRef} className="hidden" aria-hidden />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

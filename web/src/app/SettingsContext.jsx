@@ -46,6 +46,18 @@ function load() {
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(load)
 
+  // HTTPS page + http:// API = mixed content (WS/fetch fail). Force Vite /api proxy.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.location.protocol !== 'https:') return
+    const proxy = `${window.location.origin}/api`
+    const stored = (localStorage.getItem('apiBase') || settings.apiBase || '').replace(/\/$/, '')
+    if (!stored || stored.startsWith('http://')) {
+      localStorage.setItem('apiBase', proxy)
+      setSettings((s) => (s.apiBase === proxy ? s : { ...s, apiBase: proxy }))
+    }
+  }, [])
+
   useEffect(() => {
     localStorage.setItem('sg-settings', JSON.stringify(settings))
     if (settings.apiBase) localStorage.setItem('apiBase', settings.apiBase)

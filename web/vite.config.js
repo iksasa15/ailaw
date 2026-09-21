@@ -57,6 +57,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         ws: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.warn('[vite api proxy]', err?.message || err)
+          })
+        },
       },
     },
   },

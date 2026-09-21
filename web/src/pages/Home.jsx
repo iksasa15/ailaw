@@ -11,7 +11,7 @@ import { useTts } from '../hooks/useTts'
 import { useAmbient } from '../hooks/useAmbient'
 import { useObstacleProximity } from '../hooks/useObstacleProximity'
 import { useSettings } from '../app/SettingsContext'
-import { checkHealth, fetchLawyerScene, publishScenePhrase } from '../services/api'
+import { checkHealth, fetchLawyerScene, fetchPersonScene, publishScenePhrase } from '../services/api'
 import { HandLandmarkCanvas, PermissionGate, VideoFeed } from '../components/camera/Camera'
 import {
   AlertToast,
@@ -34,6 +34,8 @@ export default function Home({ lockedRole = null }) {
   const [badgePulse, setBadgePulse] = useState(false)
   const [rolePulse, setRolePulse] = useState(false)
   const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
+  const [remotePersonPhrase, setRemotePersonPhrase] = useState(null)
+  const lastRemotePersonSpokenRef = useRef('')
   const [syncState, setSyncState] = useState('waiting')
   const [cameraFacing, setCameraFacing] = useState(() =>
     dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
@@ -166,25 +168,42 @@ export default function Home({ lockedRole = null }) {
     }
   }, [lockedRole, settings.apiBase])
 
-  // شاشة المحامي: نبض صحة الخادم للمزامنة
+  // شاشة المحامي: استقبل عبارات الشخص (إشارات) + نبض الصحة
   useEffect(() => {
     if (lockedRole !== 'lawyer') return undefined
     let cancelled = false
     const tick = async () => {
       try {
-        await checkHealth()
-        if (!cancelled) lastBackendOkRef.current = Date.now()
+        const data = await fetchPersonScene()
+        if (cancelled) return
+        lastBackendOkRef.current = Date.now()
+        if (!data?.text) return
+        lastSceneSyncRef.current = Date.now()
+        const key = `${data.at || ''}:${data.text}`
+        setRemotePersonPhrase((prev) => {
+          if (prev?.at === data.at && prev?.text === data.text) return prev
+          return {
+            fingers: data.fingers ?? null,
+            text: data.text,
+            at: data.at || Date.now(),
+          }
+        })
+        if (lastRemotePersonSpokenRef.current !== key) {
+          lastRemotePersonSpokenRef.current = key
+          unlockTts()
+          speak(data.text, { force: true })
+        }
       } catch {
         /* offline */
       }
     }
     tick()
-    const id = window.setInterval(tick, 2500)
+    const id = window.setInterval(tick, 1200)
     return () => {
       cancelled = true
       window.clearInterval(id)
     }
-  }, [lockedRole, settings.apiBase])
+  }, [lockedRole, settings.apiBase, speak, unlockTts])
 
   // نطق تحذير عند حاجز قريب
   const lastObstacleSpokenRef = useRef(0)
@@ -366,11 +385,26 @@ export default function Home({ lockedRole = null }) {
       ) : null}
 
       <CaptionBubble text={stt.text} partial={stt.partial} raised={sendOn} />
+      {lockedRole === 'lawyer' && remotePersonPhrase?.text ? (
+        <div
+          className={`pointer-events-none absolute inset-x-4 z-30 flex justify-center ${
+            sendOn ? 'bottom-56' : 'bottom-40'
+          }`}
+        >
+          <div className="mx-auto max-w-xl rounded-2xl border border-[#3ecf8e]/40 bg-[#0d2a1c]/95 px-4 py-3 text-center shadow-lg">
+            <p className="mb-1 text-xs font-semibold text-[#3ecf8e]">👤 الشخص بالإشارة</p>
+            <p className="text-lg font-bold text-white">
+              {remotePersonPhrase.fingers
+                ? `${remotePersonPhrase.fingers} أصابع · ${remotePersonPhrase.text}`
+                : remotePersonPhrase.text}
+            </p>
+          </div>
+        </div>
+      ) : null}
       <SignCoachAvatar
         visible={sendOn && (lockedRole === 'person' || !dedicated)}
         lawyerPhrase={lastLawyerPhrase}
-      />
-      <SignBadge
+      />      <SignBadge
         label={
           sendResult?.display
             ? sendResult.fingers
