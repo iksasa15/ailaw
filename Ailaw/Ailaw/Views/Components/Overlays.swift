@@ -207,6 +207,8 @@ struct LensBottomBar: View {
     @Binding var receiveOn: Bool
     @Binding var sendOn: Bool
     @Binding var safetyOn: Bool
+    var isBackCamera: Bool = false
+    var onFlipCamera: (() -> Void)?
     let onClear: () -> Void
 
     var body: some View {
@@ -214,6 +216,18 @@ struct LensBottomBar: View {
             toggle("استقبال", isOn: $receiveOn, active: AppTheme.accent)
             toggle("إرسال", isOn: $sendOn, active: AppTheme.lawyer)
             toggle("أمان", isOn: $safetyOn, active: AppTheme.danger)
+            if let onFlipCamera {
+                Button(action: onFlipCamera) {
+                    Text(isBackCamera ? "خلفية" : "أمامية")
+                        .font(AppTheme.brandFont(13, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(isBackCamera ? AppTheme.lawyer.opacity(0.85) : Color.white.opacity(0.1))
+                        .foregroundStyle(isBackCamera ? AppTheme.accentInk : AppTheme.text)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
             Button(action: onClear) {
                 Text("مسح")
                     .font(AppTheme.brandFont(13, weight: .semibold))

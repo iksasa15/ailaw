@@ -17,6 +17,8 @@ export function BottomBar({
   onToggleReceive,
   onToggleSend,
   onToggleSafety,
+  cameraFacing = 'user',
+  onFlipCamera,
   sttStatus,
   sttError,
   onRetryStt,
@@ -38,6 +40,7 @@ export function BottomBar({
   )
 
   const label = STT_LABELS[sttStatus] || sttStatus
+  const isBack = cameraFacing === 'environment'
 
   return (
     <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/80 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8">
@@ -45,6 +48,20 @@ export function BottomBar({
         {btn(receiveOn, onToggleReceive, '👂', 'استقبال')}
         {btn(sendOn, onToggleSend, '🖐️', 'إرسال')}
         {btn(safetyOn, onToggleSafety, '🚨', 'أمان')}
+        {onFlipCamera ? (
+          <button
+            type="button"
+            onClick={onFlipCamera}
+            className={`flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1.5 text-sm font-semibold ${
+              isBack ? 'bg-[#5eb8ff] text-[#041018]' : 'bg-white/15 text-white'
+            }`}
+          >
+            <span className="text-lg leading-none" aria-hidden>
+              {isBack ? '📷' : '🤳'}
+            </span>
+            <span>{isBack ? 'خلفية ●' : 'أمامية'}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onClear}

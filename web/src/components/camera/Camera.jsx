@@ -17,7 +17,7 @@ export function PermissionGate({ status, error, onRetry, children }) {
     idle: 'جاري التحضير…',
     requesting: 'يرجى السماح بالوصول إلى الكاميرا',
     denied: 'تم رفض صلاحية الكاميرا. فعّلها من إعدادات المتصفح ثم أعد المحاولة.',
-    unsupported: 'هذا المتصفح لا يدعم getUserMedia.',
+    unsupported: 'الكاميرا تحتاج HTTPS على الجوال. افتح الرابط بصيغة https:// ثم اقبل التحذير مرة واحدة.',
     error: error || 'حدث خطأ في فتح الكاميرا',
   }
 

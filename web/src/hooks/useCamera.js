@@ -31,6 +31,9 @@ export function useCamera({ facingMode = 'user', enabled = true } = {}) {
   const start = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus('unsupported')
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setError('افتح الموقع عبر HTTPS (مثل https://IP:5173) لأن HTTP على الشبكة يمنع الكاميرا')
+      }
       return
     }
     setStatus('requesting')
@@ -42,17 +45,28 @@ export function useCamera({ facingMode = 'user', enabled = true } = {}) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: facingMode },
+            facingMode: { exact: facingMode },
             width: { ideal: 1280 },
             height: { ideal: 720 },
           },
           audio: false,
         })
       } catch {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        })
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: facingMode },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          })
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          })
+        }
       }
       streamRef.current = stream
       await attachStream(stream)

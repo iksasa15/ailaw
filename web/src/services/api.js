@@ -1,7 +1,19 @@
 const DEFAULT_API = 'http://localhost:8000'
 
+function defaultApiBase() {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, origin } = window.location
+    // HTTPS LAN (phone): use Vite proxy → same origin /api
+    if (protocol === 'https:' && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${origin}/api`
+    }
+  }
+  return DEFAULT_API
+}
+
 export function getApiBase() {
-  return localStorage.getItem('apiBase') || import.meta.env.VITE_API_URL || DEFAULT_API
+  return localStorage.getItem('apiBase') || defaultApiBase()
 }
 
 export function setApiBase(url) {

@@ -85,6 +85,17 @@ struct HomeView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 6) {
+                Button {
+                    model.toggleCameraFacing()
+                } label: {
+                    Text(model.camera.currentFacing == .front ? "📷 خلفية" : "🤳 أمامية")
+                        .font(AppTheme.brandFont(13, weight: .semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.45))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
                 if lockedRole != nil {
                     SyncBadge(state: model.syncBadgeState)
                 }
@@ -138,10 +149,23 @@ struct HomeView: View {
                     receiveOn: $receiveOn,
                     sendOn: $sendOn,
                     safetyOn: $safetyOn,
+                    isBackCamera: model.camera.currentFacing == .back,
+                    onFlipCamera: { model.toggleCameraFacing() },
                     onClear: { model.clearCaption() }
                 )
             } else {
                 HStack {
+                    Button {
+                        model.toggleCameraFacing()
+                    } label: {
+                        Text(model.camera.currentFacing == .front ? "كاميرا خلفية" : "كاميرا أمامية")
+                            .font(AppTheme.brandFont(14, weight: .semibold))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                     Button("مسح النص") { model.clearCaption() }
                         .font(AppTheme.brandFont(14, weight: .semibold))
                         .padding(.horizontal, 16)

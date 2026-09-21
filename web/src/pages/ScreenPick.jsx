@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import jsQR from 'jsqr'
 import { useSettings } from '../app/SettingsContext'
 import { checkHealth, getApiBase, setApiBase } from '../services/api'
 import {
@@ -23,8 +24,10 @@ export default function ScreenPick() {
   const [copied, setCopied] = useState(false)
   const [scanning, setScanning] = useState(false)
   const videoRef = useRef(null)
+  const canvasRef = useRef(null)
   const streamRef = useRef(null)
   const scanTimerRef = useRef(0)
+  const fileInputRef = useRef(null)
 
   const guestRole = hostRole === 'lawyer' ? 'person' : hostRole === 'person' ? 'lawyer' : null
   const webInvite = guestRole ? makeWebPairURL(settings.apiBase || getApiBase(), guestRole) : ''
@@ -99,40 +102,111 @@ export default function ScreenPick() {
     streamRef.current = null
   }
 
+  function decodeWithJsQR(video) {
+    const canvas = canvasRef.current
+    if (!canvas || !video || video.readyState < 2) return null
+    const w = video.videoWidth
+    const h = video.videoHeight
+    if (!w || !h) return null
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    ctx.drawImage(video, 0, 0, w, h)
+    const image = ctx.getImageData(0, 0, w, h)
+    const code = jsQR(image.data, image.width, image.height, {
+      inversionAttempts: 'attemptBoth',
+    })
+    return code?.data || null
+  }
+
   async function startScan() {
     setJoinError(null)
-    if (!('BarcodeDetector' in window)) {
-      setJoinError('المتصفح لا يدعم مسح QR — الصق الرابط يدوياً أو افتحه من كاميرا الجوال.')
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setJoinError('افتح الموقع عبر HTTPS ثم اسمح بالكاميرا، أو الصق الرابط / ارفع صورة QR.')
       return
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: { ideal: 'environment' } },
         audio: false,
       })
       streamRef.current = stream
       setScanning(true)
-      await new Promise((r) => setTimeout(r, 50))
+      await new Promise((r) => setTimeout(r, 80))
       const video = videoRef.current
       if (video) {
         video.srcObject = stream
+        video.setAttribute('playsinline', 'true')
+        video.muted = true
         await video.play()
       }
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+
+      const useNative = typeof window.BarcodeDetector === 'function'
+      let detector = null
+      if (useNative) {
+        try {
+          detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+        } catch {
+          detector = null
+        }
+      }
+
       scanTimerRef.current = window.setInterval(async () => {
         try {
-          if (!videoRef.current) return
-          const codes = await detector.detect(videoRef.current)
-          const raw = codes?.[0]?.rawValue
+          const v = videoRef.current
+          if (!v) return
+          let raw = null
+          if (detector) {
+            try {
+              const codes = await detector.detect(v)
+              raw = codes?.[0]?.rawValue || null
+            } catch {
+              raw = null
+            }
+          }
+          if (!raw) raw = decodeWithJsQR(v)
           if (raw) applyJoin(raw)
         } catch {
           /* keep scanning */
         }
-      }, 500)
+      }, 350)
     } catch {
-      setJoinError('تعذر فتح الكاميرا للمسح')
+      setJoinError('تعذر فتح الكاميرا للمسح — جرّب رفع صورة QR أو لصق الرابط.')
       stopScan()
     }
+  }
+
+  function onPickQrFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setJoinError(null)
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const canvas = canvasRef.current || document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
+        ctx.drawImage(img, 0, 0)
+        const image = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const code = jsQR(image.data, image.width, image.height, {
+          inversionAttempts: 'attemptBoth',
+        })
+        URL.revokeObjectURL(url)
+        if (code?.data) applyJoin(code.data)
+        else setJoinError('لم يُعثر على رمز QR في الصورة')
+      } catch {
+        URL.revokeObjectURL(url)
+        setJoinError('تعذر قراءة صورة QR')
+      }
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      setJoinError('تعذر تحميل الصورة')
+    }
+    img.src = url
   }
 
   return (
@@ -183,6 +257,12 @@ export default function ScreenPick() {
           {(apiDraft.includes('localhost') || apiDraft.includes('127.0.0.1')) && (
             <p className="text-xs font-medium text-amber-300">
               تنبيه: على الجوال استخدم IP الماك (مثل 192.168.x.x) وليس localhost.
+            </p>
+          )}
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && (
+            <p className="text-xs text-white/55">
+              على HTTPS يمكنك ترك العنوان فارغاً أو وضع:{' '}
+              <span dir="ltr">{`${window.location.origin}/api`}</span>
             </p>
           )}
         </section>
@@ -275,11 +355,28 @@ export default function ScreenPick() {
                 muted
                 playsInline
               />
+              <canvas ref={canvasRef} className="hidden" />
+              <p className="text-center text-xs text-white/60">وجّه الكاميرا نحو رمز QR…</p>
               <button type="button" onClick={stopScan} className="min-h-10 w-full rounded-xl bg-white/10 text-sm">
                 إيقاف المسح
               </button>
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="min-h-11 w-full rounded-xl bg-white/10 text-sm font-semibold"
+          >
+            رفع صورة QR من المعرض
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={onPickQrFile}
+          />
           <input
             className="w-full rounded-xl border border-white/15 bg-[#0b1220] px-3 py-3 text-sm"
             value={pasteText}

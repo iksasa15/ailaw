@@ -22,6 +22,8 @@ final class HomeViewModel {
     var lastSceneSyncAt: Date?
     var lastBackendOkAt: Date?
     var syncBadgeState: SyncBadge.State = .waiting
+    /// Manual override; nil = follow preferredFacing()
+    var cameraFacingOverride: CameraFacing?
 
     private var fingerTimer: Timer?
     private var sceneTimer: Timer?
@@ -116,7 +118,14 @@ final class HomeViewModel {
         alertKind = nil
     }
 
+    func toggleCameraFacing() {
+        let current = cameraFacingOverride ?? preferredFacing()
+        cameraFacingOverride = current == .front ? .back : .front
+        camera.setFacing(cameraFacingOverride!)
+    }
+
     private func preferredFacing() -> CameraFacing {
+        if let cameraFacingOverride { return cameraFacingOverride }
         if settings.sendEnabled || lockedRole != nil { return .front }
         if settings.safetyEnabled { return .back }
         return .front

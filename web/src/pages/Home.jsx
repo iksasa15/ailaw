@@ -35,6 +35,9 @@ export default function Home({ lockedRole = null }) {
   const [rolePulse, setRolePulse] = useState(false)
   const [lastLawyerPhrase, setLastLawyerPhrase] = useState(null)
   const [syncState, setSyncState] = useState('waiting')
+  const [cameraFacing, setCameraFacing] = useState(() =>
+    dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
+  )
   const lastSceneSyncRef = useRef(0)
   const lastBackendOkRef = useRef(0)
   const lastSpokenRef = useRef('')
@@ -64,15 +67,8 @@ export default function Home({ lockedRole = null }) {
   const needMic = settings.receiveEnabled || settings.safetyEnabled
   const mic = useSharedMic({ enabled: needMic })
 
-  // شاشات مستقلة دائماً كاميرا أمامية للإشارات
-  const facingMode = dedicated
-    ? 'user'
-    : settings.sendEnabled
-      ? 'user'
-      : settings.safetyEnabled
-        ? 'environment'
-        : 'user'
   const sendOn = dedicated ? true : settings.sendEnabled
+  const facingMode = cameraFacing
   const camera = useCamera({ facingMode, enabled: true })
   const hands = useHands({
     videoRef: camera.videoRef,
@@ -310,7 +306,7 @@ export default function Home({ lockedRole = null }) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <PermissionGate status={camera.status} error={camera.error} onRetry={camera.start}>
-        <VideoFeed videoRef={camera.videoRef} />
+        <VideoFeed videoRef={camera.videoRef} mirrored={cameraFacing === 'user'} />
         <HandLandmarkCanvas canvasRef={hands.canvasRef} />
         {sendOn && <HandGuide visible={hands.trackingQuality === 'lost'} />}
       </PermissionGate>
@@ -330,6 +326,16 @@ export default function Home({ lockedRole = null }) {
           ) : null}
         </div>
         <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
+            }
+            className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white"
+            title="تبديل الكاميرا"
+          >
+            {cameraFacing === 'user' ? '📷 خلفية' : '🤳 أمامية'}
+          </button>
           <Link to="/screens" className="rounded-lg bg-black/40 px-3 py-2 text-sm text-white">
             📱 شاشتين
           </Link>
@@ -404,8 +410,17 @@ export default function Home({ lockedRole = null }) {
           const next = !settings.sendEnabled
           if (next) unlockTts()
           update({ sendEnabled: next })
+          // عند تفعيل الإرسال نفضّل الأمامية للإشارات؛ عند الإيقاف للخلفية للأمان
+          setCameraFacing(next ? 'user' : settings.safetyEnabled ? 'environment' : 'user')
         }}
-        onToggleSafety={() => update({ safetyEnabled: !settings.safetyEnabled })}
+        onToggleSafety={() => {
+          const next = !settings.safetyEnabled
+          update({ safetyEnabled: next })
+        }}
+        cameraFacing={cameraFacing}
+        onFlipCamera={() =>
+          setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
+        }
         sttStatus={sttStatus}
         sttError={sttError}
         onRetryStt={() => {
