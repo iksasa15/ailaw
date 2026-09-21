@@ -7,6 +7,7 @@ import Guide from './pages/Guide'
 import Onboarding from './pages/Onboarding'
 import ScreenPick from './pages/ScreenPick'
 import PairJoin from './pages/PairJoin'
+import Lab from './pages/Lab'
 
 function Gate({ children }) {
   const { settings } = useSettings()
@@ -49,6 +50,14 @@ export default function App() {
           element={
             <Gate>
               <Home lockedRole="person" />
+            </Gate>
+          }
+        />
+        <Route
+          path="/lab"
+          element={
+            <Gate>
+              <Lab />
             </Gate>
           }
         />

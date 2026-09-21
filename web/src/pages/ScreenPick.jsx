@@ -420,6 +420,9 @@ export default function ScreenPick() {
           {joinError && <p className="text-sm text-[#ff3b4e]">{joinError}</p>}
         </section>
 
+        <Link to="/lab" className="rounded-xl bg-[#3ecf8e]/20 px-4 py-3 text-center text-sm font-bold text-[#3ecf8e]">
+          تجربة محامي + أفتار (جهاز واحد)
+        </Link>
         <Link to="/" className="rounded-xl bg-white/10 px-4 py-3 text-center text-sm text-white">
           العدسة المشتركة (تبديل الأدوار على جهاز واحد)
         </Link>

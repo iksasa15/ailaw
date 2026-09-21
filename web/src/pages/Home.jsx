@@ -339,6 +339,13 @@ export default function Home({ lockedRole = null }) {
           {menuOpen ? (
             <div className="absolute left-0 top-full mt-2 min-w-[10rem] overflow-hidden rounded-xl bg-[#0b1220]/95 ring-1 ring-white/15 shadow-xl">
               <Link
+                to="/lab"
+                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
+                onClick={() => setMenuOpen(false)}
+              >
+                تجربة الأفتار
+              </Link>
+              <Link
                 to="/screens"
                 className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
                 onClick={() => setMenuOpen(false)}

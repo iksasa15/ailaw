@@ -217,9 +217,9 @@ function SignerFigure({ pose = 'open', motion = 'bob', active = false, stepKey =
 
 /**
  * يحوّل كلام المحامي (STT أو أصابع) إلى تسلسل لغة إشارة على شاشة الشخص.
- * خفيف وآمن للجوال — بدون CWASA.
+ * mode: overlay (فوق الكاميرا) | panel (صفحة تجربة)
  */
-export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
+export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = 'overlay' }) {
   const [stepIdx, setStepIdx] = useState(0)
 
   const steps = useMemo(() => speechToSignSteps(lawyerPhrase), [lawyerPhrase])
@@ -237,9 +237,12 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
 
   if (!visible) return null
 
-  return (
-    <div className="pointer-events-none absolute inset-x-3 bottom-[7.5rem] z-[25] flex justify-center">
-      <div className="w-full max-w-lg rounded-2xl bg-[#0b1220]/95 px-3 py-3 ring-1 ring-[#3ecf8e]/40 shadow-xl backdrop-blur-sm">
+  const card = (
+      <div
+        className={`w-full rounded-2xl bg-[#0b1220]/95 px-3 py-3 ring-1 ring-[#3ecf8e]/40 shadow-xl ${
+          mode === 'panel' ? 'max-w-none' : 'max-w-lg backdrop-blur-sm'
+        }`}
+      >
         <div className="mb-2 flex items-center justify-between gap-2">
           <p className="text-[11px] font-bold text-[#3ecf8e]">ترجمة → لغة إشارة</p>
           {hasLawyer ? (
@@ -284,13 +287,21 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null }) {
               </>
             ) : (
               <p className="text-sm leading-6 text-white/75">
-                تكلّم في جوال <strong className="text-white">المحامي</strong> — هنا يتحول كلامك
-                إلى إشارات متتابعة للشخص.
+                تكلّم أو اكتب عبارة المحامي — الأفتار يحوّلها إلى إشارات متتابعة.
               </p>
             )}
           </div>
         </div>
       </div>
+  )
+
+  if (mode === 'panel') {
+    return <div className="w-full">{card}</div>
+  }
+
+  return (
+    <div className="pointer-events-none absolute inset-x-3 bottom-[7.5rem] z-[25] flex justify-center">
+      {card}
     </div>
   )
 }
