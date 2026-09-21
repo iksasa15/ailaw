@@ -26,13 +26,13 @@ export function PermissionGate({ status, error, onRetry, children }) {
       {/* Always mount video so the stream can attach (iOS + React timing) */}
       {children}
       {!ready ? (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[#0b1220]/92 px-6 text-center">
-          <p className="max-w-sm text-lg text-[#f4f7fb]">{messages[status] || messages.error}</p>
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[rgba(21,32,51,0.92)] px-6 text-center">
+          <p className="max-w-sm text-lg text-white">{messages[status] || messages.error}</p>
           {(status === 'denied' || status === 'error') && (
             <button
               type="button"
               onClick={onRetry}
-              className="min-h-11 rounded-xl bg-[#3ecf8e] px-5 text-base font-semibold text-[#0b1220]"
+              className="btn-primary min-h-11 rounded-xl px-5 text-base"
             >
               إعادة المحاولة
             </button>
