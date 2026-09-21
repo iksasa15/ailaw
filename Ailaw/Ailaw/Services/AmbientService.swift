@@ -40,8 +40,9 @@ final class AmbientService {
 
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.mixWithOthers, .defaultToSpeaker])
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
+            try session.overrideOutputAudioPort(.speaker)
 
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("ambient-\(UUID().uuidString).wav")
             let settings: [String: Any] = [

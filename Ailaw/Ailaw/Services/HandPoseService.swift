@@ -35,6 +35,15 @@ final class HandPoseService {
     private let lock = NSLock()
     private var busy = false
 
+    func reset() {
+        quality = .lost
+        fingerCount = 0
+        hands = []
+        primaryLandmarks = []
+        lastPoints = []
+        stableFrames = 0
+    }
+
     func process(pixelBuffer: CVPixelBuffer) {
         lock.lock()
         if busy {
@@ -46,6 +55,7 @@ final class HandPoseService {
 
         let request = VNDetectHumanHandPoseRequest()
         request.maximumHandCount = 2
+        // Portrait buffers from our capture pipeline (rotationAngle 90).
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in

@@ -12,7 +12,7 @@ final class CameraService: NSObject {
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "ailaw.camera")
     private let videoOutput = AVCaptureVideoDataOutput()
-    private var currentFacing: CameraFacing = .front
+    private(set) var currentFacing: CameraFacing = .front
     private var isConfigured = false
 
     var onFrame: ((CVPixelBuffer) -> Void)?

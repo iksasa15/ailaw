@@ -171,8 +171,9 @@ final class STTService {
 
     private func runAppleSpeech(recognizer: SFSpeechRecognizer) throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
+        try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
         try session.setActive(true, options: .notifyOthersOnDeactivation)
+        try session.overrideOutputAudioPort(.speaker)
 
         let engine = AVAudioEngine()
         let request = SFSpeechAudioBufferRecognitionRequest()
@@ -209,8 +210,9 @@ final class STTService {
     private func startPCMCapture(onChunk: @escaping (Data) -> Void) {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
+            try session.overrideOutputAudioPort(.speaker)
 
             let engine = AVAudioEngine()
             audioEngine = engine

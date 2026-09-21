@@ -17,6 +17,16 @@ struct HomeView: View {
                 CameraPreviewView(session: model.camera.session)
                     .ignoresSafeArea()
 
+                // Hand skeleton (dots + bones) — same idea as web HandLandmarkCanvas
+                if settings.sendEnabled || lockedRole != nil {
+                    HandSkeletonOverlay(
+                        hands: model.hands.hands,
+                        quality: model.hands.quality,
+                        mirrored: model.camera.currentFacing == .front
+                    )
+                    .ignoresSafeArea()
+                }
+
                 VStack(spacing: 0) {
                     topBar(model)
                     Spacer()
@@ -65,7 +75,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func topBar(_ model: HomeViewModel) -> some View {
-        HStack {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("النظارة الذكية")
                     .font(AppTheme.brandFont(12, weight: .semibold))
@@ -74,12 +84,17 @@ struct HomeView: View {
                     .font(AppTheme.brandFont(20, weight: .bold))
             }
             Spacer()
-            if let banner = model.phrases.roleChangedBanner {
-                Text(banner)
-                    .font(AppTheme.brandFont(12, weight: .semibold))
-                    .padding(8)
-                    .background(AppTheme.accent.opacity(0.2))
-                    .clipShape(Capsule())
+            VStack(alignment: .trailing, spacing: 6) {
+                if lockedRole != nil {
+                    SyncBadge(state: model.syncBadgeState)
+                }
+                if let banner = model.phrases.roleChangedBanner {
+                    Text(banner)
+                        .font(AppTheme.brandFont(12, weight: .semibold))
+                        .padding(8)
+                        .background(AppTheme.accent.opacity(0.2))
+                        .clipShape(Capsule())
+                }
             }
         }
         .padding(.horizontal, 16)

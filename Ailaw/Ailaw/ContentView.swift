@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(PairingCoordinator.self) private var pairing
     @State private var tab: AppTab = .lens
 
     enum AppTab: Hashable {
@@ -33,6 +34,12 @@ struct ContentView: View {
                         .tag(AppTab.settings)
                 }
                 .tint(AppTheme.accent)
+                .onChange(of: pairing.shouldOpenScreensTab) { _, open in
+                    if open {
+                        tab = .screens
+                        pairing.shouldOpenScreensTab = false
+                    }
+                }
             } else {
                 OnboardingView()
             }
@@ -45,4 +52,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AppSettings())
+        .environment(PairingCoordinator())
 }

@@ -19,9 +19,13 @@ final class HomeViewModel {
     var alertKind: AlertToast.Kind?
     var coachText: String?
     var whisperHealthy = false
+    var lastSceneSyncAt: Date?
+    var lastBackendOkAt: Date?
+    var syncBadgeState: SyncBadge.State = .waiting
 
     private var fingerTimer: Timer?
     private var sceneTimer: Timer?
+    private var syncUiTimer: Timer?
     private var healthChecked = false
     private var lastPublished: String?
 
@@ -52,6 +56,7 @@ final class HomeViewModel {
     }
 
     func onAppear() {
+        AudioSessionHub.activateForApp()
         phrases.lawyerPhrases = settings.lawyerPhrases
         phrases.personPhrases = settings.personPhrases
         if let lockedRole {
@@ -62,8 +67,13 @@ final class HomeViewModel {
         camera.requestAccessAndStart(facing: preferredFacing())
         camera.onFrame = { [weak self] buffer in
             guard let self else { return }
-            if self.settings.sendEnabled {
+            let trackHands = self.settings.sendEnabled || self.lockedRole != nil
+            if trackHands {
                 self.hands.process(pixelBuffer: buffer)
+            } else {
+                Task { @MainActor in
+                    self.hands.reset()
+                }
             }
             if self.settings.safetyEnabled && !self.settings.sendEnabled {
                 self.obstacle.analyze(pixelBuffer: buffer)
@@ -71,8 +81,9 @@ final class HomeViewModel {
         }
         startFingerTicker()
         Task { await refreshHealthAndPipelines() }
-        if lockedRole == .person {
+        if lockedRole != nil {
             startScenePolling()
+            startSyncUiTicker()
         }
     }
 
@@ -81,6 +92,8 @@ final class HomeViewModel {
         fingerTimer = nil
         sceneTimer?.invalidate()
         sceneTimer = nil
+        syncUiTimer?.invalidate()
+        syncUiTimer = nil
         camera.stop()
         ambient.stop()
         Task { await stt.stop() }
@@ -127,18 +140,49 @@ final class HomeViewModel {
     private func startScenePolling() {
         sceneTimer?.invalidate()
         sceneTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { [weak self] _ in
-            Task { await self?.pollLawyerScene() }
+            Task { await self?.pollScene() }
+        }
+        Task { await pollScene() }
+    }
+
+    private func startSyncUiTicker() {
+        syncUiTimer?.invalidate()
+        syncUiTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshSyncBadge()
+            }
         }
     }
 
-    private func pollLawyerScene() async {
+    private func pollScene() async {
         do {
-            let scene = try await api.fetchLawyerScene()
-            if let text = scene.text, !text.isEmpty {
-                coachText = text
+            if lockedRole == .person {
+                let scene = try await api.fetchLawyerScene()
+                if let text = scene.text, !text.isEmpty {
+                    coachText = text
+                    lastSceneSyncAt = Date()
+                }
+                lastBackendOkAt = Date()
+            } else if lockedRole == .lawyer {
+                _ = try await api.checkHealth()
+                lastBackendOkAt = Date()
             }
         } catch {
-            // ignore
+            // leave timestamps stale → offline badge
+        }
+        refreshSyncBadge()
+    }
+
+    private func refreshSyncBadge() {
+        let now = Date()
+        let backendFresh = lastBackendOkAt.map { now.timeIntervalSince($0) < 4 } ?? false
+        let phraseFresh = lastSceneSyncAt.map { now.timeIntervalSince($0) < 2.5 } ?? false
+        if phraseFresh {
+            syncBadgeState = .synced
+        } else if backendFresh {
+            syncBadgeState = .waiting
+        } else {
+            syncBadgeState = .offline
         }
     }
 
@@ -170,16 +214,33 @@ final class HomeViewModel {
     }
 
     private func handleAccepted(_ result: FingerPhraseResult) {
-        tts.speak(result.text)
+        // Pause mic pipelines briefly so TTS can own the speaker.
+        Task { @MainActor in
+            await stt.stop()
+            tts.speak(result.text)
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            if settings.receiveEnabled {
+                await stt.start(useWhisper: whisperHealthy, language: settings.language)
+            }
+        }
         let key = "\(result.role.rawValue)-\(result.fingers)-\(result.text)"
         guard lastPublished != key else { return }
         lastPublished = key
         Task {
-            try? await api.publishScenePhrase(
-                role: result.role.rawValue,
-                text: result.text,
-                fingers: result.fingers
-            )
+            do {
+                try await api.publishScenePhrase(
+                    role: result.role.rawValue,
+                    text: result.text,
+                    fingers: result.fingers
+                )
+                await MainActor.run {
+                    lastSceneSyncAt = Date()
+                    lastBackendOkAt = Date()
+                    refreshSyncBadge()
+                }
+            } catch {
+                // keep waiting / offline state
+            }
         }
     }
 

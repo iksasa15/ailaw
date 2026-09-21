@@ -8,27 +8,58 @@ final class TTSService: NSObject {
     override init() {
         super.init()
         synthesizer.delegate = self
+        AudioSessionHub.activateForApp()
     }
 
     func speak(_ text: String, language: String = "ar-SA") {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        AudioSessionHub.prepareForSpeech()
         synthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: language)
-            ?? AVSpeechSynthesisVoice(language: "ar")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.95
-        utterance.pitchMultiplier = 1.0
+
+        let utterance = AVSpeechUtterance(string: trimmed)
+        utterance.voice = Self.bestArabicVoice(preferred: language)
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
+        utterance.pitchMultiplier = 1.05
+        utterance.volume = 1.0
+        utterance.preUtteranceDelay = 0.05
+        utterance.postUtteranceDelay = 0.05
+
         isSpeaking = true
-        synthesizer.speak(utterance)
+        // Ensure we speak on the main queue after session is ready.
+        DispatchQueue.main.async { [weak self] in
+            self?.synthesizer.speak(utterance)
+        }
     }
 
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking = false
     }
+
+    private static func bestArabicVoice(preferred: String) -> AVSpeechSynthesisVoice? {
+        let voices = AVSpeechSynthesisVoice.speechVoices()
+        if let exact = voices.first(where: { $0.language == preferred }) {
+            return exact
+        }
+        if let arSA = voices.first(where: { $0.language.hasPrefix("ar-SA") }) {
+            return arSA
+        }
+        if let anyAr = voices.first(where: { $0.language.hasPrefix("ar") }) {
+            return anyAr
+        }
+        return AVSpeechSynthesisVoice(language: preferred)
+            ?? AVSpeechSynthesisVoice(language: "ar")
+    }
 }
 
 extension TTSService: AVSpeechSynthesizerDelegate {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        isSpeaking = true
+        try? AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
+    }
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         isSpeaking = false
     }
