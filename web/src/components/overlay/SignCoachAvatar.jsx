@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { resolveSignClips } from '../../data/signLexicon'
 
 /**
- * مترجم إشارة مرئي — صور/مقاطع متتابعة، ليس عدّ أصابع.
+ * مترجم إشارة مرئي — مقاطع فيديو حقيقية متتابعة لشخص يوقّع.
  * mode: overlay | panel
  */
 export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = 'overlay' }) {
   const [stepIdx, setStepIdx] = useState(0)
+  const [videoMissing, setVideoMissing] = useState(false)
+  const videoRef = useRef(null)
   const clips = useMemo(() => resolveSignClips(lawyerPhrase), [lawyerPhrase])
   const hasSign = Boolean(clips?.length)
   const current = hasSign ? clips[stepIdx] || clips[0] : null
@@ -14,11 +16,24 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
   useEffect(() => {
     if (!visible || !clips?.length) return undefined
     setStepIdx(0)
-    const id = window.setInterval(() => {
-      setStepIdx((i) => (i + 1) % clips.length)
-    }, 1400)
-    return () => window.clearInterval(id)
+    setVideoMissing(false)
+    return undefined
   }, [visible, clips, lawyerPhrase?.text, lawyerPhrase?.fingers, lawyerPhrase?.at])
+
+  useEffect(() => {
+    setVideoMissing(false)
+    const el = videoRef.current
+    if (!el || !current?.src) return undefined
+    el.load()
+    const play = el.play()
+    if (play?.catch) play.catch(() => {})
+    return undefined
+  }, [current?.src, stepIdx])
+
+  const advance = () => {
+    if (!clips?.length) return
+    setStepIdx((i) => (i + 1) % clips.length)
+  }
 
   if (!visible) return null
 
@@ -39,24 +54,56 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
         )}
       </div>
 
-      <div className={`relative bg-[#1a2740] ${mode === 'panel' ? 'aspect-[4/3]' : 'aspect-[5/4]'}`}>
-        {hasSign && current ? (
-          <img
+      <div className={`relative overflow-hidden bg-[#0b1220] ${mode === 'panel' ? 'aspect-[4/3]' : 'aspect-[5/4]'}`}>
+        {hasSign && current && !videoMissing ? (
+          <video
             key={`${current.src}-${stepIdx}`}
+            ref={videoRef}
             src={current.src}
-            alt={current.label}
-            className="h-full w-full object-contain p-2 sign-fade"
+            className="absolute inset-0 h-full w-full object-cover"
+            playsInline
+            muted
+            autoPlay
+            preload="auto"
+            onEnded={advance}
+            onError={() => setVideoMissing(true)}
+            aria-label={current.label}
           />
-        ) : (
+        ) : null}
+
+        {hasSign && current && videoMissing ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+            <p className="text-sm font-semibold text-white/80">فيديو الإشارة غير متوفر</p>
+            <p className="text-xs text-white/45">{current.label}</p>
+            <p className="max-w-[16rem] text-[11px] leading-5 text-white/35">
+              ضع الملف في public/signs/videos ثم أعد التحميل
+            </p>
+            {clips.length > 1 ? (
+              <button
+                type="button"
+                className="mt-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80"
+                onClick={() => {
+                  setVideoMissing(false)
+                  advance()
+                }}
+              >
+                المقطع التالي
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!hasSign ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#243552] text-3xl text-[#E8A078]">
               ◌
             </div>
             <p className="text-sm text-white/60">سيظهر هنا مترجم الإشارة</p>
           </div>
-        )}
-        {hasSign && current ? (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8">
+        ) : null}
+
+        {hasSign && current && !videoMissing ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8">
             <p className="text-center text-lg font-bold text-white">{current.label}</p>
           </div>
         ) : null}
@@ -76,7 +123,10 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
                     className={`rounded-lg px-2 py-1 text-xs font-semibold ${
                       i === stepIdx ? 'bg-[var(--accent)] text-white' : 'bg-white/10 text-white/70'
                     }`}
-                    onClick={() => setStepIdx(i)}
+                    onClick={() => {
+                      setVideoMissing(false)
+                      setStepIdx(i)
+                    }}
                   >
                     {c.label}
                   </button>
@@ -87,7 +137,7 @@ export function SignCoachAvatar({ visible = false, lawyerPhrase = null, mode = '
         ) : (
           <p className="text-sm leading-6 text-white/75">
             عندما يتكلم أو يرسل المحامي عبارة، تُعرض هنا{' '}
-            <strong className="text-white">إشارات مرئية</strong> متتابعة.
+            <strong className="text-white">فيديوهات إشارة حقيقية</strong> متتابعة.
           </p>
         )}
       </div>

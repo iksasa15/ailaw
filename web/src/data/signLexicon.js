@@ -1,8 +1,13 @@
 import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
 
-const S = (file, label) => ({ src: `/signs/${file}.svg`, label })
+/** مقطع فيديو إشارة حقيقية تحت /signs/videos/ */
+const S = (file, label) => ({
+  src: `/signs/videos/${file}.mp4`,
+  label,
+  type: 'video',
+})
 
-/** تسلسل إشارات لكل عبارة محامي (1–10) — صور إشارة وليس أرقام أصابع */
+/** تسلسل إشارات لكل عبارة محامي (1–10) — فيديو شخص يوقّع */
 export const LAWYER_SIGN_CLIPS = {
   1: [S('lawyer-01', 'أنا محاميك'), S('lawyer-01b', 'تفضّل')],
   2: [S('lawyer-02b', 'اسأل'), S('lawyer-02', 'تفاصيل القضية')],
@@ -16,7 +21,7 @@ export const LAWYER_SIGN_CLIPS = {
   10: [S('lawyer-10b', 'القضية'), S('lawyer-10', 'متابعة')],
 }
 
-/** كلمات شائعة → إشارة مرئية */
+/** كلمات شائعة → فيديو إشارة */
 export const WORD_SIGN_CLIPS = {
   أنا: S('word-ana', 'أنا'),
   محامي: S('word-lawyer', 'محامي'),
@@ -74,8 +79,8 @@ function normalize(text) {
 }
 
 /**
- * حوّل عبارة المحامي إلى تسلسل إشارات مرئية (صور).
- * @returns {{ src: string, label: string }[] | null}
+ * حوّل عبارة المحامي إلى تسلسل فيديوهات إشارة حقيقية.
+ * @returns {{ src: string, label: string, type: string }[] | null}
  */
 export function resolveSignClips(lawyerPhrase) {
   if (!lawyerPhrase?.text && !(lawyerPhrase?.fingers >= 1)) return null

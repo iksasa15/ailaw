@@ -157,7 +157,13 @@ export default function Home({ lockedRole = null }) {
   })
   sceneMarkRef.current = scene.markLocalPublish
 
-  const lastLawyerPhrase = scene.lawyerPhrase || localLawyerPhrase
+  const lastLawyerPhrase = (() => {
+    const remote = scene.lawyerPhrase
+    const local = localLawyerPhrase
+    if (!remote) return local
+    if (!local) return remote
+    return (local.at || 0) >= (remote.at || 0) ? local : remote
+  })()
   const remotePersonPhrase = scene.personPhrase
   const syncState = scene.syncState
 
@@ -251,12 +257,18 @@ export default function Home({ lockedRole = null }) {
     settings.roomId,
   ])
 
-  // بث كلام المحامي (STT) لغرفة الجلسة → أفتار الإشارة عند الشخص
+  // كلام المحامي (STT) → مترجم الإشارة عند الشخص
+  // - شاشة المحامي: يبث للغرفة
+  // - شاشة الشخص / استقبال: يترجم محلياً فوراً (وضع فردي أو كلام في المايك)
   const lastPublishedSttRef = useRef('')
   useEffect(() => {
+    if (!settings.receiveEnabled) return undefined
     const isLawyerTalking =
-      lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer' && settings.receiveEnabled)
-    if (!isLawyerTalking) return undefined
+      lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer')
+    const isPersonListening =
+      lockedRole === 'person' || (!dedicated && finger.role === 'person')
+    if (!isLawyerTalking && !isPersonListening) return undefined
+
     const raw = (stt.text || '').trim()
     if (!raw || raw.length < 2) return undefined
     // Take the latest sentence/chunk (caption accumulates)
@@ -272,6 +284,8 @@ export default function Home({ lockedRole = null }) {
         text: snippet,
         at: Date.now(),
       })
+      // المحامي فقط ينشر للغرفة؛ الشخص يعرض الإشارات محلياً
+      if (!isLawyerTalking) return
       publishScenePhrase({
         role: 'lawyer',
         text: snippet,
