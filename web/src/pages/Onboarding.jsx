@@ -1,21 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../app/SettingsContext'
 
-const STEPS = [
-  {
-    title: 'الصلاحيات',
-    body: 'يحتاج التطبيق إلى الكاميرا والمايكروفون لمحاكاة عدسة النظارة الذكية.',
-  },
-  {
-    title: 'الاتجاهان + الأمان',
-    body: 'استقبال الكلام كنص، إرسال الإشارة كصوت، وتنبيه بصري عند أصوات الخطر.',
-  },
-  {
-    title: 'جاهز للعدسة',
-    body: 'يمكنك تشغيل المسارات معاً من الشريط السفلي وضبط الخادم من الإعدادات.',
-  },
-]
-
 export default function Onboarding() {
   const navigate = useNavigate()
   const { update } = useSettings()
@@ -26,24 +11,23 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="flex h-full flex-col justify-between bg-[#0b1220] px-5 py-8 text-white">
-      <div>
-        <p className="text-sm text-[#3ecf8e]">النظارة الذكية</p>
-        <h1 className="mt-2 text-3xl font-bold">مرحباً بك</h1>
-        <div className="mt-8 space-y-4">
-          {STEPS.map((s) => (
-            <div key={s.title} className="rounded-2xl bg-white/5 p-4">
-              <h2 className="text-lg font-semibold">{s.title}</h2>
-              <p className="mt-2 text-white/75 leading-7">{s.body}</p>
-            </div>
-          ))}
+    <div className="app-bg flex h-full flex-col justify-between px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="mb-8 flex justify-center" aria-hidden>
+          <svg viewBox="0 0 88 40" className="h-12 w-28">
+            <circle cx="28" cy="20" r="14" fill="none" stroke="#2F6FED" strokeWidth="3" />
+            <circle cx="60" cy="20" r="14" fill="none" stroke="#C45C26" strokeWidth="3" />
+            <path d="M42 20h4" stroke="#152033" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
         </div>
+        <h1 className="font-brand text-center text-4xl font-bold leading-tight text-[var(--ink)]">
+          النظارة الذكية
+        </h1>
+        <p className="mx-auto mt-4 max-w-xs text-center text-base leading-7 text-[var(--muted)]">
+          عدسة جوال تربط كلام المحامي بإشارات مرئية للصم — والعكس بصوت مسموع.
+        </p>
       </div>
-      <button
-        type="button"
-        onClick={finish}
-        className="min-h-12 rounded-2xl bg-[#3ecf8e] text-lg font-bold text-[#062016]"
-      >
+      <button type="button" onClick={finish} className="btn-primary min-h-12 w-full rounded-2xl text-lg">
         ابدأ الآن
       </button>
     </div>

@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0b1220;
-  --panel: rgba(8, 14, 28, 0.55);
-  --text: #f4f7fb;
-  --muted: #b7c2d6;
-  --accent: #3ecf8e;
-  --danger: #ff3b4e;
-  --caption-bg: rgba(0, 0, 0, 0.55);
+  --bg: #e6ecf2;
+  --bg-soft: #f4f7fa;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #ffffff;
+  --ink: #152033;
+  --muted: #5a6b7d;
+  --accent: #c45c26;
+  --accent-ink: #fff8f3;
+  --accent-2: #2f6fed;
+  --accent-2-ink: #f3f7ff;
+  --danger: #d64545;
+  --ring: rgba(21, 32, 51, 0.1);
+  --caption-bg: rgba(21, 32, 51, 0.78);
   --font-scale: 1;
+  --tabbar-h: 4.25rem;
+  --font-ui: "Cairo", system-ui, sans-serif;
+  --font-brand: "El Messiri", "Cairo", sans-serif;
 }
 
 * {
@@ -23,12 +32,47 @@ body,
   margin: 0;
   overflow: hidden;
   background: var(--bg);
-  color: var(--text);
-  font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-ui);
 }
 
 body {
   overscroll-behavior: none;
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+.app-bg {
+  background:
+    radial-gradient(120% 80% at 100% -10%, rgba(47, 111, 237, 0.14), transparent 55%),
+    radial-gradient(90% 70% at -15% 110%, rgba(196, 92, 38, 0.12), transparent 50%),
+    linear-gradient(165deg, var(--bg-soft) 0%, var(--bg) 55%, #dfe7ef 100%);
+}
+
+.app-surface {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 28px rgba(21, 32, 51, 0.06);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.btn-primary:active {
+  filter: brightness(0.95);
+}
+
+.btn-secondary {
+  background: var(--accent-2);
+  color: var(--accent-2-ink);
+  font-weight: 700;
 }
 
 .caption-text {
@@ -43,10 +87,10 @@ body {
 
 @keyframes flash {
   from {
-    background: rgba(255, 40, 60, 0.15);
+    background: rgba(214, 69, 69, 0.15);
   }
   to {
-    background: rgba(255, 40, 60, 0.55);
+    background: rgba(214, 69, 69, 0.5);
   }
 }
 
@@ -117,7 +161,6 @@ body {
   animation: gestureSmoke 2s ease-in-out infinite;
 }
 
-/* Sign-language interpreter — whole-figure motions per step */
 .signer-motion-idle {
   animation: signerIdleFig 2.4s ease-in-out infinite;
 }
@@ -210,7 +253,6 @@ body {
   }
 }
 
-/* legacy arm classes kept for safety */
 .signer-arm-right {
   transform-origin: 76px 80px;
 }
@@ -384,7 +426,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .alert-flash {
     animation: none;
-    background: rgba(255, 40, 60, 0.45);
+    background: rgba(214, 69, 69, 0.45);
   }
 
   .sign-pulse,
@@ -419,6 +461,12 @@ body {
   animation: signFadeIn 0.35s ease-out;
 }
 @keyframes signFadeIn {
-  from { opacity: 0.35; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0.35;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

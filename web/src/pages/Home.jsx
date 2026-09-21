@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useCamera } from '../hooks/useCamera'
 import { useHands } from '../hooks/useHands'
 import { useSharedMic } from '../hooks/useSharedMic'
@@ -34,7 +33,6 @@ export default function Home({ lockedRole = null }) {
   const [pulseToken, setPulseToken] = useState(0)
   const [badgePulse, setBadgePulse] = useState(false)
   const [rolePulse, setRolePulse] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [cameraFacing, setCameraFacing] = useState(() =>
     dedicated || settings.sendEnabled ? 'user' : settings.safetyEnabled ? 'environment' : 'user',
   )
@@ -314,68 +312,18 @@ export default function Home({ lockedRole = null }) {
         {sendOn && <HandGuide visible={hands.trackingQuality === 'lost'} />}
       </PermissionGate>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
-        <div>
-          <p className="text-lg font-bold text-white drop-shadow">{title}</p>
-          <p className="text-xs text-white/70">
-            {dedicated
-              ? `${ROLE_LABELS[lockedRole]}${settings.roomId ? ` · ${settings.roomId}` : ''}`
-              : `STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
-          </p>
-          {dedicated ? (
-            <div className="mt-2">
-              <SyncBadge state={syncState} />
-            </div>
-          ) : null}
-        </div>
-        <div className="pointer-events-auto relative">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="rounded-lg bg-black/45 px-3 py-2 text-sm font-semibold text-white"
-          >
-            المزيد
-          </button>
-          {menuOpen ? (
-            <div className="absolute left-0 top-full mt-2 min-w-[10rem] overflow-hidden rounded-xl bg-[#0b1220]/95 ring-1 ring-white/15 shadow-xl">
-              <Link
-                to="/lab"
-                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
-                onClick={() => setMenuOpen(false)}
-              >
-                تجربة الأفتار
-              </Link>
-              <Link
-                to="/screens"
-                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
-                onClick={() => setMenuOpen(false)}
-              >
-                شاشتين
-              </Link>
-              <Link
-                to="/guide"
-                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
-                onClick={() => setMenuOpen(false)}
-              >
-                تعليمات
-              </Link>
-              <Link
-                to="/settings"
-                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
-                onClick={() => setMenuOpen(false)}
-              >
-                إعدادات
-              </Link>
-              <Link
-                to="/about"
-                className="block px-4 py-2.5 text-sm text-white hover:bg-white/10"
-                onClick={() => setMenuOpen(false)}
-              >
-                عن المشروع
-              </Link>
-            </div>
-          ) : null}
-        </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <p className="font-brand text-sm font-semibold text-white/90 drop-shadow">{title}</p>
+        <p className="text-xs text-white/65">
+          {dedicated
+            ? `${ROLE_LABELS[lockedRole]}${settings.roomId ? ` · ${settings.roomId}` : ''}`
+            : `STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
+        </p>
+        {dedicated ? (
+          <div className="mt-2">
+            <SyncBadge state={syncState} />
+          </div>
+        ) : null}
       </div>
 
       {sendOn && <TrackingBadge quality={hands.trackingQuality} />}
@@ -401,8 +349,8 @@ export default function Home({ lockedRole = null }) {
             sendOn ? 'bottom-56' : 'bottom-40'
           }`}
         >
-          <div className="mx-auto max-w-xl rounded-2xl border border-[#3ecf8e]/40 bg-[#0d2a1c]/95 px-4 py-3 text-center shadow-lg">
-            <p className="mb-1 text-xs font-semibold text-[#3ecf8e]">الشخص بالإشارة</p>
+          <div className="mx-auto max-w-xl rounded-2xl border border-[#C45C26]/45 bg-[rgba(21,32,51,0.9)] px-4 py-3 text-center shadow-lg">
+            <p className="mb-1 text-xs font-semibold text-[#E8A078]">الشخص بالإشارة</p>
             <p className="text-lg font-bold text-white">
               {remotePersonPhrase.fingers
                 ? `${remotePersonPhrase.fingers} أصابع · ${remotePersonPhrase.text}`
@@ -442,7 +390,7 @@ export default function Home({ lockedRole = null }) {
             sendOn ? 'top-[10.5rem]' : 'top-[7.25rem]'
           }`}
         >
-          <div className="rounded-full bg-[#ff3b4e]/90 px-3 py-1.5 text-sm font-semibold text-white shadow-md">
+          <div className="rounded-full bg-[var(--danger)] px-3 py-1.5 text-sm font-semibold text-white shadow-md">
             اقترب من حاجز…
           </div>
         </div>
