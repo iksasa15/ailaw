@@ -1,4 +1,10 @@
 const DEFAULT_API = 'http://localhost:8000'
+/** Backend tunnel baked into production builds (Cloudflare quick tunnel). */
+export const BUILTIN_API =
+  String(import.meta.env.VITE_API_URL || 'https://highest-asks-takes-dom.trycloudflare.com').replace(
+    /\/$/,
+    '',
+  )
 
 /** True when running Vite HTTPS with the local /api → :8000 proxy. */
 export function hasLocalApiProxy() {
@@ -30,11 +36,22 @@ function isSameOriginApi(url) {
   }
 }
 
+function isStaleHostedApi(url) {
+  if (!url) return true
+  if (isSameOriginApi(url)) return true
+  if (isInsecureHttp(url)) return true
+  return false
+}
+
 function defaultApiBase() {
   if (import.meta.env.VITE_API_URL) return String(import.meta.env.VITE_API_URL).replace(/\/$/, '')
-  // Local Vite HTTPS only — production hosts (Vercel) have no /api backend.
+  // Local Vite HTTPS only — use same-origin proxy.
   if (typeof window !== 'undefined' && window.location.protocol === 'https:' && hasLocalApiProxy()) {
     return proxyApiBase()
+  }
+  // Hosted frontend → baked-in tunnel
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && !hasLocalApiProxy()) {
+    return BUILTIN_API
   }
   return DEFAULT_API
 }
@@ -66,10 +83,10 @@ function shouldForceProxy(url) {
 export function getApiBase() {
   const stored = (localStorage.getItem('apiBase') || '').replace(/\/$/, '')
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    // Production: do not silently rewrite to useless same-origin /api
+    // Production: prefer stored https tunnel, else baked-in BUILTIN_API
     if (!hasLocalApiProxy()) {
-      if (stored && isSameOriginApi(stored)) return stored
-      return stored || (import.meta.env.VITE_API_URL || '')
+      if (stored && !isStaleHostedApi(stored)) return stored
+      return BUILTIN_API
     }
     if (shouldForceProxy(stored)) {
       const proxy = proxyApiBase()

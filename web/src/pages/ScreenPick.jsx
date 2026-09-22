@@ -14,7 +14,7 @@ import {
 export default function ScreenPick() {
   const { settings, update } = useSettings()
   const navigate = useNavigate()
-  const [apiDraft, setApiDraft] = useState(settings.apiBase || getApiBase())
+  const [apiDraft, setApiDraft] = useState(() => settings.apiBase || getApiBase())
   const [healthOK, setHealthOK] = useState(null)
   const [healthDetail, setHealthDetail] = useState('لم يُفحص بعد')
   const [checking, setChecking] = useState(false)

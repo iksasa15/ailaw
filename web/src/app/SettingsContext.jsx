@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { LAWYER_PHRASES, PERSON_PHRASES, mergePhraseMap } from '../hooks/useFingerPhrases'
+import { BUILTIN_API } from '../services/api'
 
 const SettingsContext = createContext(null)
 
 const PHRASE_PACK = 'accident-case-v1'
 
 const DEFAULTS = {
-  apiBase: '',
+  apiBase: BUILTIN_API,
   roomId: '',
   language: 'ar',
   fontScale: 1,
@@ -49,21 +50,25 @@ export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(load)
 
   // Local Vite HTTPS: force same-origin /api proxy (mixed content).
-  // Production hosts (Vercel) have no backend — keep https:// tunnels as-is.
+  // Production: bake in Cloudflare tunnel URL and replace stale /api entries.
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.location.protocol !== 'https:') return
     if (!import.meta.env.DEV) {
-      // Clear stale same-origin /api that was auto-set on Vercel
       const stored = (localStorage.getItem('apiBase') || settings.apiBase || '').replace(/\/$/, '')
+      let stale = !stored
       try {
         const u = new URL(stored, window.location.origin)
-        if (u.origin === window.location.origin && (u.pathname === '/api' || u.pathname.endsWith('/api'))) {
-          localStorage.removeItem('apiBase')
-          setSettings((s) => (s.apiBase ? { ...s, apiBase: '' } : s))
-        }
+        stale =
+          !stored ||
+          u.protocol === 'http:' ||
+          (u.origin === window.location.origin && (u.pathname === '/api' || u.pathname.endsWith('/api')))
       } catch {
-        /* ignore */
+        stale = true
+      }
+      if (stale) {
+        localStorage.setItem('apiBase', BUILTIN_API)
+        setSettings((s) => (s.apiBase === BUILTIN_API ? s : { ...s, apiBase: BUILTIN_API }))
       }
       return
     }
