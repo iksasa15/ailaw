@@ -65,26 +65,26 @@ export function SignCoachAvatar({
 
   const stage = (
     <div
-      className={`overflow-hidden rounded-2xl bg-[var(--panel)] ring-1 ring-[var(--panel-ring)] shadow-xl ${
-        mode === 'panel' ? 'w-full' : 'w-full max-w-lg backdrop-blur-sm'
+      className={`overflow-hidden rounded-xl bg-[var(--panel)] ring-1 ring-[var(--panel-ring)] shadow-lg ${
+        mode === 'panel' ? 'w-full' : 'w-[9.5rem] backdrop-blur-sm'
       }`}
     >
-      <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
-        <p className="text-[11px] font-bold text-[var(--highlight)]">
-          {isLetterMode ? 'تهجئة إشارة (أبجدية)' : 'مترجم الإشارة'}
+      <div className={`flex items-center justify-between gap-1 ${mode === 'panel' ? 'px-3 pt-2.5' : 'px-2 pt-1.5'}`}>
+        <p className={`font-bold text-[var(--highlight)] ${mode === 'panel' ? 'text-[11px]' : 'text-[9px]'}`}>
+          {isLetterMode ? 'تهجئة' : 'مترجم'}
         </p>
         {hasSign ? (
-          <p className="text-[11px] text-white/55">
-            {isLetterMode ? 'حرف' : 'إشارة'} {stepIdx + 1} من {clips.length}
+          <p className={`text-white/55 ${mode === 'panel' ? 'text-[11px]' : 'text-[8px]'}`}>
+            {stepIdx + 1}/{clips.length}
           </p>
-        ) : (
+        ) : mode === 'panel' ? (
           <p className="text-[11px] text-white/45">بانتظار كلام المحامي</p>
-        )}
+        ) : null}
       </div>
 
       <div
         className={`relative overflow-hidden bg-[#0b1220] ${
-          mode === 'panel' ? 'aspect-[4/3]' : 'aspect-[5/4]'
+          mode === 'panel' ? 'aspect-[4/3]' : 'aspect-square'
         }`}
       >
         {hasSign && current && !mediaMissing && isImage ? (
@@ -92,7 +92,7 @@ export function SignCoachAvatar({
             key={`${current.src}-${stepIdx}`}
             src={current.src}
             alt={current.label}
-            className="absolute inset-0 h-full w-full object-contain bg-white p-3"
+            className={`absolute inset-0 h-full w-full object-contain bg-white ${mode === 'panel' ? 'p-3' : 'p-1.5'}`}
             onError={() => setMediaMissing(true)}
           />
         ) : null}
@@ -114,62 +114,90 @@ export function SignCoachAvatar({
         ) : null}
 
         {hasSign && current && mediaMissing ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-            <p className="text-4xl font-bold text-white">{current.label}</p>
-            <p className="text-sm text-white/55">تعذّر تحميل صورة الحرف</p>
+          <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center">
+            <p className={`font-bold text-white ${mode === 'panel' ? 'text-4xl' : 'text-lg'}`}>{current.label}</p>
+            {mode === 'panel' ? <p className="text-sm text-white/55">تعذّر تحميل صورة الحرف</p> : null}
           </div>
         ) : null}
 
         {!hasSign ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(15,118,110,0.22)] text-3xl text-[var(--highlight)]">
+          <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center">
+            <div
+              className={`flex items-center justify-center rounded-full bg-[rgba(15,118,110,0.22)] text-[var(--highlight)] ${
+                mode === 'panel' ? 'h-20 w-20 text-3xl' : 'h-10 w-10 text-lg'
+              }`}
+            >
               ◌
             </div>
-            <p className="text-sm text-white/60">سيظهر هنا مترجم الإشارة</p>
+            {mode === 'panel' ? (
+              <p className="text-sm text-white/60">سيظهر هنا مترجم الإشارة</p>
+            ) : (
+              <p className="text-[9px] leading-3 text-white/55">بانتظار الكلام</p>
+            )}
           </div>
         ) : null}
 
         {hasSign && current && !mediaMissing ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8">
-            <p className="text-center text-2xl font-bold text-white">{current.label}</p>
+          <div
+            className={`pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent ${
+              mode === 'panel' ? 'px-3 pb-3 pt-8' : 'px-1.5 pb-1.5 pt-4'
+            }`}
+          >
+            <p className={`text-center font-bold text-white ${mode === 'panel' ? 'text-2xl' : 'text-xs'}`}>
+              {current.label}
+            </p>
           </div>
         ) : null}
       </div>
 
-      <div className="space-y-2 px-3 py-3 text-right">
-        {hasSign ? (
-          <>
-            <p className="text-[11px] font-semibold text-white/50">
-              {isLetterMode ? 'كلام خارج النص — تهجئة حرفاً حرفاً' : 'ترجمة كلام المحامي'}
+      {mode === 'panel' || hasSign ? (
+        <div className={`space-y-1 text-right ${mode === 'panel' ? 'px-3 py-3' : 'px-1.5 py-1.5'}`}>
+          {hasSign ? (
+            <>
+              {mode === 'panel' ? (
+                <p className="text-[11px] font-semibold text-white/50">
+                  {isLetterMode ? 'كلام خارج النص — تهجئة حرفاً حرفاً' : 'ترجمة كلام المحامي'}
+                </p>
+              ) : null}
+              <p
+                className={`font-bold text-white ${
+                  mode === 'panel' ? 'text-base leading-6' : 'line-clamp-2 text-[10px] leading-3'
+                }`}
+              >
+                {lawyerPhrase?.text}
+              </p>
+              {clips.length > 1 ? (
+                <div
+                  className={`flex flex-wrap justify-end gap-1 overflow-y-auto ${
+                    mode === 'panel' ? 'max-h-24 pt-1' : 'max-h-10 pt-0.5'
+                  }`}
+                >
+                  {clips.map((c, i) => (
+                    <button
+                      key={`${c.label}-${i}`}
+                      type="button"
+                      className={`rounded-md font-semibold ${
+                        mode === 'panel' ? 'px-2 py-1 text-xs' : 'px-1 py-0.5 text-[8px]'
+                      } ${i === stepIdx ? 'bg-[var(--accent)] text-white' : 'bg-white/10 text-white/70'}`}
+                      onClick={() => {
+                        setMediaMissing(false)
+                        setStepIdx(i)
+                      }}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="text-sm leading-6 text-white/75">
+              عبارات السيناريو تظهر كإشارات جاهزة. أي كلام{' '}
+              <strong className="text-white">خارج النص</strong> يُهجَّأ بأبجدية لغة الإشارة.
             </p>
-            <p className="text-base font-bold leading-6 text-white">{lawyerPhrase?.text}</p>
-            {clips.length > 1 ? (
-              <div className="flex max-h-24 flex-wrap justify-end gap-1 overflow-y-auto pt-1">
-                {clips.map((c, i) => (
-                  <button
-                    key={`${c.label}-${i}`}
-                    type="button"
-                    className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                      i === stepIdx ? 'bg-[var(--accent)] text-white' : 'bg-white/10 text-white/70'
-                    }`}
-                    onClick={() => {
-                      setMediaMissing(false)
-                      setStepIdx(i)
-                    }}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <p className="text-sm leading-6 text-white/75">
-            عبارات السيناريو تظهر كإشارات جاهزة. أي كلام{' '}
-            <strong className="text-white">خارج النص</strong> يُهجَّأ بأبجدية لغة الإشارة.
-          </p>
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
     </div>
   )
 
@@ -178,7 +206,7 @@ export function SignCoachAvatar({
   }
 
   return (
-    <div className="pointer-events-auto absolute inset-x-3 bottom-[11.25rem] z-[25] flex justify-center">
+    <div className="pointer-events-auto absolute bottom-24 end-3 z-[25]">
       {stage}
     </div>
   )

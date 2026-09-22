@@ -4,7 +4,7 @@ export function CaptionBubble({ text, partial, raised = false }) {
   return (
     <div
       className={`pointer-events-none absolute inset-x-3 z-20 ${
-        raised ? 'bottom-[11.5rem]' : 'bottom-[9.5rem]'
+        raised ? 'bottom-28' : 'bottom-20'
       }`}
     >
       <div
@@ -44,7 +44,7 @@ export function TrackingBadge({ quality }) {
   }
   const item = map[quality] || map.lost
   return (
-    <div className="pointer-events-none absolute inset-x-4 top-[4.25rem] z-20 flex justify-center">
+    <div className="pointer-events-none absolute inset-x-4 top-[11.75rem] z-20 flex justify-center">
       <div className={`rounded-full px-3 py-1.5 text-sm font-semibold shadow-md transition-colors ${item.cls}`}>
         {item.text}
       </div>
@@ -60,7 +60,7 @@ export function RoleBadge({ role, holdProgress = 0, pulse = false, onToggle }) {
   const seconds = Math.min(5, Math.ceil(holdProgress * 5))
 
   return (
-    <div className="pointer-events-none absolute inset-x-4 top-[7rem] z-20 flex flex-col items-center gap-1.5">
+    <div className="pointer-events-none absolute inset-x-4 top-[14.25rem] z-20 flex flex-col items-center gap-1.5">
       <div className="pointer-events-auto flex items-center gap-2">
         <div
           className={`rounded-full px-3 py-1.5 text-sm font-semibold shadow-md transition-all ${

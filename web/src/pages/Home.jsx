@@ -375,19 +375,52 @@ export default function Home({ lockedRole = null }) {
         {sendOn && <HandGuide visible={hands.trackingQuality === 'lost'} />}
       </PermissionGate>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <p className="font-brand text-sm font-bold text-white/95 drop-shadow">{title}</p>
-        <p className="text-xs text-white/65">
-          {dedicated
+      <BottomBar
+        dedicated={dedicated}
+        title={title}
+        subtitle={
+          dedicated
             ? `${ROLE_LABELS[lockedRole]}${settings.roomId ? ` · ${settings.roomId}` : ''}`
-            : `STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`}
-        </p>
-        {dedicated ? (
-          <div className="mt-2">
-            <SyncBadge state={syncState} />
-          </div>
-        ) : null}
-      </div>
+            : `STT: ${useWs ? 'Whisper' : useBrowser ? 'المتصفح' : 'إيقاف'}`
+        }
+        syncBadge={dedicated ? <SyncBadge state={syncState} /> : null}
+        receiveOn={settings.receiveEnabled}
+        sendOn={sendOn}
+        safetyOn={settings.safetyEnabled}
+        translateOn={translateVisible}
+        lettersOn={spellLetters}
+        onToggleReceive={() => update({ receiveEnabled: !settings.receiveEnabled })}
+        onToggleSend={() => {
+          if (dedicated) return
+          const next = !settings.sendEnabled
+          if (next) unlockTts()
+          update({ sendEnabled: next })
+          setCameraFacing(next ? 'user' : settings.safetyEnabled ? 'environment' : 'user')
+        }}
+        onToggleSafety={() => {
+          const next = !settings.safetyEnabled
+          update({ safetyEnabled: next })
+        }}
+        onToggleTranslate={() => setTranslateVisible((v) => !v)}
+        onToggleLetters={() => {
+          setSpellLetters((v) => !v)
+          setTranslateVisible(true)
+        }}
+        cameraFacing={cameraFacing}
+        onFlipCamera={() =>
+          setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
+        }
+        sttStatus={sttStatus}
+        sttError={sttError}
+        onRetryStt={() => {
+          mic.start()
+          stt.start?.()
+        }}
+        onClear={() => {
+          stt.clearText()
+          if (spellLetters) alphabet.clear()
+        }}
+      />
 
       {sendOn && <TrackingBadge quality={hands.trackingQuality} />}
       {sendOn && !dedicated ? (
@@ -420,11 +453,7 @@ export default function Home({ lockedRole = null }) {
         onSend={sendAlphabetToLawyer}
       />
       {lockedRole === 'lawyer' && remotePersonPhrase?.text ? (
-        <div
-          className={`pointer-events-none absolute inset-x-4 z-30 flex justify-center ${
-            sendOn ? 'bottom-[13.5rem]' : 'bottom-[11.5rem]'
-          }`}
-        >
+        <div className="pointer-events-none absolute inset-x-4 bottom-28 z-30 flex justify-center">
           <div className="mx-auto max-w-xl rounded-2xl border border-[var(--accent)]/45 bg-[var(--panel)] px-4 py-3 text-center shadow-lg">
             <p className="mb-1 text-xs font-semibold text-[var(--highlight)]">الشخص بالإشارة</p>
             <p className="text-lg font-bold text-white">
@@ -463,56 +492,12 @@ export default function Home({ lockedRole = null }) {
       />
       <AlertToast alert={safetyAlert} onDismiss={clearSafetyAlert} />
       {settings.safetyEnabled && obstacle.near && !safetyAlert ? (
-        <div
-          className={`pointer-events-none absolute inset-x-4 z-20 flex justify-center ${
-            sendOn ? 'top-[10.5rem]' : 'top-[7.25rem]'
-          }`}
-        >
+        <div className="pointer-events-none absolute inset-x-4 top-[17rem] z-20 flex justify-center">
           <div className="rounded-full bg-[var(--danger)] px-3 py-1.5 text-sm font-semibold text-white shadow-md">
             اقترب من حاجز…
           </div>
         </div>
       ) : null}
-
-      <BottomBar
-        dedicated={dedicated}
-        receiveOn={settings.receiveEnabled}
-        sendOn={sendOn}
-        safetyOn={settings.safetyEnabled}
-        translateOn={translateVisible}
-        lettersOn={spellLetters}
-        onToggleReceive={() => update({ receiveEnabled: !settings.receiveEnabled })}
-        onToggleSend={() => {
-          if (dedicated) return
-          const next = !settings.sendEnabled
-          if (next) unlockTts()
-          update({ sendEnabled: next })
-          setCameraFacing(next ? 'user' : settings.safetyEnabled ? 'environment' : 'user')
-        }}
-        onToggleSafety={() => {
-          const next = !settings.safetyEnabled
-          update({ safetyEnabled: next })
-        }}
-        onToggleTranslate={() => setTranslateVisible((v) => !v)}
-        onToggleLetters={() => {
-          setSpellLetters((v) => !v)
-          setTranslateVisible(true)
-        }}
-        cameraFacing={cameraFacing}
-        onFlipCamera={() =>
-          setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))
-        }
-        sttStatus={sttStatus}
-        sttError={sttError}
-        onRetryStt={() => {
-          mic.start()
-          stt.start?.()
-        }}
-        onClear={() => {
-          stt.clearText()
-          if (spellLetters) alphabet.clear()
-        }}
-      />
     </div>
   )
 }
