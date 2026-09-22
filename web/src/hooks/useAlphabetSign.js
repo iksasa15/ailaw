@@ -139,21 +139,23 @@ export function classifyAlphabetLetter(landmarks) {
 }
 
 /**
- * عند تفعيل وضع الحروف: يتعرّف على شكل الحرف من الكاميرا ويكتبه على الشاشة.
+ * عند تفعيل وضع الحروف: يتعرّف على شكل الحرف من الكاميرا
+ * ولا يكتبه إلا بعد ثبات نفس الحرف holdMs (افتراضي 3 ثوانٍ).
  */
 export function useAlphabetSign({
   landmarksRef,
   enabled = false,
   trackingQuality = 'lost',
   intervalMs = 100,
-  stableNeed = 7,
-  appendCooldownMs = 900,
+  holdMs = 3000,
+  appendCooldownMs = 500,
 } = {}) {
   const [letter, setLetter] = useState(null)
   const [text, setText] = useState('')
   const [pulse, setPulse] = useState(false)
+  const [holdProgress, setHoldProgress] = useState(0)
 
-  const streakRef = useRef({ letter: null, count: 0 })
+  const holdRef = useRef({ letter: null, startedAt: 0 })
   const lastAppendAtRef = useRef(0)
   const lastAppendLetterRef = useRef('')
   const qualityRef = useRef(trackingQuality)
@@ -161,8 +163,9 @@ export function useAlphabetSign({
 
   useEffect(() => {
     if (!enabled || trackingQuality === 'lost') {
-      streakRef.current = { letter: null, count: 0 }
+      holdRef.current = { letter: null, startedAt: 0 }
       setLetter(null)
+      setHoldProgress(0)
     }
   }, [enabled, trackingQuality])
 
@@ -170,65 +173,67 @@ export function useAlphabetSign({
     if (!enabled) return undefined
     const id = window.setInterval(() => {
       if (qualityRef.current === 'lost') {
+        holdRef.current = { letter: null, startedAt: 0 }
         setLetter(null)
+        setHoldProgress(0)
         return
       }
       const lm = landmarksRef?.current
       const hit = classifyAlphabetLetter(lm)
-      if (!hit?.letter) {
-        streakRef.current = { letter: null, count: 0 }
-        setLetter(null)
-        return
-      }
-
-      const s = streakRef.current
-      if (s.letter === hit.letter) s.count += 1
-      else {
-        s.letter = hit.letter
-        s.count = 1
-      }
-
-      if (s.count >= Math.max(3, Math.floor(stableNeed / 2))) {
-        setLetter({ letter: hit.letter, confidence: hit.confidence })
-      }
-
-      if (s.count < stableNeed) return
       const now = Date.now()
-      // كف مفتوح ثابت → مسافة
-      if (hit.letter === 'س' || hit.letter === 'ش') {
-        // لا تكتب س/ش مكررة بسرعة؛ مسافة عند ثبات أطول
-        if (s.count === stableNeed + 4 && now - lastAppendAtRef.current > 1200) {
-          setText((t) => (t.endsWith(' ') ? t : `${t} `))
-          lastAppendAtRef.current = now
-          lastAppendLetterRef.current = ' '
-          setPulse(true)
-          window.setTimeout(() => setPulse(false), 280)
-        }
-      }
 
-      if (now - lastAppendAtRef.current < appendCooldownMs) return
-      if (lastAppendLetterRef.current === hit.letter && now - lastAppendAtRef.current < appendCooldownMs * 2) {
+      if (!hit?.letter) {
+        holdRef.current = { letter: null, startedAt: 0 }
+        setLetter(null)
+        setHoldProgress(0)
         return
       }
+
+      const hold = holdRef.current
+      if (hold.letter !== hit.letter) {
+        hold.letter = hit.letter
+        hold.startedAt = now
+        setHoldProgress(0)
+      }
+
+      const elapsed = now - hold.startedAt
+      const progress = Math.min(1, elapsed / holdMs)
+      setHoldProgress(progress)
+      setLetter({ letter: hit.letter, confidence: hit.confidence })
+
+      if (elapsed < holdMs) return
+      if (now - lastAppendAtRef.current < appendCooldownMs) return
+      if (
+        lastAppendLetterRef.current === hit.letter &&
+        now - lastAppendAtRef.current < appendCooldownMs * 2
+      ) {
+        return
+      }
+
       lastAppendAtRef.current = now
       lastAppendLetterRef.current = hit.letter
       setText((t) => `${t}${hit.letter}`)
       setPulse(true)
       window.setTimeout(() => setPulse(false), 280)
+      // إعادة العدّ لنفس الحرف إن ثبّت مجدداً
+      hold.startedAt = now
+      setHoldProgress(0)
     }, intervalMs)
 
     return () => window.clearInterval(id)
-  }, [enabled, landmarksRef, intervalMs, stableNeed, appendCooldownMs])
+  }, [enabled, landmarksRef, intervalMs, holdMs, appendCooldownMs])
 
   const clear = () => {
     setText('')
     setLetter(null)
+    setHoldProgress(0)
     lastAppendLetterRef.current = ''
+    holdRef.current = { letter: null, startedAt: 0 }
   }
 
   const backspace = () => {
     setText((t) => t.slice(0, -1))
   }
 
-  return { letter, text, pulse, clear, backspace, setText }
+  return { letter, text, pulse, holdProgress, clear, backspace, setText }
 }

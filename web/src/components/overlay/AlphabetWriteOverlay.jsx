@@ -5,6 +5,7 @@ export function AlphabetWriteOverlay({
   letter = null,
   text = '',
   pulse = false,
+  holdProgress = 0,
   visible = false,
   sending = false,
   sent = false,
@@ -16,6 +17,7 @@ export function AlphabetWriteOverlay({
   if (!visible) return null
   const clip = letter?.letter ? LETTER_SIGN_CLIPS[letter.letter] : null
   const canSend = Boolean(String(text || '').trim()) && !sending
+  const holding = holdProgress > 0 && holdProgress < 1
 
   return (
     <div className="pointer-events-none absolute inset-x-3 top-[4.75rem] z-[28] flex flex-col items-center gap-2">
@@ -43,8 +45,21 @@ export function AlphabetWriteOverlay({
               </span>
             ) : null}
           </p>
+          {holding ? (
+            <div className="mt-2">
+              <p className="mb-1 text-[11px] text-white/55">
+                ثبّت الحرف… {Math.ceil((1 - holdProgress) * 3)}ث
+              </p>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                <div
+                  className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-100"
+                  style={{ width: `${Math.round(holdProgress * 100)}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
           <p className="mt-1 line-clamp-2 text-base font-bold leading-6 text-white/95">
-            {text || <span className="font-normal text-white/40">شكّل حرفاً باليد ليُكتب هنا</span>}
+            {text || <span className="font-normal text-white/40">شكّل حرفاً وثبّته 3 ثوانٍ ليُكتب</span>}
           </p>
           {sent ? (
             <p className="mt-1 text-[11px] font-semibold text-[#3ecf8e]">تم الإرسال للمحامي ✓</p>

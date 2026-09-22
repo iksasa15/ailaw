@@ -19,7 +19,7 @@ const FINGER_COLORS = {
   palm: '#94a3b8',
 }
 
-const WASM_ROOT = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm'
+const WASM_ROOT = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm'
 const MODEL_URL =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 
@@ -222,17 +222,32 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
       const vision = await FilesetResolver.forVisionTasks(WASM_ROOT)
       if (cancelled) return
 
-      const landmarker = await HandLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: MODEL_URL,
-          delegate: 'GPU',
-        },
-        runningMode: 'VIDEO',
-        numHands: maxHands,
-        minHandDetectionConfidence: 0.65,
-        minHandPresenceConfidence: 0.65,
-        minTrackingConfidence: 0.65,
-      })
+      let landmarker
+      try {
+        landmarker = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: MODEL_URL,
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numHands: maxHands,
+          minHandDetectionConfidence: 0.65,
+          minHandPresenceConfidence: 0.65,
+          minTrackingConfidence: 0.65,
+        })
+      } catch {
+        landmarker = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: MODEL_URL,
+            delegate: 'CPU',
+          },
+          runningMode: 'VIDEO',
+          numHands: maxHands,
+          minHandDetectionConfidence: 0.65,
+          minHandPresenceConfidence: 0.65,
+          minTrackingConfidence: 0.65,
+        })
+      }
       if (cancelled) {
         landmarker.close?.()
         return
@@ -312,12 +327,11 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
         const video = videoRef?.current
         const landmarkerNow = landmarkerRef.current
         if (video && landmarkerNow && video.readyState >= 2) {
-          const t = video.currentTime
-          // detectForVideo requires strictly increasing timestamps
-          if (t !== lastVideoTimeRef.current) {
-            lastVideoTimeRef.current = t
+          const nowMs = performance.now()
+          if (nowMs > lastVideoTimeRef.current) {
+            lastVideoTimeRef.current = nowMs
             try {
-              const result = landmarkerNow.detectForVideo(video, performance.now())
+              const result = landmarkerNow.detectForVideo(video, nowMs)
               processResults(result?.landmarks || [])
             } catch {
               /* ignore frame errors */

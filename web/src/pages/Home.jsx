@@ -410,6 +410,7 @@ export default function Home({ lockedRole = null }) {
         letter={alphabet.letter}
         text={alphabet.text}
         pulse={alphabet.pulse}
+        holdProgress={alphabet.holdProgress}
         sending={alphabetSending}
         sent={alphabetSent}
         onClear={alphabet.clear}
