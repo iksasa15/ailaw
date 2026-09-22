@@ -124,6 +124,16 @@ export default function Home({ lockedRole = null }) {
     trackingQuality: hands.trackingQuality,
   })
 
+  // Finger phrases win; ARSL only as high-confidence supplement when no finger accept
+  const sendResult =
+    finger.result?.accepted
+      ? finger.result
+      : settings.arslEnabled && arsl.result?.accepted && (arsl.result.confidence || 0) >= 0.45
+        ? arsl.result
+        : finger.result || (settings.arslEnabled ? arsl.result : null)
+
+  const { speak, unlock: unlockTts } = useTts({ cooldownMs: 1600 })
+
   const sendAlphabetToLawyer = useCallback(async () => {
     const msg = String(alphabet.text || '').trim()
     if (!msg || alphabetSending) return
@@ -159,15 +169,6 @@ export default function Home({ lockedRole = null }) {
     unlockTts,
   ])
 
-  // Finger phrases win; ARSL only as high-confidence supplement when no finger accept
-  const sendResult =
-    finger.result?.accepted
-      ? finger.result
-      : settings.arslEnabled && arsl.result?.accepted && (arsl.result.confidence || 0) >= 0.45
-        ? arsl.result
-        : finger.result || (settings.arslEnabled ? arsl.result : null)
-
-  const { speak, unlock: unlockTts } = useTts({ cooldownMs: 1600 })
   const ambient = useAmbient({
     enabled: settings.safetyEnabled && mic.status === 'ready',
     stream: mic.stream,
