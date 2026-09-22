@@ -28,19 +28,24 @@ export default function PairJoin() {
 
   if (error) {
     return (
-      <div className="app-bg flex h-full flex-col items-center justify-center gap-4 px-6">
-        <p className="font-semibold text-[var(--danger)]">{error}</p>
-        <a href="/screens" className="btn-primary rounded-xl px-4 py-3">
-          العودة للجلسة
-        </a>
+      <div className="app-bg flex h-full flex-col items-center justify-center gap-5 px-6 text-center">
+        <div className="app-surface w-full max-w-sm rounded-2xl p-6">
+          <p className="font-brand text-sm font-bold text-[var(--accent)]">النظارة الذكية</p>
+          <p className="mt-3 text-lg font-bold text-[var(--danger)]">{error}</p>
+          <a href="/screens" className="btn-primary mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl text-base">
+            العودة للجلسة
+          </a>
+        </div>
       </div>
     )
   }
 
   if (!target) {
     return (
-      <div className="app-bg flex h-full items-center justify-center text-[var(--ink)]">
-        جاري الانضمام…
+      <div className="app-bg flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--accent)]/25" aria-hidden />
+        <p className="font-semibold text-[var(--ink)]">جاري الانضمام…</p>
+        <p className="text-sm text-[var(--muted)]">يتم تطبيق دعوة الجلسة</p>
       </div>
     )
   }

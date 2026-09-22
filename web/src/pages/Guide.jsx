@@ -112,13 +112,13 @@ export default function Guide() {
       <div className="mx-auto max-w-lg space-y-5 pb-10">
         <PageHeader title="التعليمات" subtitle="كيف تستخدم العدسة والإشارات" backTo="/more" />
 
-        <p className="leading-7 text-[var(--ink)]/80">
+        <p className="app-surface rounded-2xl px-4 py-3 leading-7 text-[var(--ink)]/85">
           سيناريو قضية: بدّل الدور بالتثبيت 5 ثوانٍ، ثم تحدّث بعبارات الأصابع.
         </p>
 
         <section
           id="vocab"
-          className="space-y-4 rounded-2xl border border-[rgba(196,92,38,0.35)] bg-[var(--accent)]/8 p-4"
+          className="space-y-4 rounded-2xl border border-[rgba(15,118,110,0.3)] bg-[var(--accent)]/8 p-4"
         >
           <div>
             <p className="text-xs font-semibold text-[var(--accent)]">إرسال · قضية</p>

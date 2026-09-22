@@ -9,7 +9,7 @@ export function CaptionBubble({ text, partial, raised = false }) {
     >
       <div
         className="mx-auto max-w-xl rounded-2xl px-4 py-3.5 text-center shadow-lg ring-1 ring-white/15"
-        style={{ background: 'var(--caption-bg, rgba(21,32,51,0.78))' }}
+        style={{ background: 'var(--caption-bg)' }}
       >
         {text ? (
           <p

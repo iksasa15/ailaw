@@ -164,7 +164,7 @@ export default function Lab() {
       <div className="mx-auto flex min-h-full max-w-md flex-col gap-4">
         <PageHeader title="المعمل" subtitle="سيناريو قضية واقعي + مترجم إشارة" />
 
-        <section className="app-surface rounded-2xl p-4 ring-1 ring-[rgba(196,92,38,0.28)]">
+        <section className="app-surface rounded-2xl p-4 ring-1 ring-[rgba(15,118,110,0.22)]">
           <div className="mb-1 flex items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-[var(--ink)]">{SCENARIO_TITLE}</h2>
@@ -221,8 +221,8 @@ export default function Lab() {
             <div
               className={`mt-4 rounded-xl px-3 py-3 ${
                 current.role === 'lawyer'
-                  ? 'bg-[rgba(196,92,38,0.12)] ring-1 ring-[rgba(196,92,38,0.35)]'
-                  : 'bg-[rgba(36,74,115,0.12)] ring-1 ring-[rgba(36,74,115,0.3)]'
+                  ? 'bg-[rgba(15,118,110,0.1)] ring-1 ring-[rgba(15,118,110,0.32)]'
+                  : 'bg-[rgba(30,91,184,0.1)] ring-1 ring-[rgba(30,91,184,0.28)]'
               }`}
             >
               <div className="mb-1 flex items-center justify-between gap-2">
@@ -282,15 +282,15 @@ export default function Lab() {
         </section>
 
         {personLine ? (
-          <section className="rounded-2xl bg-[#152033] px-4 py-4 text-center text-white shadow-lg">
-            <p className="text-xs font-semibold text-[#E8A078]">الشخص بالإشارة → صوت للمحامي</p>
+          <section className="rounded-2xl bg-[var(--panel)] px-4 py-4 text-center text-white shadow-lg ring-1 ring-[var(--panel-ring)]">
+            <p className="text-xs font-semibold text-[var(--highlight)]">الشخص بالإشارة → صوت للمحامي</p>
             <p className="mt-1 text-xl font-bold">
               {personLine.fingers} أصابع · {personLine.text}
             </p>
           </section>
         ) : null}
 
-        <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(196,92,38,0.25)]">
+        <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(15,118,110,0.2)]">
           <div className="mb-2 flex items-center justify-between gap-2 px-1">
             <h2 className="text-base font-bold text-[var(--ink)]">مترجم الإشارة (للموكّل)</h2>
             <button

@@ -1,23 +1,69 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyahsans-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyahsans-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyahsans-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyahsans-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyahsans-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --bg: #e6ecf2;
-  --bg-soft: #f4f7fa;
-  --surface: rgba(255, 255, 255, 0.72);
+  --bg: #e8f1f4;
+  --bg-soft: #f3f8fa;
+  --surface: rgba(255, 255, 255, 0.78);
   --surface-solid: #ffffff;
-  --ink: #152033;
-  --muted: #5a6b7d;
-  --accent: #c45c26;
-  --accent-ink: #fff8f3;
-  --accent-2: #2f6fed;
-  --accent-2-ink: #f3f7ff;
-  --danger: #d64545;
-  --ring: rgba(21, 32, 51, 0.1);
-  --caption-bg: rgba(21, 32, 51, 0.78);
+  --ink: #0b1c24;
+  --muted: #4a6570;
+  --accent: #0f766e;
+  --accent-ink: #f0fdfa;
+  --accent-soft: #14b8a6;
+  --accent-2: #1e5bb8;
+  --accent-2-ink: #eff6ff;
+  --danger: #dc2626;
+  --ring: rgba(11, 28, 36, 0.1);
+  --caption-bg: rgba(11, 28, 36, 0.82);
+  --panel: rgba(11, 28, 36, 0.92);
+  --panel-ring: rgba(15, 118, 110, 0.4);
+  --highlight: #5eead4;
   --font-scale: 1;
   --tabbar-h: 4.25rem;
-  --font-ui: "Cairo", system-ui, sans-serif;
-  --font-brand: "El Messiri", "Cairo", sans-serif;
+  --font-ui: "Thmanyah Sans", system-ui, sans-serif;
+  --font-brand: "Thmanyah Sans", system-ui, sans-serif;
+  --radius-lg: 1.25rem;
+  --shadow-soft: 0 10px 32px rgba(11, 28, 36, 0.08);
 }
 
 * {
@@ -46,33 +92,35 @@ body {
 
 .app-bg {
   background:
-    radial-gradient(120% 80% at 100% -10%, rgba(47, 111, 237, 0.14), transparent 55%),
-    radial-gradient(90% 70% at -15% 110%, rgba(196, 92, 38, 0.12), transparent 50%),
-    linear-gradient(165deg, var(--bg-soft) 0%, var(--bg) 55%, #dfe7ef 100%);
+    radial-gradient(110% 75% at 100% -8%, rgba(30, 91, 184, 0.12), transparent 55%),
+    radial-gradient(85% 65% at -12% 108%, rgba(15, 118, 110, 0.14), transparent 52%),
+    linear-gradient(168deg, var(--bg-soft) 0%, var(--bg) 52%, #dce9ee 100%);
 }
 
 .app-surface {
   background: var(--surface);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 28px rgba(21, 32, 51, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(165deg, var(--accent-soft) 0%, var(--accent) 100%);
   color: var(--accent-ink);
   font-weight: 700;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
 }
 
 .btn-primary:active {
-  filter: brightness(0.95);
+  filter: brightness(0.96);
 }
 
 .btn-secondary {
-  background: var(--accent-2);
+  background: linear-gradient(165deg, #3b82f6 0%, var(--accent-2) 100%);
   color: var(--accent-2-ink);
   font-weight: 700;
+  box-shadow: 0 8px 20px rgba(30, 91, 184, 0.22);
 }
 
 .caption-text {
@@ -87,10 +135,10 @@ body {
 
 @keyframes flash {
   from {
-    background: rgba(214, 69, 69, 0.15);
+    background: rgba(220, 38, 38, 0.15);
   }
   to {
-    background: rgba(214, 69, 69, 0.5);
+    background: rgba(220, 38, 38, 0.5);
   }
 }
 
@@ -426,7 +474,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .alert-flash {
     animation: none;
-    background: rgba(214, 69, 69, 0.45);
+    background: rgba(220, 38, 38, 0.45);
   }
 
   .sign-pulse,

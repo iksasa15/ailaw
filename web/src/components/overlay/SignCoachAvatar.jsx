@@ -65,12 +65,12 @@ export function SignCoachAvatar({
 
   const stage = (
     <div
-      className={`overflow-hidden rounded-2xl bg-[rgba(21,32,51,0.92)] ring-1 ring-[rgba(196,92,38,0.35)] shadow-xl ${
+      className={`overflow-hidden rounded-2xl bg-[var(--panel)] ring-1 ring-[var(--panel-ring)] shadow-xl ${
         mode === 'panel' ? 'w-full' : 'w-full max-w-lg backdrop-blur-sm'
       }`}
     >
       <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
-        <p className="text-[11px] font-bold text-[#E8A078]">
+        <p className="text-[11px] font-bold text-[var(--highlight)]">
           {isLetterMode ? 'تهجئة إشارة (أبجدية)' : 'مترجم الإشارة'}
         </p>
         {hasSign ? (
@@ -122,7 +122,7 @@ export function SignCoachAvatar({
 
         {!hasSign ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#243552] text-3xl text-[#E8A078]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(15,118,110,0.22)] text-3xl text-[var(--highlight)]">
               ◌
             </div>
             <p className="text-sm text-white/60">سيظهر هنا مترجم الإشارة</p>

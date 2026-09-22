@@ -22,7 +22,7 @@ export function AlphabetWriteOverlay({
   return (
     <div className="pointer-events-none absolute inset-x-3 top-[4.75rem] z-[28] flex flex-col items-center gap-2">
       <div
-        className={`flex w-full max-w-md items-center gap-3 rounded-2xl bg-[rgba(21,32,51,0.92)] px-3 py-2.5 shadow-xl ring-1 ring-[rgba(196,92,38,0.4)] ${
+        className={`flex w-full max-w-md items-center gap-3 rounded-2xl bg-[var(--panel)] px-3 py-2.5 shadow-xl ring-1 ring-[var(--panel-ring)] ${
           pulse ? 'sign-pulse' : ''
         }`}
       >
@@ -36,7 +36,7 @@ export function AlphabetWriteOverlay({
           )}
         </div>
         <div className="min-w-0 flex-1 text-right">
-          <p className="text-[11px] font-semibold text-[#E8A078]">اكتب بالحروف · لغة الإشارة</p>
+          <p className="text-[11px] font-semibold text-[var(--highlight)]">اكتب بالحروف · لغة الإشارة</p>
           <p className="mt-0.5 text-3xl font-black text-white">
             {letter?.letter || '—'}
             {letter?.confidence != null ? (
@@ -80,7 +80,7 @@ export function AlphabetWriteOverlay({
           type="button"
           onClick={onBackspace}
           disabled={!text}
-          className="min-h-11 rounded-xl bg-[#D64545]/90 px-4 text-sm font-bold text-white disabled:opacity-40"
+          className="min-h-11 rounded-xl bg-[var(--danger)]/90 px-4 text-sm font-bold text-white disabled:opacity-40"
         >
           مسح الحرف
         </button>

@@ -29,10 +29,20 @@ export default function More() {
             <Link
               key={item.to}
               to={item.to}
-              className="app-surface block rounded-2xl px-4 py-4 text-right transition active:scale-[0.99]"
+              className="app-surface group flex items-center justify-between gap-3 rounded-2xl px-4 py-4 text-right transition active:scale-[0.99]"
             >
-              <p className="text-lg font-bold text-[var(--ink)]">{item.title}</p>
-              <p className="mt-1 text-sm text-[var(--muted)]">{item.body}</p>
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-[var(--ink)]">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{item.body}</p>
+              </div>
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] transition group-active:scale-95"
+                aria-hidden
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M14 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
             </Link>
           ))}
         </div>

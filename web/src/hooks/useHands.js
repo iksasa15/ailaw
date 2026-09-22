@@ -11,12 +11,12 @@ const HAND_EDGES = [
 ]
 
 const FINGER_COLORS = {
-  thumb: '#E8A078',
-  index: '#C45C26',
-  middle: '#2F6FED',
-  ring: '#7B8FA8',
-  pinky: '#D64545',
-  palm: '#94a3b8',
+  thumb: '#5EEAD4',
+  index: '#0F766E',
+  middle: '#1E5BB8',
+  ring: '#64748B',
+  pinky: '#DC2626',
+  palm: '#94A3B8',
 }
 
 const WASM_ROOT = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm'

@@ -376,7 +376,7 @@ export default function Home({ lockedRole = null }) {
       </PermissionGate>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <p className="font-brand text-sm font-semibold text-white/90 drop-shadow">{title}</p>
+        <p className="font-brand text-sm font-bold text-white/95 drop-shadow">{title}</p>
         <p className="text-xs text-white/65">
           {dedicated
             ? `${ROLE_LABELS[lockedRole]}${settings.roomId ? ` · ${settings.roomId}` : ''}`
@@ -425,8 +425,8 @@ export default function Home({ lockedRole = null }) {
             sendOn ? 'bottom-56' : 'bottom-40'
           }`}
         >
-          <div className="mx-auto max-w-xl rounded-2xl border border-[#C45C26]/45 bg-[rgba(21,32,51,0.9)] px-4 py-3 text-center shadow-lg">
-            <p className="mb-1 text-xs font-semibold text-[#E8A078]">الشخص بالإشارة</p>
+          <div className="mx-auto max-w-xl rounded-2xl border border-[var(--accent)]/45 bg-[var(--panel)] px-4 py-3 text-center shadow-lg">
+            <p className="mb-1 text-xs font-semibold text-[var(--highlight)]">الشخص بالإشارة</p>
             <p className="text-lg font-bold text-white">
               {remotePersonPhrase.fingers
                 ? `${remotePersonPhrase.fingers} أصابع · ${remotePersonPhrase.text}`

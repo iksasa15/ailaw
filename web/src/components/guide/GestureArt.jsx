@@ -49,14 +49,14 @@ export function GestureArt({ name, number, emoji }) {
   const face = emoji || clip?.emoji || FINGER_EMOJI[n] || '✋'
   return (
     <div
-      className="flex h-full min-h-[9rem] w-full flex-col items-center justify-center gap-2 bg-[#dfe7ef] gesture-nod"
+      className="flex h-full min-h-[9rem] w-full flex-col items-center justify-center gap-2 bg-[#dce9ee] gesture-nod"
       role="img"
       aria-label={name || `إشارة ${n}`}
     >
       <span className="text-6xl leading-none" aria-hidden>
         {face}
       </span>
-      <span className="rounded-full bg-[rgba(196,92,38,0.15)] px-3 py-0.5 text-sm font-bold text-[var(--accent)]">
+      <span className="rounded-full bg-[rgba(15,118,110,0.14)] px-3 py-0.5 text-sm font-bold text-[var(--accent)]">
         {n}
       </span>
     </div>

@@ -12,7 +12,7 @@ export function AppShell() {
   return (
     <div className="app-bg flex h-full w-full justify-center">
       <div
-        className={`relative flex h-full w-full max-w-md flex-col overflow-hidden shadow-[0_0_0_1px_rgba(21,32,51,0.06)] ${
+        className={`relative flex h-full w-full max-w-md flex-col overflow-hidden shadow-[0_0_0_1px_rgba(11,28,36,0.06)] ${
           isLens ? 'bg-black' : ''
         }`}
       >

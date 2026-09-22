@@ -3,7 +3,7 @@
 function EmojiPanel({ emoji, title, subtitle, ariaLabel }) {
   return (
     <div
-      className="flex min-h-[7.5rem] flex-col items-center justify-center gap-2 rounded-xl bg-[#152033] px-4 py-5 text-center ring-1 ring-white/10"
+      className="flex min-h-[7.5rem] flex-col items-center justify-center gap-2 rounded-xl bg-[var(--panel)] px-4 py-5 text-center ring-1 ring-[var(--panel-ring)]"
       role="img"
       aria-label={ariaLabel || title}
     >
@@ -63,7 +63,7 @@ export function SvgSafety() {
 export function SvgBadges() {
   return (
     <div
-      className="grid grid-cols-3 gap-2 rounded-xl bg-[#152033] p-3 ring-1 ring-white/10"
+      className="grid grid-cols-3 gap-2 rounded-xl bg-[var(--panel)] p-3 ring-1 ring-[var(--panel-ring)]"
       role="img"
       aria-label="شارات التتبع"
     >
@@ -72,11 +72,11 @@ export function SvgBadges() {
         { e: '🤏', t: 'ضعيف' },
         { e: '✋', t: 'متثبتة' },
       ].map((b) => (
-        <div key={b.t} className="flex flex-col items-center gap-1 rounded-lg bg-[#dfe7ef] px-1 py-3">
+        <div key={b.t} className="flex flex-col items-center gap-1 rounded-lg bg-[#dce9ee] px-1 py-3">
           <span className="text-3xl" aria-hidden>
             {b.e}
           </span>
-          <span className="text-[11px] font-semibold text-white/80">{b.t}</span>
+          <span className="text-[11px] font-semibold text-[var(--ink)]">{b.t}</span>
         </div>
       ))}
     </div>
@@ -103,7 +103,7 @@ export function SvgHowToSend() {
   ]
   return (
     <div
-      className="flex items-center justify-between gap-1 rounded-xl bg-[#152033] px-3 py-4 ring-1 ring-white/10"
+      className="flex items-center justify-between gap-1 rounded-xl bg-[var(--panel)] px-3 py-4 ring-1 ring-[var(--panel-ring)]"
       role="img"
       aria-label="خطوات الإرسال والدور"
     >

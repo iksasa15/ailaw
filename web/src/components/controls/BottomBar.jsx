@@ -32,12 +32,12 @@ export function BottomBar({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`flex min-h-10 min-w-[3.9rem] flex-col items-center justify-center rounded-xl px-2 py-1.5 text-xs font-semibold disabled:opacity-40 ${
+      className={`flex min-h-11 min-w-[3.9rem] flex-col items-center justify-center rounded-xl px-2 py-1.5 text-xs font-bold disabled:opacity-40 ${
         active
           ? tone === 'blue'
-            ? 'bg-[var(--accent-2)] text-white'
-            : 'bg-[var(--accent)] text-white'
-          : 'bg-white/15 text-white'
+            ? 'bg-[var(--accent-2)] text-white shadow-md shadow-[var(--accent-2)]/30'
+            : 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/30'
+          : 'bg-white/12 text-white ring-1 ring-white/10'
       }`}
     >
       {active ? `${label} ●` : label}
@@ -48,7 +48,7 @@ export function BottomBar({
   const isBack = cameraFacing === 'environment'
 
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-8">
+    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-3 pb-2 pt-10">
       <div className="mx-auto flex max-w-md flex-wrap items-center justify-center gap-1.5">
         {btn(receiveOn, onToggleReceive, 'استقبال')}
         {!dedicated ? btn(sendOn, onToggleSend, 'إرسال') : null}
@@ -59,7 +59,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={onClear}
-          className="flex min-h-10 flex-col items-center justify-center rounded-xl bg-white/10 px-2.5 py-1.5 text-xs text-white"
+          className="flex min-h-11 flex-col items-center justify-center rounded-xl bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white ring-1 ring-white/10"
         >
           مسح
         </button>
