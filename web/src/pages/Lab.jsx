@@ -245,7 +245,7 @@ export default function Lab() {
             </div>
           ) : (
             <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-              اضغط «تشغيل السيناريو» لمشاهدة جلسة كاملة: ترحيب → تفاصيل → شهود → دليل → توكيل → متابعة.
+              اضغط «تشغيل السيناريو» لمشاهدة جلسة حادث مروري كاملة.
             </p>
           )}
 
@@ -340,7 +340,7 @@ export default function Lab() {
               className="min-h-[5rem] w-full rounded-xl border border-[var(--ring)] bg-white px-3 py-3 text-sm text-[var(--ink)]"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="مثال: أنا محاميك، تفضّل"
+              placeholder="مثال: السلام عليكم، أنا محاميك"
             />
           </label>
           <button
