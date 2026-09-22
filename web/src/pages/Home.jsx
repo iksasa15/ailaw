@@ -41,6 +41,8 @@ export default function Home({ lockedRole = null }) {
   const [localLawyerPhrase, setLocalLawyerPhrase] = useState(null)
   const [translateVisible, setTranslateVisible] = useState(true)
   const [spellLetters, setSpellLetters] = useState(false)
+  const [alphabetSending, setAlphabetSending] = useState(false)
+  const [alphabetSent, setAlphabetSent] = useState(false)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
   const lastRemoteSpokenRef = useRef('')
@@ -122,17 +124,40 @@ export default function Home({ lockedRole = null }) {
     trackingQuality: hands.trackingQuality,
   })
 
-  // عند الكتابة بالحروف: اعرض النص في مترجم الإشارة وحدث الجملة
-  useEffect(() => {
-    if (!spellLetters) return
-    const t = (alphabet.text || '').trim()
-    if (!t) return
-    setLocalLawyerPhrase({
-      text: t,
-      fingers: null,
-      at: Date.now(),
-    })
-  }, [alphabet.text, spellLetters])
+  const sendAlphabetToLawyer = useCallback(async () => {
+    const msg = String(alphabet.text || '').trim()
+    if (!msg || alphabetSending) return
+    setAlphabetSending(true)
+    setAlphabetSent(false)
+    unlockTts()
+    try {
+      await publishScenePhrase({
+        role: 'person',
+        text: msg,
+        fingers: null,
+        room: settings.roomId || undefined,
+      })
+      sceneMarkRef.current?.()
+      // شاشة الشخص: المحامي يسمع عبر الغرفة. غير ذلك انطق محلياً.
+      if (lockedRole !== 'person') {
+        speak(msg, { force: true })
+      }
+      setAlphabetSent(true)
+      alphabet.clear()
+      window.setTimeout(() => setAlphabetSent(false), 2500)
+    } catch {
+      /* ignore */
+    } finally {
+      setAlphabetSending(false)
+    }
+  }, [
+    alphabet,
+    alphabetSending,
+    lockedRole,
+    settings.roomId,
+    speak,
+    unlockTts,
+  ])
 
   // Finger phrases win; ARSL only as high-confidence supplement when no finger accept
   const sendResult =
@@ -385,9 +410,12 @@ export default function Home({ lockedRole = null }) {
         letter={alphabet.letter}
         text={alphabet.text}
         pulse={alphabet.pulse}
+        sending={alphabetSending}
+        sent={alphabetSent}
         onClear={alphabet.clear}
         onBackspace={alphabet.backspace}
         onSpace={() => alphabet.setText((t) => (t.endsWith(' ') ? t : `${t} `))}
+        onSend={sendAlphabetToLawyer}
       />
       {lockedRole === 'lawyer' && remotePersonPhrase?.text ? (
         <div

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 
 const HAND_EDGES = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -18,6 +19,10 @@ const FINGER_COLORS = {
   palm: '#94a3b8',
 }
 
+const WASM_ROOT = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm'
+const MODEL_URL =
+  'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
+
 function edgeColor(a, b) {
   if (a <= 4 && b <= 4) return FINGER_COLORS.thumb
   if ((a >= 5 && a <= 8) || (b >= 5 && b <= 8)) return FINGER_COLORS.index
@@ -25,21 +30,6 @@ function edgeColor(a, b) {
   if ((a >= 13 && a <= 16) || (b >= 13 && b <= 16)) return FINGER_COLORS.ring
   if ((a >= 17 && a <= 20) || (b >= 17 && b <= 20)) return FINGER_COLORS.pinky
   return FINGER_COLORS.palm
-}
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
-    }
-    const s = document.createElement('script')
-    s.src = src
-    s.async = true
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error(`Failed to load ${src}`))
-    document.head.appendChild(s)
-  })
 }
 
 function emaLandmarks(prev, next, alpha = 0.35) {
@@ -130,7 +120,6 @@ function drawHand(ctx, handDisplay, { pulse = false, quality = 'weak' } = {}) {
   const locked = quality === 'locked'
   const accent = locked ? 'rgba(62,207,142,0.95)' : 'rgba(251,191,36,0.9)'
 
-  // Soft palm highlight only (no heavy box / corners)
   const grad = ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius)
   grad.addColorStop(0, pulse ? 'rgba(62,207,142,0.4)' : locked ? 'rgba(62,207,142,0.22)' : 'rgba(251,191,36,0.16)')
   grad.addColorStop(1, 'rgba(0,0,0,0)')
@@ -139,22 +128,13 @@ function drawHand(ctx, handDisplay, { pulse = false, quality = 'weak' } = {}) {
   ctx.arc(cx, cy, radius * (pulse ? 1.15 : 1), 0, Math.PI * 2)
   ctx.fill()
 
-  // Thin oval outline around hand
   const box = handBounds(handDisplay, 22)
   ctx.save()
   ctx.strokeStyle = accent
   ctx.lineWidth = locked ? 2.5 : 2
   ctx.globalAlpha = 0.85
   ctx.beginPath()
-  ctx.ellipse(
-    box.x + box.w / 2,
-    box.y + box.h / 2,
-    box.w / 2,
-    box.h / 2,
-    0,
-    0,
-    Math.PI * 2,
-  )
+  ctx.ellipse(box.x + box.w / 2, box.y + box.h / 2, box.w / 2, box.h / 2, 0, 0, Math.PI * 2)
   ctx.stroke()
   ctx.restore()
 
@@ -187,22 +167,30 @@ function drawHand(ctx, handDisplay, { pulse = false, quality = 'weak' } = {}) {
   }
 }
 
+function mapLandmarks(hand) {
+  return hand.map((p) => [p.x, p.y, p.z ?? 0])
+}
+
+/**
+ * Hand tracking via MediaPipe Tasks Vision HandLandmarker (full model).
+ * Exposes the same [[x,y,z], ...] landmark shape as the legacy Hands API.
+ */
 export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken = 0 } = {}) {
   const [landmarks, setLandmarks] = useState(null)
   const [ready, setReady] = useState(false)
   const [trackingQuality, setTrackingQuality] = useState('lost')
   const landmarksRef = useRef(null)
-  const allHandsRef = useRef([]) // every smoothed hand (for two-hand finger phrases)
-  const smoothRef = useRef([]) // one smoothed hand per detected hand
-  const handsRef = useRef(null)
+  const allHandsRef = useRef([])
+  const smoothRef = useRef([])
+  const landmarkerRef = useRef(null)
   const rafRef = useRef(0)
   const canvasRef = useRef(null)
   const lastPublishRef = useRef(0)
+  const lastVideoTimeRef = useRef(-1)
   const stableFramesRef = useRef(0)
   const lostFramesRef = useRef(0)
   const qualityRef = useRef('lost')
   const pulseUntilRef = useRef(0)
-  const busyRef = useRef(false)
 
   useEffect(() => {
     if (pulseToken) pulseUntilRef.current = Date.now() + 450
@@ -218,43 +206,43 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
       smoothRef.current = []
       qualityRef.current = 'lost'
       cancelAnimationFrame(rafRef.current)
-      handsRef.current?.close?.()
-      handsRef.current = null
+      landmarkerRef.current?.close?.()
+      landmarkerRef.current = null
       const canvas = canvasRef.current
       if (canvas) {
         const ctx = canvas.getContext('2d')
         ctx?.clearRect(0, 0, canvas.width, canvas.height)
       }
-      return
+      return undefined
     }
 
     let cancelled = false
 
     async function boot() {
-      const cdn = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands'
-      await loadScript(`${cdn}/hands.js`)
+      const vision = await FilesetResolver.forVisionTasks(WASM_ROOT)
       if (cancelled) return
-      const HandsCtor = window.Hands
-      if (!HandsCtor) throw new Error('MediaPipe Hands unavailable')
 
-      const hands = new HandsCtor({
-        locateFile: (file) => `${cdn}/${file}`,
+      const landmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: MODEL_URL,
+          delegate: 'GPU',
+        },
+        runningMode: 'VIDEO',
+        numHands: maxHands,
+        minHandDetectionConfidence: 0.65,
+        minHandPresenceConfidence: 0.65,
+        minTrackingConfidence: 0.65,
       })
-      // selfieMode false: landmarks match raw video; we CSS-mirror video+canvas together
-      hands.setOptions({
-        maxNumHands: maxHands,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.6,
-        selfieMode: false,
-      })
+      if (cancelled) {
+        landmarker.close?.()
+        return
+      }
 
-      hands.onResults((results) => {
-        if (cancelled) return
-        const rawHands = results.multiHandLandmarks || []
-        const mappedHands = rawHands.map((hand) => hand.map((p) => [p.x, p.y, p.z]))
+      landmarkerRef.current = landmarker
+      setReady(true)
 
-        // Smooth each hand independently; ArSL uses the first (primary) hand
+      const processResults = (rawHands) => {
+        const mappedHands = rawHands.map(mapLandmarks)
         const prevAll = smoothRef.current
         const smoothedHands = mappedHands.map((mapped, i) =>
           emaLandmarks(prevAll[i] || null, mapped, 0.35),
@@ -267,7 +255,6 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
 
         if (primary) {
           lostFramesRef.current = 0
-          // Average motion across all visible hands (supports two-hand demos)
           let motion = landmarkMotion(prevAll[0] || null, primary)
           if (smoothedHands[1]) {
             const m2 = landmarkMotion(prevAll[1] || null, smoothedHands[1])
@@ -318,22 +305,23 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
             quality: qualityRef.current,
           })
         })
-      })
+      }
 
-      handsRef.current = hands
-      setReady(true)
-
-      const loop = async () => {
+      const loop = () => {
         if (cancelled) return
         const video = videoRef?.current
-        if (video && video.readyState >= 2 && handsRef.current && !busyRef.current) {
-          busyRef.current = true
-          try {
-            await handsRef.current.send({ image: video })
-          } catch {
-            /* ignore */
-          } finally {
-            busyRef.current = false
+        const landmarkerNow = landmarkerRef.current
+        if (video && landmarkerNow && video.readyState >= 2) {
+          const t = video.currentTime
+          // detectForVideo requires strictly increasing timestamps
+          if (t !== lastVideoTimeRef.current) {
+            lastVideoTimeRef.current = t
+            try {
+              const result = landmarkerNow.detectForVideo(video, performance.now())
+              processResults(result?.landmarks || [])
+            } catch {
+              /* ignore frame errors */
+            }
           }
         }
         rafRef.current = requestAnimationFrame(loop)
@@ -341,13 +329,15 @@ export function useHands({ videoRef, enabled = false, maxHands = 2, pulseToken =
       rafRef.current = requestAnimationFrame(loop)
     }
 
-    boot().catch(() => setReady(false))
+    boot().catch(() => {
+      if (!cancelled) setReady(false)
+    })
 
     return () => {
       cancelled = true
       cancelAnimationFrame(rafRef.current)
-      handsRef.current?.close?.()
-      handsRef.current = null
+      landmarkerRef.current?.close?.()
+      landmarkerRef.current = null
     }
   }, [enabled, maxHands, videoRef])
 
