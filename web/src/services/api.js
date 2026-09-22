@@ -1,7 +1,7 @@
 const DEFAULT_API = 'http://localhost:8000'
 /** Backend tunnel baked into production builds (Cloudflare quick tunnel). */
 export const BUILTIN_API =
-  String(import.meta.env.VITE_API_URL || 'https://highest-asks-takes-dom.trycloudflare.com').replace(
+  String(import.meta.env.VITE_API_URL || 'https://dude-glasgow-chairman-appliances.trycloudflare.com').replace(
     /\/$/,
     '',
   )

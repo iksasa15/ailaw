@@ -20,9 +20,9 @@ export function AlphabetWriteOverlay({
   const holding = holdProgress > 0 && holdProgress < 1
 
   return (
-    <div className="pointer-events-none absolute inset-x-3 top-[11.5rem] z-[28] flex flex-col items-center gap-2">
+    <div className="pointer-events-none absolute start-3 top-[11.5rem] z-[28] flex w-[min(100%-1.5rem,16rem)] flex-col items-stretch gap-2">
       <div
-        className={`flex w-full max-w-md items-center gap-3 rounded-2xl bg-[var(--panel)] px-3 py-2.5 shadow-xl ring-1 ring-[var(--panel-ring)] ${
+        className={`flex w-full items-center gap-3 rounded-2xl bg-[var(--panel)] px-3 py-2.5 shadow-xl ring-1 ring-[var(--panel-ring)] ${
           pulse ? 'sign-pulse' : ''
         }`}
       >

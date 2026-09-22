@@ -206,7 +206,7 @@ export function SignCoachAvatar({
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-24 end-3 z-[25]">
+    <div className="pointer-events-auto absolute bottom-24 start-auto end-3 z-[25]">
       {stage}
     </div>
   )
