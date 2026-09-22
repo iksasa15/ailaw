@@ -51,13 +51,14 @@ export default function Settings() {
   }, [])
 
   async function saveApi() {
-    setApiBase(api)
-    update({ apiBase: api.replace(/\/$/, '') })
+    const cleaned = api.replace(/\/$/, '')
+    setApiBase(cleaned)
+    update({ apiBase: cleaned })
     try {
-      const h = await checkHealth()
+      const h = await checkHealth(cleaned)
       setHealth(h)
-    } catch {
-      setHealth({ status: 'error' })
+    } catch (e) {
+      setHealth({ status: 'error', detail: e.message })
     }
   }
 

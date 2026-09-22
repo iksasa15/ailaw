@@ -122,12 +122,20 @@ async function readJsonOrThrow(res, label) {
   }
 }
 
-export async function checkHealth() {
-  const base = getApiBase()
+export async function checkHealth(apiBaseOverride) {
+  const base = String(apiBaseOverride || getApiBase() || '').replace(/\/$/, '')
   if (!base) {
     throw new Error('لم يُحدد عنوان الخادم. ضع رابط Backend (نفق HTTPS) ثم احفظ.')
   }
-  const res = await fetch(`${base}/health`)
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && isInsecureHttp(base)) {
+    throw new Error('على HTTPS لا يمكن استخدام http:// — استخدم نفق Cloudflare/ngrok.')
+  }
+  let res
+  try {
+    res = await fetch(`${base}/health`, { mode: 'cors', cache: 'no-store' })
+  } catch {
+    throw new Error('تعذر الوصول للخادم (شبكة/CORS). تأكد أن النفق شغال.')
+  }
   return readJsonOrThrow(res, 'health')
 }
 

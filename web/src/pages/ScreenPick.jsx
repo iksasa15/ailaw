@@ -63,7 +63,18 @@ export default function ScreenPick() {
     const cleaned = apiDraft.trim().replace(/\/$/, '')
     setApiBase(cleaned)
     update({ apiBase: cleaned })
-    await runHealth()
+    setChecking(true)
+    try {
+      const h = await checkHealth(cleaned)
+      const ok = h.status === 'ok' || h.whisper != null
+      setHealthOK(ok)
+      setHealthDetail(ok ? 'متصل بالخادم ✓' : 'استجابة غير متوقعة')
+    } catch (e) {
+      setHealthOK(false)
+      setHealthDetail(`غير متصل — ${e.message || 'فشل الاتصال'}`)
+    } finally {
+      setChecking(false)
+    }
   }
 
   async function startSession(role = 'lawyer') {
