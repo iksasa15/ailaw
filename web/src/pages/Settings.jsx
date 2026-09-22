@@ -85,11 +85,17 @@ export default function Settings() {
             className="w-full rounded-xl border border-[var(--ring)] bg-white px-3 py-3 text-[var(--ink)]"
             value={api}
             onChange={(e) => setApi(e.target.value)}
-            placeholder="http://192.168.x.x:8000"
+            placeholder="https://xxxx.trycloudflare.com"
+            dir="ltr"
           />
           <button type="button" onClick={saveApi} className="btn-primary min-h-11 rounded-xl px-4">
             حفظ وفحص /health
           </button>
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && !import.meta.env.DEV ? (
+            <p className="text-xs leading-5 text-[var(--muted)]">
+              على الاستضافة ضع رابط نفق HTTPS للخادم المحلي — ليس عنوان موقع الواجهة.
+            </p>
+          ) : null}
           {health && (
             <p className="text-sm text-[var(--muted)]">
               الحالة: {health.status === 'ok' ? 'متصل' : 'غير متصل'}

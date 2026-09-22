@@ -48,10 +48,25 @@ function load() {
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(load)
 
-  // HTTPS page must use same-origin /api proxy (mixed content + WSS / no TLS on :8000).
+  // Local Vite HTTPS: force same-origin /api proxy (mixed content).
+  // Production hosts (Vercel) have no backend — keep https:// tunnels as-is.
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.location.protocol !== 'https:') return
+    if (!import.meta.env.DEV) {
+      // Clear stale same-origin /api that was auto-set on Vercel
+      const stored = (localStorage.getItem('apiBase') || settings.apiBase || '').replace(/\/$/, '')
+      try {
+        const u = new URL(stored, window.location.origin)
+        if (u.origin === window.location.origin && (u.pathname === '/api' || u.pathname.endsWith('/api'))) {
+          localStorage.removeItem('apiBase')
+          setSettings((s) => (s.apiBase ? { ...s, apiBase: '' } : s))
+        }
+      } catch {
+        /* ignore */
+      }
+      return
+    }
     const proxy = `${window.location.origin}/api`
     const stored = (localStorage.getItem('apiBase') || settings.apiBase || '').replace(/\/$/, '')
     let force = !stored || stored.startsWith('http://')

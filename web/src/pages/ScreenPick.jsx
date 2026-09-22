@@ -283,15 +283,23 @@ export default function ScreenPick() {
           </p>
           {(apiDraft.includes('localhost') || apiDraft.includes('127.0.0.1')) && (
             <p className="text-xs font-medium text-amber-700">
-              تنبيه: على الجوال استخدم IP الماك (مثل 192.168.x.x) وليس localhost.
+              تنبيه: على الجوال استخدم IP الجهاز (مثل 192.168.x.x) وليس localhost.
             </p>
           )}
-          {typeof window !== 'undefined' && window.location.protocol === 'https:' && (
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && !import.meta.env.DEV ? (
+            <p className="text-xs leading-5 text-[var(--ink)]/60">
+              هذا الموقع واجهة فقط. ضع هنا رابط{' '}
+              <strong className="text-[var(--ink)]">نفق HTTPS</strong> لخادم Backend على جهازك
+              (مثل Cloudflare Tunnel أو ngrok) — وليس{' '}
+              <span dir="ltr">/api</span> من نفس الموقع.
+            </p>
+          ) : null}
+          {typeof window !== 'undefined' && window.location.protocol === 'https:' && import.meta.env.DEV ? (
             <p className="text-xs text-[var(--ink)]/55">
-              على HTTPS يمكنك وضع:{' '}
+              على HTTPS المحلي يمكنك وضع:{' '}
               <span dir="ltr">{`${window.location.origin}/api`}</span>
             </p>
-          )}
+          ) : null}
         </section>
 
         {!hostRole ? (
