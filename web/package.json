@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "fonts:sync": "node -e \"const fs=require('fs');const p=require('path');const src=p.resolve('..','fonts');const dest=p.resolve('public','fonts');fs.mkdirSync(dest,{recursive:true});for(const f of fs.readdirSync(src).filter(n=>/\\.otf$/i.test(n)))fs.copyFileSync(p.join(src,f),p.join(dest,f));console.log('fonts synced')\""
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.0.1",

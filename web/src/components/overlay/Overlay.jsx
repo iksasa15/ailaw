@@ -4,7 +4,7 @@ export function CaptionBubble({ text, partial, raised = false }) {
   return (
     <div
       className={`pointer-events-none absolute inset-x-3 z-20 ${
-        raised ? 'bottom-40' : 'bottom-24'
+        raised ? 'bottom-[11.5rem]' : 'bottom-[9.5rem]'
       }`}
     >
       <div

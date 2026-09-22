@@ -178,7 +178,7 @@ export function SignCoachAvatar({
   }
 
   return (
-    <div className="pointer-events-auto absolute inset-x-3 bottom-[6.5rem] z-[25] flex justify-center">
+    <div className="pointer-events-auto absolute inset-x-3 bottom-[11.25rem] z-[25] flex justify-center">
       {stage}
     </div>
   )

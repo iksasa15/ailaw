@@ -422,7 +422,7 @@ export default function Home({ lockedRole = null }) {
       {lockedRole === 'lawyer' && remotePersonPhrase?.text ? (
         <div
           className={`pointer-events-none absolute inset-x-4 z-30 flex justify-center ${
-            sendOn ? 'bottom-56' : 'bottom-40'
+            sendOn ? 'bottom-[13.5rem]' : 'bottom-[11.5rem]'
           }`}
         >
           <div className="mx-auto max-w-xl rounded-2xl border border-[var(--accent)]/45 bg-[var(--panel)] px-4 py-3 text-center shadow-lg">
