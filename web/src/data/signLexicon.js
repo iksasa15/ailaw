@@ -1,10 +1,17 @@
 import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
 
-/** مقطع فيديو إشارة حقيقية تحت /signs/videos/ */
+/** مقطع فيديو إشارة تحت /signs/videos/ */
 const S = (file, label) => ({
   src: `/signs/videos/${file}.mp4`,
   label,
   type: 'video',
+})
+
+/** حرف أبجدية لغة الإشارة */
+const L = (file, label) => ({
+  src: `/signs/alphabet/${file}.jpg`,
+  label,
+  type: 'letter',
 })
 
 /** تسلسل إشارات لكل عبارة محامي (1–10) — سيناريو حادث مروري */
@@ -21,94 +28,107 @@ export const LAWYER_SIGN_CLIPS = {
   10: [S('word-follow', 'سأتابع'), S('word-case', 'القضية غداً')],
 }
 
-/** كلمات شائعة → فيديو إشارة */
-export const WORD_SIGN_CLIPS = {
-  أنا: S('word-ana', 'أنا'),
-  محامي: S('word-lawyer', 'محامي'),
-  محاميك: S('word-lawyer', 'محاميك'),
-  السلام: S('word-hello', 'سلام'),
-  عليكم: S('word-you', 'عليكم'),
-  ماذا: S('word-ask', 'ماذا'),
-  حدث: S('lawyer-03b', 'حدث'),
-  بالضبط: S('word-ask', 'بالضبط'),
-  أين: S('word-where', 'أين'),
-  وقع: S('word-where', 'وقع'),
-  الحادث: S('lawyer-05', 'الحادث'),
-  هل: S('word-ask', 'هل'),
-  لديك: S('word-you', 'لديك'),
-  تقرير: S('word-paper', 'تقرير'),
-  شرطة: S('word-paper', 'شرطة'),
-  من: S('word-ask', 'من'),
-  كان: S('word-you', 'كان'),
-  يقود: S('lawyer-02', 'يقود'),
-  السيارة: S('word-case', 'السيارة'),
-  أصيب: S('word-help', 'أصيب'),
-  أحد: S('word-you', 'أحد'),
-  سنطالب: S('word-protect', 'سنطالب'),
-  بالتعويض: S('word-case', 'تعويض'),
-  أحضر: S('word-please', 'أحضر'),
-  أوراق: S('word-paper', 'أوراق'),
-  التأمين: S('word-paper', 'تأمين'),
-  لا: S('word-no', 'لا'),
-  تتحدث: S('word-no', 'تتحدث'),
-  مع: S('word-you', 'مع'),
-  الطرف: S('word-you', 'الطرف'),
-  الآخر: S('word-you', 'الآخر'),
-  سأتابع: S('word-follow', 'سأتابع'),
-  القضية: S('word-case', 'قضية'),
-  غداً: S('word-when', 'غداً'),
-  غدا: S('word-when', 'غداً'),
-  تعرضت: S('word-help', 'تعرضت'),
-  لحادث: S('lawyer-05', 'حادث'),
-  اصطدم: S('lawyer-03b', 'اصطدم'),
-  بي: S('word-you', 'بي'),
-  الخلف: S('word-where', 'الخلف'),
-  عند: S('word-where', 'عند'),
-  الإشارة: S('word-ask', 'الإشارة'),
-  معي: S('word-you', 'معي'),
-  المرور: S('word-paper', 'المرور'),
-  كنت: S('word-ana', 'كنت'),
-  أقود: S('lawyer-02', 'أقود'),
-  أصبت: S('word-help', 'أصبت'),
-  في: S('word-where', 'في'),
-  رقبتي: S('word-help', 'رقبتي'),
-  أريد: S('word-please', 'أريد'),
-  تعويضاً: S('word-case', 'تعويض'),
-  عادلاً: S('word-yes', 'عادلاً'),
-  رفض: S('word-no', 'رفض'),
-  الدفع: S('word-paper', 'الدفع'),
-  يهددني: S('word-protect', 'يهددني'),
-  أعتمد: S('word-thank', 'أعتمد'),
-  عليك: S('word-you', 'عليك'),
-  شكرا: S('word-thank', 'شكراً'),
-  شكراً: S('word-thank', 'شكراً'),
-  نعم: S('word-yes', 'نعم'),
-  مرحبا: S('word-hello', 'مرحبا'),
-  مرحباً: S('word-hello', 'مرحبا'),
+/** أبجدية عربية بلغة الإشارة (من لوحة الحروف) */
+export const LETTER_SIGN_CLIPS = {
+  أ: L('alef', 'أ'),
+  ا: L('alef', 'ا'),
+  إ: L('alef', 'إ'),
+  آ: L('alef', 'آ'),
+  ٱ: L('alef', 'ا'),
+  ب: L('ba', 'ب'),
+  ت: L('ta', 'ت'),
+  ث: L('tha', 'ث'),
+  ج: L('jeem', 'ج'),
+  ح: L('ha', 'ح'),
+  خ: L('kha', 'خ'),
+  د: L('dal', 'د'),
+  ذ: L('dhal', 'ذ'),
+  ر: L('ra', 'ر'),
+  ز: L('zay', 'ز'),
+  س: L('seen', 'س'),
+  ش: L('sheen', 'ش'),
+  ص: L('sad', 'ص'),
+  ض: L('dad', 'ض'),
+  ط: L('tah', 'ط'),
+  ظ: L('zah', 'ظ'),
+  ع: L('ain', 'ع'),
+  غ: L('ghain', 'غ'),
+  ف: L('fa', 'ف'),
+  ق: L('qaf', 'ق'),
+  ك: L('kaf', 'ك'),
+  ل: L('lam', 'ل'),
+  م: L('meem', 'م'),
+  ن: L('noon', 'ن'),
+  ه: L('haa', 'ه'),
+  ة: L('ta_marbuta', 'ة'),
+  و: L('waw', 'و'),
+  ؤ: L('waw', 'ؤ'),
+  ي: L('ya', 'ي'),
+  ى: L('ya', 'ى'),
+  ئ: L('ya', 'ئ'),
+  لا: L('la', 'لا'),
 }
-
-const UNKNOWN = S('word-unknown', 'كلمة')
 
 function normalize(text) {
   return String(text || '')
+    .replace(/[\u064B-\u065F\u0670]/g, '') // tashkeel
     .replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
 
 /**
- * حوّل عبارة المحامي إلى تسلسل فيديوهات إشارة حقيقية.
+ * تهجئة نص بأبجدية لغة الإشارة حرفاً حرفاً.
+ * @returns {{ src: string, label: string, type: string }[]}
+ */
+export function fingerspellText(text, { maxLetters = 48 } = {}) {
+  const raw = normalize(text)
+  if (!raw) return []
+  const clips = []
+  const compact = raw.replace(/\s+/g, ' ')
+  let i = 0
+  while (i < compact.length && clips.length < maxLetters) {
+    const ch = compact[i]
+    if (ch === ' ') {
+      i += 1
+      continue
+    }
+    // digraph لا
+    if (ch === 'ل' && compact[i + 1] === 'ا') {
+      clips.push({ ...LETTER_SIGN_CLIPS.لا })
+      i += 2
+      continue
+    }
+    const mapped = LETTER_SIGN_CLIPS[ch]
+    if (mapped) clips.push({ ...mapped })
+    i += 1
+  }
+  return clips
+}
+
+/**
+ * حوّل عبارة إلى تسلسل إشارات.
+ * - داخل النص (1–10 / مطابقة عبارة): فيديوهات السيناريو
+ * - خارج النص أو spellLetters: تهجئة أبجدية لغة الإشارة
  * @returns {{ src: string, label: string, type: string }[] | null}
  */
-export function resolveSignClips(lawyerPhrase) {
+export function resolveSignClips(lawyerPhrase, { spellLetters = false } = {}) {
   if (!lawyerPhrase?.text && !(lawyerPhrase?.fingers >= 1)) return null
+
+  const raw = normalize(lawyerPhrase.text)
+
+  // زر «حروف» يجبر التهجئة الأبجدية دائماً
+  if (spellLetters) {
+    const text = raw || (lawyerPhrase?.fingers ? String(lawyerPhrase.fingers) : '')
+    const spelled = fingerspellText(text)
+    return spelled.length ? spelled : null
+  }
 
   const fingers = Number(lawyerPhrase.fingers)
   if (fingers >= 1 && fingers <= 10 && LAWYER_SIGN_CLIPS[fingers]) {
     return LAWYER_SIGN_CLIPS[fingers]
   }
 
-  const raw = normalize(lawyerPhrase.text)
   if (!raw) return null
 
   for (let i = 1; i <= 10; i += 1) {
@@ -117,14 +137,15 @@ export function resolveSignClips(lawyerPhrase) {
     }
   }
 
-  // partial phrase match
   for (let i = 1; i <= 10; i += 1) {
     const p = normalize(LAWYER_PHRASES[i])
-    if (p && (raw.includes(p) || p.includes(raw)) && LAWYER_SIGN_CLIPS[i]) {
+    // فقط إذا احتوى الكلام على العبارة كاملة (تجنّب مطابقة كلمات قصيرة)
+    if (p && raw.includes(p) && LAWYER_SIGN_CLIPS[i]) {
       return LAWYER_SIGN_CLIPS[i]
     }
   }
 
-  const words = raw.split(' ').filter(Boolean).slice(0, 8)
-  return words.map((w) => WORD_SIGN_CLIPS[w] || { ...UNKNOWN, label: w })
+  // خارج النص المكتوب → تهجئة إشارة حرفاً حرفاً
+  const spelled = fingerspellText(raw)
+  return spelled.length ? spelled : null
 }

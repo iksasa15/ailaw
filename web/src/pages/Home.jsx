@@ -38,6 +38,7 @@ export default function Home({ lockedRole = null }) {
   )
   const [localLawyerPhrase, setLocalLawyerPhrase] = useState(null)
   const [translateVisible, setTranslateVisible] = useState(true)
+  const [spellLetters, setSpellLetters] = useState(false)
   const lastSpokenRef = useRef('')
   const lastRoleSpokenRef = useRef('')
   const lastRemoteSpokenRef = useRef('')
@@ -381,6 +382,7 @@ export default function Home({ lockedRole = null }) {
             (!dedicated && (finger.role === 'person' || Boolean(lastLawyerPhrase?.text))))
         }
         lawyerPhrase={lastLawyerPhrase}
+        spellLetters={spellLetters}
       />
       <SignBadge
         label={
@@ -418,6 +420,7 @@ export default function Home({ lockedRole = null }) {
         sendOn={sendOn}
         safetyOn={settings.safetyEnabled}
         translateOn={translateVisible}
+        lettersOn={spellLetters}
         onToggleReceive={() => update({ receiveEnabled: !settings.receiveEnabled })}
         onToggleSend={() => {
           if (dedicated) return
@@ -431,6 +434,10 @@ export default function Home({ lockedRole = null }) {
           update({ safetyEnabled: next })
         }}
         onToggleTranslate={() => setTranslateVisible((v) => !v)}
+        onToggleLetters={() => {
+          setSpellLetters((v) => !v)
+          setTranslateVisible(true)
+        }}
         cameraFacing={cameraFacing}
         onFlipCamera={() =>
           setCameraFacing((f) => (f === 'user' ? 'environment' : 'user'))

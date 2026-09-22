@@ -24,6 +24,7 @@ export default function Lab() {
   const [backendWhisper, setBackendWhisper] = useState(false)
   const [stepIdx, setStepIdx] = useState(-1)
   const [autoPlay, setAutoPlay] = useState(false)
+  const [spellLetters, setSpellLetters] = useState(false)
   const lastSentRef = useRef('')
   const { speak, unlock } = useTts({ cooldownMs: 1200 })
 
@@ -290,8 +291,31 @@ export default function Lab() {
         ) : null}
 
         <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(196,92,38,0.25)]">
-          <h2 className="mb-2 px-1 text-base font-bold text-[var(--ink)]">مترجم الإشارة (للموكّل)</h2>
-          <SignCoachAvatar visible lawyerPhrase={lawyerPhrase} mode="panel" />
+          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+            <h2 className="text-base font-bold text-[var(--ink)]">مترجم الإشارة (للموكّل)</h2>
+            <button
+              type="button"
+              onClick={() => setSpellLetters((v) => !v)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
+                spellLetters
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'bg-white text-[var(--ink)] ring-1 ring-[var(--ring)]'
+              }`}
+            >
+              {spellLetters ? 'حروف ●' : 'حروف'}
+            </button>
+          </div>
+          <p className="mb-2 px-1 text-[11px] text-[var(--muted)]">
+            {spellLetters
+              ? 'الوضع: تهجئة كل الكلام بأبجدية لغة الإشارة'
+              : 'الوضع: عبارات السيناريو جاهزة — خارج النص يُهجَّأ بالحروف'}
+          </p>
+          <SignCoachAvatar
+            visible
+            lawyerPhrase={lawyerPhrase}
+            mode="panel"
+            spellLetters={spellLetters}
+          />
         </section>
 
         <section className="app-surface rounded-2xl p-4">
