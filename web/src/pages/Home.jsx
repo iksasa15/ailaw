@@ -6,6 +6,7 @@ import { useSttSocket } from '../hooks/useSttSocket'
 import { useBrowserStt } from '../hooks/useBrowserStt'
 import { useArsl } from '../hooks/useArsl'
 import { useFingerPhrases } from '../hooks/useFingerPhrases'
+import { useAlphabetSign } from '../hooks/useAlphabetSign'
 import { useTts } from '../hooks/useTts'
 import { useAmbient } from '../hooks/useAmbient'
 import { useObstacleProximity } from '../hooks/useObstacleProximity'
@@ -23,6 +24,7 @@ import {
 } from '../components/overlay/Overlay'
 import { SyncBadge } from '../components/overlay/SyncBadge'
 import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
+import { AlphabetWriteOverlay } from '../components/overlay/AlphabetWriteOverlay'
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
 
@@ -99,20 +101,39 @@ export default function Home({ lockedRole = null }) {
 
   const arsl = useArsl({
     landmarksRef: hands.landmarksRef,
-    enabled: Boolean(settings.arslEnabled) && sendOn && camera.status === 'ready',
+    enabled: Boolean(settings.arslEnabled) && sendOn && camera.status === 'ready' && !spellLetters,
     threshold: Math.max(0.45, settings.confidence),
     trackingQuality: hands.trackingQuality,
   })
   const finger = useFingerPhrases({
     landmarksRef: hands.landmarksRef,
     allHandsRef: hands.allHandsRef,
-    enabled: sendOn && camera.status === 'ready',
+    enabled: sendOn && camera.status === 'ready' && !spellLetters,
     trackingQuality: hands.trackingQuality,
     lawyerPhrases: settings.lawyerPhrases,
     personPhrases: settings.personPhrases,
     lockedRole: dedicated ? lockedRole : null,
     stableNeed: 10,
   })
+
+  const alphabet = useAlphabetSign({
+    landmarksRef: hands.landmarksRef,
+    enabled: spellLetters && sendOn && camera.status === 'ready',
+    trackingQuality: hands.trackingQuality,
+  })
+
+  // عند الكتابة بالحروف: اعرض النص في مترجم الإشارة وحدث الجملة
+  useEffect(() => {
+    if (!spellLetters) return
+    const t = (alphabet.text || '').trim()
+    if (!t) return
+    setLocalLawyerPhrase({
+      text: t,
+      fingers: null,
+      at: Date.now(),
+    })
+  }, [alphabet.text, spellLetters])
+
   // Finger phrases win; ARSL only as high-confidence supplement when no finger accept
   const sendResult =
     finger.result?.accepted
@@ -359,6 +380,15 @@ export default function Home({ lockedRole = null }) {
       ) : null}
 
       <CaptionBubble text={stt.text} partial={stt.partial} raised={sendOn} />
+      <AlphabetWriteOverlay
+        visible={spellLetters && sendOn}
+        letter={alphabet.letter}
+        text={alphabet.text}
+        pulse={alphabet.pulse}
+        onClear={alphabet.clear}
+        onBackspace={alphabet.backspace}
+        onSpace={() => alphabet.setText((t) => (t.endsWith(' ') ? t : `${t} `))}
+      />
       {lockedRole === 'lawyer' && remotePersonPhrase?.text ? (
         <div
           className={`pointer-events-none absolute inset-x-4 z-30 flex justify-center ${
@@ -448,7 +478,10 @@ export default function Home({ lockedRole = null }) {
           mic.start()
           stt.start?.()
         }}
-        onClear={stt.clearText}
+        onClear={() => {
+          stt.clearText()
+          if (spellLetters) alphabet.clear()
+        }}
       />
     </div>
   )
