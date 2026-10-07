@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>thmanyahsans-Light.otf</string>
+		<string>thmanyahsans-Regular.otf</string>
+		<string>thmanyahsans-Medium.otf</string>
+		<string>thmanyahsans-Bold.otf</string>
+		<string>thmanyahsans-Black.otf</string>
+	</array>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_ailaw-scene._tcp</string>
+		<string>_ailaw-scene._udp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>الكاميرا تلتقط إشارات يدك وتنبّهك للحواجز القريبة.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>المايك يحوّل كلام المحامي إلى نص ويرصد أصوات الخطر.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>التعرف على الكلام العربي يتم على جهازك بدون إنترنت.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>للاتصال المباشر بجوال المحامي أو الشخص القريب.</string>
+</dict>
+</plist>
