@@ -4,6 +4,7 @@ import UIKit
 @main
 struct AILawApp: App {
     @State private var settings = AppSettings()
+    @State private var engines = AppEngines()
 
     init() {
         #if DEBUG
@@ -15,6 +16,7 @@ struct AILawApp: App {
         WindowGroup {
             RootView()
                 .environment(settings)
+                .environment(engines)
         }
     }
 }
