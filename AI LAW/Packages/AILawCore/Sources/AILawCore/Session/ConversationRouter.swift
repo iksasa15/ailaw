@@ -62,8 +62,10 @@ public struct ConversationRouter {
 
     /// Lawyer speech (already debounced and cut to the last words) → sign translator.
     public mutating func speechSnippet(_ snippet: String, currentRole: Role, now: Int64) -> [LensAction] {
+        // In a session the lawyer phone is the only speech source: the person phone's mic would
+        // mostly hear echoes, so its sign translator shows only received lawyer messages.
         let isLawyerTalking = mode == .dedicated(.lawyer) || (mode == .solo && currentRole == .lawyer)
-        let isPersonListening = mode == .dedicated(.person) || (mode == .solo && currentRole == .person)
+        let isPersonListening = mode == .solo && currentRole == .person
         guard isLawyerTalking || isPersonListening else { return [] }
 
         let text = snippet.trimmingCharacters(in: .whitespacesAndNewlines)

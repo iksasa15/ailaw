@@ -95,6 +95,13 @@ import Testing
         #expect(r.speechSnippet("مرحبا", currentRole: .person, now: 1000) == [.showLawyerPhrase(x)])
     }
 
+    @Test func speechSnippetIgnoredOnDedicatedPersonPhone() {
+        // In a session the lawyer phone is the speech source; the person phone's mic would
+        // only hear echoes (including the lawyer phone speaking the person's own phrases).
+        var r = router(.dedicated(.person))
+        #expect(r.speechSnippet("أين وقع الحادث", currentRole: .person, now: 1000).isEmpty)
+    }
+
     @Test func alphabetSend() {
         var person = router(.dedicated(.person))
         #expect(person.alphabetSend("سلام", now: 1000) == [.publish(p(.person, "سلام", nil, 1000))])

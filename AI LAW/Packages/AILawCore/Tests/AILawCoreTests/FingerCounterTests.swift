@@ -36,6 +36,22 @@ import Testing
         #expect(abs(out[0][.wrist].x - (0.5 + 0.035)) < 1e-9)
     }
 
+    @Test func smootherKeepsHandsMatchedWhenOrderSwaps() {
+        // Vision does not keep a stable hand order between frames.
+        let left = HandFixture.hand(extended: HandFixture.allFive, origin: (0.25, 0.85))
+        let right = HandFixture.hand(extended: HandFixture.allFive, origin: (0.75, 0.85))
+        var smoother = HandSmoother()
+        var meter = TrackingQualityMeter()
+        var previous: [HandLandmarks] = []
+        for i in 0..<14 {
+            let out = smoother.smooth(i % 2 == 0 ? [left, right] : [right, left])
+            _ = meter.update(previous: previous, current: out)
+            previous = out
+            #expect(FingerCounter.count(hands: out) == 10)
+        }
+        #expect(meter.quality == .locked)
+    }
+
     @Test func motionIsOneWhenMissing() {
         #expect(landmarkMotion(nil, HandFixture.hand(extended: [])) == 1)
     }

@@ -140,10 +140,24 @@ public enum SignLexicon {
         let folded = fold(raw)
         let phrases = (1...10).compactMap { n in PhraseBook.defaultLawyer[n].map { (n, fold($0)) } }
         if let (n, _) = phrases.first(where: { $0.1 == folded }) { return lawyerClips[n] }
-        if let (n, _) = phrases.first(where: { !$0.1.isEmpty && folded.contains($0.1) }) { return lawyerClips[n] }
+        if let n = mostRecentContained(phrases, in: folded) { return lawyerClips[n] }
 
         let spelled = fingerspell(raw)
         return spelled.isEmpty ? nil : spelled
+    }
+
+    /// The live caption accumulates, so the newest phrase is the one ending rightmost
+    /// (ties: the longer phrase). The web picked the lowest-numbered match instead.
+    private static func mostRecentContained(_ phrases: [(Int, String)], in text: String) -> Int? {
+        var best: (n: Int, end: Int, length: Int)?
+        for (n, phrase) in phrases where !phrase.isEmpty {
+            guard let range = text.range(of: phrase, options: .backwards) else { continue }
+            let end = text.distance(from: text.startIndex, to: range.upperBound)
+            if best == nil || end > best!.end || (end == best!.end && phrase.count > best!.length) {
+                best = (n, end, phrase.count)
+            }
+        }
+        return best?.n
     }
 
     private static func collapseSpaces(_ s: String) -> String {

@@ -7,8 +7,11 @@ public struct HandSmoother: Sendable {
         self.alpha = alpha
     }
 
+    /// Hands are ordered by wrist x first: Vision (unlike MediaPipe) does not keep a stable
+    /// hand order between frames, and slots are matched by index.
     public mutating func smooth(_ hands: [HandLandmarks]) -> [HandLandmarks] {
-        let out = hands.enumerated().map { i, hand -> HandLandmarks in
+        let ordered = hands.sorted { $0[.wrist].x < $1[.wrist].x }
+        let out = ordered.enumerated().map { i, hand -> HandLandmarks in
             guard i < previous.count else { return hand }
             let prev = previous[i]
             let blended = zip(hand.points, prev.points).map { p, q in

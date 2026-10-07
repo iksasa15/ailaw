@@ -23,6 +23,12 @@ import Testing
         #expect(SignLexicon.fold("أيـن") == "اين")
     }
 
+    @Test func resolvePicksMostRecentContainedPhrase() {
+        // The live caption accumulates: the newest phrase is the rightmost one.
+        #expect(SignLexicon.resolve(text: "السلام عليكم أنا محاميك ماذا حدث بالضبط", fingers: nil, spellLetters: false) == SignLexicon.lawyerClips[2])
+        #expect(SignLexicon.resolve(text: "أين وقع الحادث هل لديك تقرير شرطة", fingers: nil, spellLetters: false) == SignLexicon.lawyerClips[4])
+    }
+
     @Test func fingerspellWord() {
         #expect(SignLexicon.fingerspell("مرحبا").map(\.resource) == ["meem", "ra", "ha", "ba", "alef"])
         #expect(SignLexicon.fingerspell("مرحبا").allSatisfy { $0.kind == .letter })
