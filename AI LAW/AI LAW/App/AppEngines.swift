@@ -5,4 +5,7 @@ import Observation
 final class AppEngines {
     let camera = CameraEngine()
     let hands = HandTracker()
+    let audio = AudioHub()
+    let speech = SpeechEngine()
+    let speak = SpeakEngine()
 }
