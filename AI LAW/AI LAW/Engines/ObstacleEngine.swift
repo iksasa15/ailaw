@@ -13,6 +13,8 @@ final class ObstacleEngine {
     @ObservationIgnored private weak var camera: CameraEngine?
     @ObservationIgnored private weak var hub: AudioHub?
 
+    var isAttached: Bool { camera != nil }
+
     func attach(to camera: CameraEngine, hub: AudioHub) {
         detach()
         self.camera = camera

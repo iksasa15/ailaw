@@ -8,6 +8,8 @@ import os
 @Observable
 final class SoundAlertEngine {
     private(set) var alert: DangerAlert?
+    /// Increments on every alert so the UI reacts once per alert, even for identical ones.
+    private(set) var alertToken = 0
     private(set) var isRunning = false
 
     @ObservationIgnored private var core: SoundAnalysisCore?
@@ -40,6 +42,7 @@ final class SoundAlertEngine {
     private func raise(_ newAlert: DangerAlert) {
         guard isRunning else { return }
         alert = newAlert
+        alertToken += 1
         Haptics.danger()
     }
 }

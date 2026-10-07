@@ -27,7 +27,7 @@ struct RootView: View {
     private var tabs: some View {
         TabView(selection: $tab) {
             Tab("عدسة", systemImage: "eyeglasses", value: AppTab.lens) {
-                CameraCheckScreen()
+                LensScreen(mode: .solo)
             }
             Tab("جلسة", systemImage: "iphone.gen3.radiowaves.left.and.right", value: AppTab.session) {
                 PlaceholderScreen(title: "جلسة")
@@ -66,36 +66,5 @@ private struct OnboardingPlaceholder: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.bg)
-    }
-}
-
-/// Temporary Lens tab (Task 11): camera + skeleton + debug numbers. Replaced by LensView.
-private struct CameraCheckScreen: View {
-    @Environment(AppEngines.self) private var engines
-
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            if let card = PermissionCard.camera(engines.camera.status, retry: { Task { await engines.camera.start() } }) {
-                card
-            } else {
-                CameraPreview(session: engines.camera.session).ignoresSafeArea()
-                HandSkeletonView(hands: engines.hands.hands, quality: engines.hands.quality, bufferSize: engines.camera.bufferSize)
-                    .ignoresSafeArea()
-                VStack {
-                    DebugHUD(hands: engines.hands.hands, quality: engines.hands.quality, fps: engines.hands.fps)
-                    Spacer()
-                }
-                .padding()
-            }
-        }
-        .task {
-            await engines.camera.start()
-            engines.hands.attach(to: engines.camera)
-        }
-        .onDisappear {
-            engines.hands.detach()
-            engines.camera.stop()
-        }
     }
 }

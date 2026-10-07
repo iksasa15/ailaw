@@ -13,6 +13,8 @@ final class HandTracker {
     @ObservationIgnored private let processor = HandPoseProcessor()
     @ObservationIgnored private weak var camera: CameraEngine?
 
+    var isAttached: Bool { camera != nil }
+
     func attach(to camera: CameraEngine) {
         detach()
         self.camera = camera
