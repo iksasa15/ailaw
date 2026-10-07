@@ -8,4 +8,6 @@ final class AppEngines {
     let audio = AudioHub()
     let speech = SpeechEngine()
     let speak = SpeakEngine()
+    let sound = SoundAlertEngine()
+    let obstacle = ObstacleEngine()
 }
