@@ -36,8 +36,10 @@ final class LensViewModel {
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var speechDebounce: Task<Void, Never>?
     @ObservationIgnored private var sentReset: Task<Void, Never>?
-    @ObservationIgnored private var lastFingerTick = 0.0
-    @ObservationIgnored private var lastWordTick = 0.0
+    @ObservationIgnored private var nextFingerTick = 0.0
+    @ObservationIgnored private var nextWordTick = 0.0
+    @ObservationIgnored private var isActive = false
+    @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var seenSpeech = ""
     @ObservationIgnored private var seenSoundToken = 0
     @ObservationIgnored private var seenObstacleToken = 0
@@ -101,8 +103,9 @@ final class LensViewModel {
     }
 
     var speechStatusText: String {
-        if engines.audio.status == .denied { return "المايك مرفوض" }
         guard receiveOn else { return "متوقف" }
+        if mode == .dedicated(.person) { return "يستقبل كلام المحامي" }
+        if engines.audio.status == .denied { return "المايك مرفوض" }
         switch engines.speech.status {
         case .unavailable: return "الكلام العربي غير جاهز"
         case .denied: return "التعرف على الكلام مرفوض"
@@ -126,20 +129,31 @@ final class LensViewModel {
         voter = WordSignVoter(threshold: max(0.45, s.confidence))
         seenSoundToken = engines.sound.alertToken
         seenObstacleToken = engines.obstacle.alertToken
+        // Text left over from the Lab or rehearsal must not be sent as new lawyer speech.
+        seenSpeech = engines.speech.text
+        isActive = true
         if isDedicated {
             engines.peer.onMessage = { [weak self] in self?.handleRemote($0) }
             engines.peer.snapshotProvider = { [weak self] in
                 self?.snapshot() ?? .snapshot(lawyer: nil, person: nil)
             }
         }
-        Task {
+        startTask?.cancel()
+        startTask = Task { [weak self] in
+            guard let self else { return }
             await engines.camera.start()
+            guard isActive else {
+                engines.camera.stop()
+                return
+            }
             await applyEngines()
         }
         startLoop()
     }
 
     func onDisappear() {
+        isActive = false
+        startTask?.cancel()
         if isDedicated {
             engines.peer.onMessage = nil
             engines.peer.snapshotProvider = nil
@@ -157,6 +171,7 @@ final class LensViewModel {
 
     /// Starts or stops each engine to match the current toggles.
     private func applyEngines() async {
+        guard isActive else { return }
         let s = settings.data
         let camera = engines.camera
         if sendOn {
@@ -164,16 +179,21 @@ final class LensViewModel {
         } else {
             engines.hands.detach()
         }
-        if s.safetyEnabled {
+        // Spec §5: the obstacle detector reads back-camera frames only (a ceiling or a face
+        // in front of the selfie camera would trip it).
+        if s.safetyEnabled && camera.facing == .back {
             if !engines.obstacle.isAttached { engines.obstacle.attach(to: camera, hub: engines.audio) }
         } else {
             engines.obstacle.detach()
         }
 
-        let needMic = s.receiveEnabled || s.safetyEnabled
+        // The person phone in a session shows received lawyer speech; it does not transcribe.
+        let wantsSpeech = s.receiveEnabled && mode != .dedicated(.person)
+        let needMic = wantsSpeech || s.safetyEnabled
         if needMic { await engines.audio.start() }
+        guard isActive else { return }
         let micReady = engines.audio.status == .running
-        if s.receiveEnabled && micReady { engines.speech.start(using: engines.audio) } else { engines.speech.stop() }
+        if wantsSpeech && micReady { engines.speech.start(using: engines.audio) } else { engines.speech.stop() }
         if s.safetyEnabled && micReady { engines.sound.start(using: engines.audio) } else { engines.sound.stop() }
         if !needMic { engines.audio.stop() }
     }
@@ -183,7 +203,7 @@ final class LensViewModel {
         loop = Task { [weak self] in
             while !Task.isCancelled {
                 self?.tick()
-                try? await Task.sleep(for: .milliseconds(100))
+                try? await Task.sleep(for: .milliseconds(40))
             }
         }
     }
@@ -198,8 +218,8 @@ final class LensViewModel {
 
         if !sendOn || quality == .lost { router.resetSpoken() }
 
-        if sendOn && !spellLetters && now - lastFingerTick >= FingerPhraseMachine.tickInterval {
-            lastFingerTick = now
+        if sendOn && !spellLetters && now >= nextFingerTick {
+            nextFingerTick = Self.nextDeadline(after: nextFingerTick, interval: FingerPhraseMachine.tickInterval, now: now)
             if let newRole = finger.tick(hands: hands, quality: quality, phrases: data.phraseBook, now: now) {
                 perform(router.roleChanged(to: newRole))
                 rolePulse += 1
@@ -209,9 +229,8 @@ final class LensViewModel {
             roleHoldProgress = finger.roleHoldProgress
         }
 
-        if sendOn, data.arslEnabled, !spellLetters, let primary = hands.first,
-           now - lastWordTick >= WordSignVoter.tickInterval {
-            lastWordTick = now
+        if sendOn, data.arslEnabled, !spellLetters, let primary = hands.first, now >= nextWordTick {
+            nextWordTick = Self.nextDeadline(after: nextWordTick, interval: WordSignVoter.tickInterval, now: now)
             _ = voter.add(WordSignClassifier.classify(primary), quality: quality)
         }
 
@@ -248,6 +267,12 @@ final class LensViewModel {
                 engines.speak.speak("احذر، حاجز قريب", force: true)
             }
         }
+    }
+
+    /// Fixed-rate polling on a faster loop: 120 ms really means 120 ms (spec §6).
+    private static func nextDeadline(after deadline: Double, interval: Double, now: Double) -> Double {
+        let next = deadline + interval
+        return next > now ? next : now + interval
     }
 
     /// 0.8 s after the caption stops changing, send the last 12 words to the translator.
@@ -298,6 +323,7 @@ final class LensViewModel {
     func toggleSend() {
         guard !isDedicated else { return }
         settings.data.sendEnabled.toggle()
+        resetSigns()
         engines.camera.facing = settings.data.sendEnabled ? .front : (settings.data.safetyEnabled ? .back : .front)
         Task { await applyEngines() }
     }
@@ -315,10 +341,21 @@ final class LensViewModel {
         spellLetters.toggle()
         translateVisible = true
         alphabet = AlphabetWriter()
+        resetSigns()
+    }
+
+    /// Mode changes must not re-speak the last accepted sign (web clears results when disabled).
+    private func resetSigns() {
+        finger.reset()
+        voter.reset()
+        sendResult = nil
+        debugResult = nil
+        roleHoldProgress = 0
     }
 
     func flipCamera() {
         engines.camera.facing = engines.camera.facing == .front ? .back : .front
+        Task { await applyEngines() }
     }
 
     func clear() {

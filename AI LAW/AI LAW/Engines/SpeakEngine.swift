@@ -4,7 +4,11 @@ import Observation
 /// Arabic text → speech through the phone speaker (web useTts).
 @Observable
 final class SpeakEngine: NSObject, AVSpeechSynthesizerDelegate {
-    private(set) var isSpeaking = false
+    private(set) var isSpeaking = false {
+        didSet { if oldValue != isSpeaking { onSpeakingChanged?(isSpeaking) } }
+    }
+    /// Lets speech recognition pause while the phone talks (see SpeechEngine.setPaused).
+    @ObservationIgnored var onSpeakingChanged: ((Bool) -> Void)?
 
     @ObservationIgnored private let synthesizer = AVSpeechSynthesizer()
     @ObservationIgnored private var lastText = ""

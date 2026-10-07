@@ -12,4 +12,8 @@ final class AppEngines {
     let obstacle = ObstacleEngine()
     let peer = PeerSession()
     let readiness = ReadinessChecker()
+
+    init() {
+        speak.onSpeakingChanged = { [weak speech] speaking in speech?.setPaused(speaking) }
+    }
 }

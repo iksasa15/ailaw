@@ -23,6 +23,8 @@ final class SpeechEngine {
     @ObservationIgnored private weak var hub: AudioHub?
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var heardSinceStart = false
+    @ObservationIgnored private var paused = false
+    @ObservationIgnored private var resumeTask: Task<Void, Never>?
 
     static var isArabicOnDeviceAvailable: Bool {
         SFSpeechRecognizer(locale: Locale(identifier: "ar-SA"))?.supportsOnDeviceRecognition ?? false
@@ -55,15 +57,43 @@ final class SpeechEngine {
 
     func stop() {
         generation += 1
+        resumeTask?.cancel()
+        paused = false
         teardown()
         status = .idle
         isPartial = false
     }
 
+    /// Clears the caption. The running task is restarted, otherwise its cumulative
+    /// partial result would bring the cleared words back.
     func clearText() {
         accumulator.clear()
         text = ""
         isPartial = false
+        if status == .listening && !paused { beginTask() }
+    }
+
+    /// While the phone speaks, its own mic would transcribe the speech (no echo cancellation):
+    /// stop feeding audio, and resume 0.5 s after speech ends with a fresh task.
+    func setPaused(_ pause: Bool) {
+        resumeTask?.cancel()
+        if pause {
+            guard status == .listening, !paused else { return }
+            paused = true
+            generation += 1
+            accumulator.commit()
+            text = accumulator.text
+            isPartial = false
+            teardown()
+        } else {
+            guard paused else { return }
+            resumeTask = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(500))
+                guard !Task.isCancelled, let self, paused else { return }
+                paused = false
+                if status == .listening { beginTask() }
+            }
+        }
     }
 
     private func beginTask() {
@@ -115,7 +145,7 @@ final class SpeechEngine {
         let delay: Duration = heardSinceStart ? .milliseconds(300) : .seconds(1)
         Task {
             try? await Task.sleep(for: delay)
-            if gen == generation, status == .listening { beginTask() }
+            if gen == generation, status == .listening, !paused { beginTask() }
         }
     }
 

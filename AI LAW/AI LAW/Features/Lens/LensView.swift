@@ -36,12 +36,18 @@ struct LensView: View {
             VStack(spacing: 10) {
                 topBar
                 if model.coachVisible {
-                    HStack {
-                        Spacer()
-                        SignCoachView(clips: model.signClips, token: model.signToken, compact: true)
-                            .frame(width: 190)
+                    if model.mode == .dedicated(.person) {
+                        // On the person phone the translator is the main output: full width.
+                        SignCoachView(clips: model.signClips, token: model.signToken)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    } else {
+                        HStack {
+                            Spacer()
+                            SignCoachView(clips: model.signClips, token: model.signToken, compact: true)
+                                .frame(width: 190)
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 Spacer(minLength: 0)
                 if model.showDebug {
@@ -187,6 +193,10 @@ struct LensView: View {
             }
             if model.spellLetters && model.sendOn {
                 AlphabetPanel(model: model)
+            } else if model.mode == .dedicated(.person) {
+                if model.receiveOn, let phrase = model.lawyerPhrase {
+                    CaptionBubble(text: phrase.text, partial: false, opacity: settings.data.overlayOpacity)
+                }
             } else if model.receiveOn && !engines.speech.text.isEmpty {
                 CaptionBubble(text: engines.speech.text, partial: engines.speech.isPartial,
                               opacity: settings.data.overlayOpacity)

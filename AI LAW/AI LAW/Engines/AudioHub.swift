@@ -1,6 +1,7 @@
 import AVFoundation
 import Observation
 import os
+import UIKit
 
 /// One microphone shared by speech recognition and danger-sound analysis (web useSharedMic).
 /// Owns the app's AVAudioSession.
@@ -16,8 +17,10 @@ final class AudioHub {
 
     @ObservationIgnored private let core = AudioCore()
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private var wantsRunning = false
 
     func start() async {
+        wantsRunning = true
         guard status != .running else { return }
         guard await AVAudioApplication.requestRecordPermission() else {
             status = .denied
@@ -35,6 +38,7 @@ final class AudioHub {
     }
 
     func stop() {
+        wantsRunning = false
         observers.forEach(NotificationCenter.default.removeObserver)
         observers = []
         core.stop()
@@ -57,6 +61,8 @@ final class AudioHub {
     static func configureSession() throws {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP])
+        // iOS mutes haptics while recording unless allowed; danger alerts must vibrate.
+        try session.setAllowHapticsAndSystemSoundsDuringRecording(true)
         try session.setActive(true)
     }
 
@@ -69,6 +75,18 @@ final class AudioHub {
         observers.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.restartTap() }
         })
+        // Back from Settings/background, or the engine stopped itself: bring the mic back.
+        for name in [UIApplication.didBecomeActiveNotification, Notification.Name.AVAudioEngineConfigurationChange] {
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.recoverIfStopped() }
+            })
+        }
+    }
+
+    private func recoverIfStopped() {
+        guard wantsRunning, !core.isRunning else { return }
+        status = .running
+        restartTap()
     }
 
     private func handleInterruption(_ type: AVAudioSession.InterruptionType?) {
@@ -83,12 +101,13 @@ final class AudioHub {
     }
 
     private func restartTap() {
-        guard status == .running else { return }
+        guard wantsRunning else { return }
         core.stop()
         do {
             try Self.configureSession()
             try core.start()
             format = core.inputFormat
+            status = .running
         } catch {
             status = .failed(error.localizedDescription)
         }
@@ -109,6 +128,7 @@ nonisolated final class AudioCore: @unchecked Sendable {
     private let toneSetup = OSAllocatedUnfairLock(initialState: false)
 
     var inputFormat: AVAudioFormat { engine.inputNode.outputFormat(forBus: 0) }
+    var isRunning: Bool { engine.isRunning }
 
     func start() throws {
         let installed = state.withLock { $0 }
