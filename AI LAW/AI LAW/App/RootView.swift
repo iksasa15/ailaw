@@ -19,7 +19,7 @@ struct RootView: View {
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
-        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.locale, Locale(identifier: "ar@numbers=latn"))
         .environment(\.appFontScale, settings.data.fontScale)
         .tint(Theme.accent)
     }
@@ -33,7 +33,7 @@ struct RootView: View {
                 PlaceholderScreen(title: "جلسة")
             }
             Tab("معمل", systemImage: "flask", value: AppTab.lab) {
-                PlaceholderScreen(title: "معمل")
+                LabScreen()
             }
             Tab("المزيد", systemImage: "ellipsis.circle", value: AppTab.more) {
                 PlaceholderScreen(title: "المزيد")
