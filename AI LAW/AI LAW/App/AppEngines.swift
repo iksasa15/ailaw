@@ -10,4 +10,6 @@ final class AppEngines {
     let speak = SpeakEngine()
     let sound = SoundAlertEngine()
     let obstacle = ObstacleEngine()
+    let peer = PeerSession()
+    let readiness = ReadinessChecker()
 }
