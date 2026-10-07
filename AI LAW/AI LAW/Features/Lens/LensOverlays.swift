@@ -32,7 +32,7 @@ struct RoleChip: View {
             .glassEffect(.regular.tint(role.color.opacity(0.6)).interactive(), in: .capsule)
         }
         .buttonStyle(.plain)
-        .disabled(onTap == nil)
+        .allowsHitTesting(onTap != nil)
         .symbolEffect(.bounce, value: pulse)
         .scaleEffect(1)
         .animation(.spring(duration: 0.3), value: pulse)

@@ -30,7 +30,7 @@ struct RootView: View {
                 LensScreen(mode: .solo)
             }
             Tab("جلسة", systemImage: "iphone.gen3.radiowaves.left.and.right", value: AppTab.session) {
-                PlaceholderScreen(title: "جلسة")
+                SessionView()
             }
             Tab("معمل", systemImage: "flask", value: AppTab.lab) {
                 LabScreen()

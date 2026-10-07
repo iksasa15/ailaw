@@ -126,6 +126,12 @@ final class LensViewModel {
         voter = WordSignVoter(threshold: max(0.45, s.confidence))
         seenSoundToken = engines.sound.alertToken
         seenObstacleToken = engines.obstacle.alertToken
+        if isDedicated {
+            engines.peer.onMessage = { [weak self] in self?.handleRemote($0) }
+            engines.peer.snapshotProvider = { [weak self] in
+                self?.snapshot() ?? .snapshot(lawyer: nil, person: nil)
+            }
+        }
         Task {
             await engines.camera.start()
             await applyEngines()
@@ -134,6 +140,10 @@ final class LensViewModel {
     }
 
     func onDisappear() {
+        if isDedicated {
+            engines.peer.onMessage = nil
+            engines.peer.snapshotProvider = nil
+        }
         loop?.cancel()
         loop = nil
         speechDebounce?.cancel()
