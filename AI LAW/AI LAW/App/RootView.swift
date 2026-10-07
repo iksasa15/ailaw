@@ -15,7 +15,7 @@ struct RootView: View {
             if settings.data.onboarded {
                 tabs
             } else {
-                OnboardingPlaceholder()
+                OnboardingView()
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
@@ -36,35 +36,8 @@ struct RootView: View {
                 LabScreen()
             }
             Tab("المزيد", systemImage: "ellipsis.circle", value: AppTab.more) {
-                PlaceholderScreen(title: "المزيد")
+                MoreView()
             }
         }
-    }
-}
-
-private struct PlaceholderScreen: View {
-    let title: String
-
-    var body: some View {
-        ZStack {
-            Theme.bg.ignoresSafeArea()
-            Text(title)
-                .appFont(34, .bold)
-                .foregroundStyle(Theme.ink)
-        }
-    }
-}
-
-private struct OnboardingPlaceholder: View {
-    @Environment(AppSettings.self) private var settings
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("النظارة الذكية").appFont(40, .bold)
-            Button("ابدأ الآن") { settings.data.onboarded = true }
-                .appFont(18, .bold)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.bg)
     }
 }

@@ -60,7 +60,9 @@ public struct SettingsData: Codable, Equatable, Sendable {
         (try? JSONEncoder().encode(self)) ?? Data()
     }
 
+    /// Phrases in use; an entry emptied in Settings falls back to its default.
     public var phraseBook: PhraseBook {
-        PhraseBook(lawyer: lawyerPhrases, person: personPhrases)
+        PhraseBook(lawyer: PhraseBook.merge(lawyerPhrases, defaults: PhraseBook.defaultLawyer),
+                   person: PhraseBook.merge(personPhrases, defaults: PhraseBook.defaultPerson))
     }
 }

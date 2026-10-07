@@ -39,6 +39,14 @@ import Testing
         #expect(SettingsData.decode(Data("not json".utf8)) == SettingsData())
     }
 
+    @Test func phraseBookFallsBackForEmptyEntries() {
+        var s = SettingsData()
+        s.lawyerPhrases[2] = "   "
+        s.personPhrases[5] = ""
+        #expect(s.phraseBook.phrase(for: .lawyer, fingers: 2) == PhraseBook.defaultLawyer[2])
+        #expect(s.phraseBook.phrase(for: .person, fingers: 5) == PhraseBook.defaultPerson[5])
+    }
+
     @Test func settingsRoundTrip() {
         var s = SettingsData()
         s.fontScale = 1.2
