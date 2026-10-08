@@ -39,7 +39,7 @@ struct LensSidePanel: View {
             }
         } else if model.receiveOn && !engines.speech.text.isEmpty {
             CaptionBubble(text: engines.speech.text, partial: engines.speech.isPartial,
-                          opacity: settings.data.overlayOpacity)
+                          opacity: settings.data.overlayOpacity, onClear: model.clear)
         }
     }
 

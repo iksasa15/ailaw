@@ -57,6 +57,7 @@ struct LensView: View {
         .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { landscape = $0 }
         .animation(.easeInOut(duration: 0.25), value: sidePanel)
         .animation(.easeInOut(duration: 0.25), value: model.coachVisible)
+        .animation(.easeInOut(duration: 0.25), value: model.hasTranslation)
         .animation(.easeInOut(duration: 0.2), value: model.safetyAlert)
         .onAppear {
             model.onAppear()
@@ -95,7 +96,7 @@ struct LensView: View {
 
             VStack(spacing: 10) {
                 topBar
-                if model.coachVisible && !sidePanel {
+                if model.coachVisible && model.hasTranslation && !sidePanel {
                     coach
                 }
                 Spacer(minLength: 0)
@@ -189,6 +190,9 @@ struct LensView: View {
                     circleButton("keyboard", label: "اكتب وانطق") { showTyping = true }
                 }
                 circleButton("text.bubble", label: "سجل المحادثة") { showLog = true }
+                circleButton("arrow.triangle.2.circlepath.camera",
+                             label: engines.camera.facing == .front ? "الكاميرا الخلفية" : "الكاميرا الأمامية",
+                             action: model.flipCamera)
                 if let onClose {
                     Button(action: onClose) {
                         Image(systemName: "xmark")
@@ -272,7 +276,7 @@ struct LensView: View {
                     }
                 } else if model.receiveOn && !engines.speech.text.isEmpty {
                     CaptionBubble(text: engines.speech.text, partial: engines.speech.isPartial,
-                                  opacity: settings.data.overlayOpacity)
+                                  opacity: settings.data.overlayOpacity, onClear: model.clear)
                 }
             }
             LensControlsBar(model: model)

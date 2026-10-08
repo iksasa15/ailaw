@@ -86,6 +86,9 @@ final class LensViewModel {
         SignLexicon.resolve(text: lawyerPhrase?.text, fingers: lawyerPhrase?.fingers, spellLetters: spellLetters)
     }
 
+    /// The translator card only covers the camera when it has a phrase to show.
+    var hasTranslation: Bool { !(signClips ?? []).isEmpty }
+
     var signToken: String { "\(lawyerPhrase?.id.uuidString ?? "-"):\(spellLetters)" }
 
     var roleHoldSeconds: Double { settings.data.tuning.roleHold }

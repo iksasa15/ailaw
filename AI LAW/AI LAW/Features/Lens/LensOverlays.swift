@@ -119,10 +119,25 @@ struct CaptionBubble: View {
     let text: String
     let partial: Bool
     let opacity: Double
+    var onClear: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("كلام المحامي").appFont(11, .bold).foregroundStyle(Theme.highlight)
+            HStack {
+                Text("كلام المحامي").appFont(11, .bold).foregroundStyle(Theme.highlight)
+                Spacer()
+                if let onClear {
+                    Button(action: onClear) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .frame(width: 26, height: 26)
+                            .background(.white.opacity(0.14), in: .circle)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("مسح النص")
+                }
+            }
             Text(text)
                 .appFont(19, .medium)
                 .foregroundStyle(.white.opacity(partial ? 0.75 : 1))
