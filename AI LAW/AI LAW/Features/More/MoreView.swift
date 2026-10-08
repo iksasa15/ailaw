@@ -19,6 +19,7 @@ struct MoreView: View {
                     row(.readiness, "فحص الجاهزية", "تأكد أن كل شيء جاهز قبل العرض", "checklist.checked")
                     row(.about, "عن المشروع", "نظرة عامة ومفردات الديمو", "info.circle.fill")
                 }
+                .readableWidth()
                 .padding(16)
             }
             .background(AppBackground())
@@ -61,6 +62,8 @@ struct MoreView: View {
 struct MorePage<Content: View>: View {
     let title: String
     var subtitle: String?
+    /// iPad column width; the guide widens it for two columns.
+    var maxWidth: CGFloat = AppLayout.readable
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -69,6 +72,7 @@ struct MorePage<Content: View>: View {
                 PageHeader(title: title, subtitle: subtitle)
                 content
             }
+            .readableWidth(maxWidth)
             .padding(16)
             .padding(.bottom, 24)
         }

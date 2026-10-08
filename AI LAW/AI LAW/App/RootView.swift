@@ -1,5 +1,6 @@
 import AILawCore
 import SwiftUI
+import UIKit
 
 enum AppTab: String, Hashable {
     case lens, session, lab, more
@@ -22,6 +23,17 @@ struct RootView: View {
         .environment(\.locale, Locale(identifier: "ar@numbers=latn"))
         .environment(\.appFontScale, settings.data.fontScale)
         .tint(Theme.accent)
+        #if DEBUG
+        .task {
+            // Launch argument `-uiLandscape YES` (iPad simulator screenshots). iPadOS only honours it for
+            // a full-screen-only build: xcodebuild … INFOPLIST_KEY_UIRequiresFullScreen=YES.
+            if UserDefaults.standard.bool(forKey: "uiLandscape"),
+               let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                try? await Task.sleep(for: .seconds(0.5))
+                scene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight)) { _ in }
+            }
+        }
+        #endif
     }
 
     private var tabs: some View {
@@ -39,5 +51,7 @@ struct RootView: View {
                 MoreView()
             }
         }
+        // iPhone: bottom tab bar. iPad: top tab bar that can expand into a sidebar.
+        .tabViewStyle(.sidebarAdaptable)
     }
 }

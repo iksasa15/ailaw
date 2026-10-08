@@ -47,14 +47,17 @@ struct ResultBadge: View {
     let pulse: Int
     let onReplay: () -> Void
     @State private var pop = false
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var regular: Bool { sizeClass == .regular }
 
     var body: some View {
         VStack(spacing: 10) {
             if let caption {
-                Text(caption).appFont(13, .bold).foregroundStyle(Theme.highlight)
+                Text(caption).appFont(regular ? 15 : 13, .bold).foregroundStyle(Theme.highlight)
             }
             Text(result.display)
-                .appFont(30, .black)
+                .appFont(regular ? 40 : 30, .black)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
@@ -80,7 +83,7 @@ struct ResultBadge: View {
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 16)
-        .frame(maxWidth: 330)
+        .frame(maxWidth: regular ? 460 : 330)
         .glassEffect(.regular.tint(Theme.panel.opacity(0.55)), in: .rect(cornerRadius: 26))
         .opacity(result.accepted ? 1 : 0.7)
         .scaleEffect(pop ? 1.08 : 1)
@@ -93,11 +96,13 @@ struct ResultBadge: View {
 
 /// Dashed frame shown while no hand is tracked (web HandGuide).
 struct HandGuide: View {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
         VStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 60)
                 .strokeBorder(.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [8, 8]))
-                .frame(width: 200, height: 240)
+                .frame(width: sizeClass == .regular ? 260 : 200, height: sizeClass == .regular ? 310 : 240)
                 .overlay {
                     Image(systemName: "hand.raised")
                         .font(.system(size: 56, weight: .light))

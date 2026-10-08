@@ -18,16 +18,31 @@ struct LabScreen: View {
 
 struct LabView: View {
     @Bindable var model: LabViewModel
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 PageHeader(title: "المعمل", subtitle: "سيناريو قضية واقعي + مترجم إشارة")
-                scenarioCard
-                translatorCard
-                stepsCard
-                manualCard
+                if sizeClass == .regular {
+                    // iPad: the controls in one column, the long step list beside them.
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(spacing: 16) {
+                            scenarioCard
+                            translatorCard
+                            manualCard
+                        }
+                        .frame(maxWidth: .infinity)
+                        stepsCard.frame(maxWidth: .infinity)
+                    }
+                } else {
+                    scenarioCard
+                    translatorCard
+                    stepsCard
+                    manualCard
+                }
             }
+            .readableWidth(AppLayout.wide)
             .padding(16)
             .padding(.bottom, 24)
         }

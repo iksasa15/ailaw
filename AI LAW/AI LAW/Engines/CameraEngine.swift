@@ -15,8 +15,8 @@ final class CameraEngine {
     }
 
     private(set) var status: Status = .idle
-    /// Frames arrive upright (portrait) and mirrored for the front camera, like the preview.
-    let bufferSize = CGSize(width: 720, height: 1280)
+    /// Bumped after every (re)configuration, so the preview can follow a new input device.
+    private(set) var configuration = 0
 
     var facing: Facing = .front {
         didSet {
@@ -62,12 +62,22 @@ final class CameraEngine {
         controller.removeConsumer(id)
     }
 
+    /// The camera in use since the last configuration (the preview's rotation coordinator tracks it).
+    @ObservationIgnored private(set) var device: AVCaptureDevice?
+
+    /// Frames are rotated like the preview, so landmarks line up with what is on screen.
+    func setRotation(_ angle: CGFloat) {
+        controller.setRotation(angle)
+    }
+
     private func configure() async {
         let front = facing == .front
         let ok = await withCheckedContinuation { continuation in
             controller.configureAndRun(front: front) { continuation.resume(returning: $0) }
         }
         status = ok ? .ready : .failed("تعذّر تشغيل الكاميرا")
+        device = CaptureController.device(front: front)
+        configuration += 1
     }
 }
 
@@ -85,6 +95,8 @@ nonisolated final class CaptureController: NSObject, AVCaptureVideoDataOutputSam
     private let videoQueue = DispatchQueue(label: "ailaw.camera.video", qos: .userInitiated)
     private let output = AVCaptureVideoDataOutput()
     private var input: AVCaptureDeviceInput?
+    /// Upright portrait until the preview reports the interface orientation. Touched only on `sessionQueue`.
+    private var rotationAngle: CGFloat = 90
     private let consumers = OSAllocatedUnfairLock<[String: Consumer]>(initialState: [:])
 
     static func device(front: Bool) -> AVCaptureDevice? {
@@ -116,12 +128,14 @@ nonisolated final class CaptureController: NSObject, AVCaptureVideoDataOutputSam
                 if session.canAddOutput(output) { session.addOutput(output) }
             }
             if let connection = output.connection(with: .video) {
-                if connection.isVideoRotationAngleSupported(90) { connection.videoRotationAngle = 90 }
+                if connection.isVideoRotationAngleSupported(rotationAngle) { connection.videoRotationAngle = rotationAngle }
                 if connection.isVideoMirroringSupported {
                     connection.automaticallyAdjustsVideoMirroring = false
                     connection.isVideoMirrored = front
                 }
             }
+            // iPad: keep the camera running in Split View / Slide Over.
+            if session.isMultitaskingCameraAccessSupported { session.isMultitaskingCameraAccessEnabled = true }
             session.commitConfiguration()
             if !session.isRunning { session.startRunning() }
             completion(session.isRunning)
@@ -131,6 +145,16 @@ nonisolated final class CaptureController: NSObject, AVCaptureVideoDataOutputSam
     func stop() {
         sessionQueue.async { [self] in
             if session.isRunning { session.stopRunning() }
+        }
+    }
+
+    func setRotation(_ angle: CGFloat) {
+        sessionQueue.async { [self] in
+            rotationAngle = angle
+            guard let connection = output.connection(with: .video),
+                  connection.isVideoRotationAngleSupported(angle),
+                  connection.videoRotationAngle != angle else { return }
+            connection.videoRotationAngle = angle
         }
     }
 

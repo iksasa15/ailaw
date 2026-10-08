@@ -45,7 +45,7 @@ struct GestureGrid: View {
     ]
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
             ForEach(WordSignClassifier.labels, id: \.self) { label in
                 VStack(spacing: 6) {
                     if let file = Self.files[label], let image = UIImage(named: "\(file).png") {

@@ -30,60 +30,32 @@ struct LensView: View {
     @Environment(AppSettings.self) private var settings
     @State private var showLog = false
     @State private var showTyping = false
+    @State private var landscape = false
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    /// iPad (full screen or a wide split): roomier overlays.
+    private var regular: Bool { sizeClass == .regular }
+    /// iPad landscape: the camera beside a fixed panel with everything that is read.
+    private var sidePanel: Bool { regular && landscape }
 
     var body: some View {
         ZStack {
-            camera
-            legibilityGradients
-
-            VStack(spacing: 10) {
-                topBar
-                if model.coachVisible {
-                    if model.mode == .dedicated(.person) {
-                        // On the person phone the translator is the main output: full width.
-                        SignCoachView(clips: model.signClips, token: model.signToken)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    } else {
-                        HStack {
-                            Spacer()
-                            SignCoachView(clips: model.signClips, token: model.signToken, compact: true)
-                                .frame(width: 190)
-                        }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
+            // One HStack in every orientation keeps the camera view (and its session) alive on rotation.
+            HStack(spacing: 0) {
+                stage
+                if sidePanel {
+                    LensSidePanel(model: model)
+                        .frame(width: AppLayout.lensPanel)
+                        .transition(.move(edge: .trailing))
                 }
-                Spacer(minLength: 0)
-                if model.showDebug {
-                    DebugHUD(hands: engines.hands.hands, quality: engines.hands.quality, fps: engines.hands.fps,
-                             onInject: { model.injectDebug(fingers: $0) })
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                bottomStack
-            }
-            .padding(.horizontal, 14)
-            .padding(.top, 6)
-            .padding(.bottom, 8)
-
-            center
-
-            if safetyNear {
-                VStack {
-                    Spacer().frame(height: 150)
-                    Text("اقترب من حاجز…")
-                        .appFont(14, .bold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 7)
-                        .background(Theme.danger, in: .capsule)
-                    Spacer()
-                }
-                .allowsHitTesting(false)
             }
 
             if let alert = model.safetyAlert {
                 DangerOverlay(alert: alert, onDismiss: model.dismissAlert)
             }
         }
+        .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { landscape = $0 }
+        .animation(.easeInOut(duration: 0.25), value: sidePanel)
         .animation(.easeInOut(duration: 0.25), value: model.coachVisible)
         .animation(.easeInOut(duration: 0.2), value: model.safetyAlert)
         .onAppear {
@@ -115,6 +87,64 @@ struct LensView: View {
 
     // MARK: Layers
 
+    /// The camera with its overlays (the whole screen, except the side panel in iPad landscape).
+    private var stage: some View {
+        ZStack {
+            camera
+            legibilityGradients
+
+            VStack(spacing: 10) {
+                topBar
+                if model.coachVisible && !sidePanel {
+                    coach
+                }
+                Spacer(minLength: 0)
+                if model.showDebug {
+                    DebugHUD(hands: engines.hands.hands, quality: engines.hands.quality, fps: engines.hands.fps,
+                             onInject: { model.injectDebug(fingers: $0) })
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                bottomStack
+                    .frame(maxWidth: AppLayout.lensOverlay)
+            }
+            .padding(.horizontal, regular ? 20 : 14)
+            .padding(.top, 6)
+            .padding(.bottom, 8)
+
+            center
+
+            if safetyNear {
+                VStack {
+                    Spacer().frame(height: 150)
+                    Text("اقترب من حاجز…")
+                        .appFont(14, .bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Theme.danger, in: .capsule)
+                    Spacer()
+                }
+                .allowsHitTesting(false)
+            }
+        }
+    }
+
+    @ViewBuilder private var coach: some View {
+        if model.mode == .dedicated(.person) {
+            // On the person phone the translator is the main output: full width (centered on iPad).
+            SignCoachView(clips: model.signClips, token: model.signToken)
+                .frame(maxWidth: regular ? 520 : .infinity)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        } else {
+            HStack {
+                Spacer()
+                SignCoachView(clips: model.signClips, token: model.signToken, compact: !regular)
+                    .frame(width: regular ? 320 : 190)
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
     @ViewBuilder private var camera: some View {
         Color.black.ignoresSafeArea()
         if let card = PermissionCard.camera(engines.camera.status, retry: { Task { await engines.camera.start() } }) {
@@ -125,12 +155,13 @@ struct LensView: View {
             }
             .padding(.horizontal, 24)
         } else {
-            CameraPreview(session: engines.camera.session)
+            CameraPreview(session: engines.camera.session, device: engines.camera.device,
+                          configuration: engines.camera.configuration,
+                          onRotation: { [camera = engines.camera] in camera.setRotation($0) })
                 .ignoresSafeArea()
                 .environment(\.layoutDirection, .leftToRight)
             if model.sendOn {
-                HandSkeletonView(hands: engines.hands.hands, quality: engines.hands.quality,
-                                 bufferSize: engines.camera.bufferSize)
+                HandSkeletonView(hands: engines.hands.hands, quality: engines.hands.quality, aspect: engines.hands.aspect)
                     .ignoresSafeArea()
             }
         }
@@ -228,18 +259,21 @@ struct LensView: View {
 
     private var bottomStack: some View {
         VStack(spacing: 10) {
-            if let remote = model.remotePerson, model.mode == .dedicated(.lawyer) {
-                RemotePersonCard(phrase: remote)
-            }
-            if model.spellLetters && model.sendOn {
-                AlphabetPanel(model: model)
-            } else if model.mode == .dedicated(.person) {
-                if model.receiveOn, let phrase = model.lawyerPhrase {
-                    CaptionBubble(text: phrase.text, partial: false, opacity: settings.data.overlayOpacity)
+            // In iPad landscape the remote card, caption and letters live in the side panel.
+            if !sidePanel {
+                if let remote = model.remotePerson, model.mode == .dedicated(.lawyer) {
+                    RemotePersonCard(phrase: remote)
                 }
-            } else if model.receiveOn && !engines.speech.text.isEmpty {
-                CaptionBubble(text: engines.speech.text, partial: engines.speech.isPartial,
-                              opacity: settings.data.overlayOpacity)
+                if model.spellLetters && model.sendOn {
+                    AlphabetPanel(model: model)
+                } else if model.mode == .dedicated(.person) {
+                    if model.receiveOn, let phrase = model.lawyerPhrase {
+                        CaptionBubble(text: phrase.text, partial: false, opacity: settings.data.overlayOpacity)
+                    }
+                } else if model.receiveOn && !engines.speech.text.isEmpty {
+                    CaptionBubble(text: engines.speech.text, partial: engines.speech.isPartial,
+                                  opacity: settings.data.overlayOpacity)
+                }
             }
             LensControlsBar(model: model)
         }

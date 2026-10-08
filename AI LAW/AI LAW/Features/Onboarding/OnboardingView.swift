@@ -65,6 +65,7 @@ struct OnboardingView: View {
                 .padding(.top, 12)
         }
         .padding(24)
+        .frame(maxWidth: 520)
     }
 
     private func permissionCard(_ index: Int) -> some View {
@@ -90,6 +91,7 @@ struct OnboardingView: View {
                 .buttonStyle(.appSecondary)
         }
         .padding(24)
+        .frame(maxWidth: 520)
     }
 
     private func request(_ index: Int) async {

@@ -4,12 +4,27 @@ import SwiftUI
 /// How to use the app (port of web Guide.jsx, adapted: no server, two-phone session via the Session tab).
 struct GuideView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private struct Section {
         let emoji: String
         let title: String
         let steps: [String]
         var tip: String?
+    }
+
+    private enum Card: Identifiable {
+        case vocab
+        case section(Section)
+        case phrases(Role)
+
+        var id: String {
+            switch self {
+            case .vocab: "vocab"
+            case .section(let section): section.title
+            case .phrases(let role): role.rawValue
+            }
+        }
     }
 
     private let howToVocab = [
@@ -70,30 +85,56 @@ struct GuideView: View {
         ]),
     ]
 
+    private var cards: [Card] {
+        [.vocab] + sections.map(Card.section) + [.phrases(.person), .phrases(.lawyer)]
+    }
+
     var body: some View {
-        MorePage(title: "التعليمات", subtitle: "كيف تستخدم العدسة والإشارات") {
-            SectionCard(title: "محامي ↔︎ شخص (1–10)", systemImage: "hand.raised.fingers.spread.fill") {
-                bullets(howToVocab)
-            }
-            ForEach(sections, id: \.title) { section in
-                SectionCard {
-                    Text("\(section.emoji)  \(section.title)").appFont(18, .bold).foregroundStyle(Theme.ink)
-                    bullets(section.steps, numbered: true)
-                    if let tip = section.tip {
-                        Text("💡 \(tip)")
-                            .appFont(14)
-                            .foregroundStyle(Theme.accent)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Theme.accent.opacity(0.08), in: .rect(cornerRadius: 12))
+        let regular = sizeClass == .regular
+        MorePage(title: "التعليمات", subtitle: "كيف تستخدم العدسة والإشارات",
+                 maxWidth: regular ? AppLayout.wide : AppLayout.readable) {
+            if regular {
+                // iPad: cards alternate between two columns, in reading order.
+                HStack(alignment: .top, spacing: 16) {
+                    ForEach(0..<2, id: \.self) { column in
+                        VStack(spacing: 16) {
+                            ForEach(Array(cards.enumerated()).filter { $0.offset % 2 == column }.map(\.element)) { card($0) }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
+            } else {
+                ForEach(cards) { card($0) }
             }
-            phraseTable("عبارات الشخص", settings.data.phraseBook.person, color: Role.person.color)
-            phraseTable("عبارات المحامي", settings.data.phraseBook.lawyer, color: Role.lawyer.color)
             SectionCard(title: "كلمات ArSL", systemImage: "hands.sparkles.fill") {
                 GestureGrid()
             }
+        }
+    }
+
+    @ViewBuilder private func card(_ card: Card) -> some View {
+        switch card {
+        case .vocab:
+            SectionCard(title: "محامي ↔︎ شخص (1–10)", systemImage: "hand.raised.fingers.spread.fill") {
+                bullets(howToVocab)
+            }
+        case .section(let section):
+            SectionCard {
+                Text("\(section.emoji)  \(section.title)").appFont(18, .bold).foregroundStyle(Theme.ink)
+                bullets(section.steps, numbered: true)
+                if let tip = section.tip {
+                    Text("💡 \(tip)")
+                        .appFont(14)
+                        .foregroundStyle(Theme.accent)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.accent.opacity(0.08), in: .rect(cornerRadius: 12))
+                }
+            }
+        case .phrases(let role):
+            phraseTable(role == .person ? "عبارات الشخص" : "عبارات المحامي",
+                        role == .person ? settings.data.phraseBook.person : settings.data.phraseBook.lawyer,
+                        color: role.color)
         }
     }
 

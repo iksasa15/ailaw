@@ -40,6 +40,7 @@ struct SessionView: View {
                     .disabled(peer.state == .idle)
                 }
             }
+            .readableWidth()
             .padding(16)
             .padding(.bottom, 24)
         }

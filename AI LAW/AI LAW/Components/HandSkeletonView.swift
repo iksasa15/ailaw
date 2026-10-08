@@ -5,7 +5,8 @@ import SwiftUI
 struct HandSkeletonView: View {
     let hands: [HandLandmarks]
     let quality: TrackingQuality
-    let bufferSize: CGSize
+    /// Height ÷ width of the analysed frames (portrait ≈ 1.78, iPad landscape ≈ 0.56).
+    let aspect: Double
 
     static let bones: [(Int, Int)] = [
         (0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (7, 8), (5, 9), (9, 10), (10, 11), (11, 12),
@@ -35,11 +36,11 @@ struct HandSkeletonView: View {
         .environment(\.layoutDirection, .leftToRight)
     }
 
-    /// Landmark (image-width units on both axes) → view point under aspect-fill.
+    /// Landmark (image-width units on both axes, frame = 1 × aspect) → view point under aspect-fill.
     private func map(_ p: Point3, in size: CGSize) -> CGPoint {
-        let scale = max(size.width / bufferSize.width, size.height / bufferSize.height)
-        let offX = (size.width - bufferSize.width * scale) / 2
-        let offY = (size.height - bufferSize.height * scale) / 2
-        return CGPoint(x: p.x * bufferSize.width * scale + offX, y: p.y * bufferSize.width * scale + offY)
+        let scale = max(size.width, size.height / aspect)
+        let offX = (size.width - scale) / 2
+        let offY = (size.height - aspect * scale) / 2
+        return CGPoint(x: p.x * scale + offX, y: p.y * scale + offY)
     }
 }
