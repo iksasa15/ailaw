@@ -1,5 +1,6 @@
 import AILawCore
 import SwiftUI
+import UIKit
 
 /// Letters mode: current letter with its 3-second hold ring, written text, editing (web AlphabetWriteOverlay).
 struct AlphabetPanel: View {
@@ -27,6 +28,7 @@ struct AlphabetPanel: View {
                         .truncationMode(.head)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                referenceImage
             }
             HStack(spacing: 6) {
                 small("حذف", "delete.left", model.alphabetBackspace)
@@ -50,6 +52,25 @@ struct AlphabetPanel: View {
         .onChange(of: model.letterPulse) {
             withAnimation(.spring(duration: 0.15)) { pop = true }
             withAnimation(.spring(duration: 0.25).delay(0.15)) { pop = false }
+        }
+    }
+
+    /// The sign-alphabet picture of the letter being read, so the person can check the shape.
+    @ViewBuilder private var referenceImage: some View {
+        if let letter = model.alphabet.current?.letter,
+           let clip = SignLexicon.letterClips[letter],
+           let image = UIImage(named: clip.fileName) {
+            VStack(spacing: 3) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(.rect(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.highlight.opacity(0.6)))
+                Text("الإشارة").appFont(10, .medium).foregroundStyle(.white.opacity(0.7))
+            }
+            .transition(.scale.combined(with: .opacity))
+            .id(letter)
         }
     }
 

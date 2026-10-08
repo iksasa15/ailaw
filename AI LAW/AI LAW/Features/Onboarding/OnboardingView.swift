@@ -43,11 +43,11 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: 0) {
             Spacer()
-            LogoMark()
-                .frame(width: 96, height: 96)
-                .background(.white.opacity(0.85), in: .rect(cornerRadius: 28))
-                .shadow(color: Theme.accent.opacity(0.2), radius: 24, y: 12)
-                .padding(.bottom, 28)
+            BrandIcon()
+                .frame(width: 120, height: 120)
+                .clipShape(.rect(cornerRadius: 28, style: .continuous))
+                .shadow(color: Theme.accent.opacity(0.35), radius: 26, y: 14)
+                .padding(.bottom, 30)
             Text("عدسة مساعدة للصم").appFont(14, .bold).foregroundStyle(Theme.accent)
             Text("النظارة الذكية").appFont(44, .black).foregroundStyle(Theme.ink).padding(.top, 6)
             Text("كلام المحامي يصبح إشارة مرئية — وإشارتك تُسمَع صوتاً واضحاً.")
@@ -115,27 +115,5 @@ struct OnboardingView: View {
         } else {
             settings.data.onboarded = true
         }
-    }
-}
-
-/// Two lenses joined by a bridge — the web logo.
-struct LogoMark: View {
-    var body: some View {
-        Canvas { context, size in
-            let r = size.width * 0.15
-            let y = size.height / 2
-            let left = CGPoint(x: size.width * 0.28, y: y)
-            let right = CGPoint(x: size.width * 0.72, y: y)
-            let line = StrokeStyle(lineWidth: size.width * 0.04)
-            context.stroke(Path(ellipseIn: CGRect(x: left.x - r, y: y - r, width: r * 2, height: r * 2)),
-                           with: .color(Theme.accent2), style: line)
-            context.stroke(Path(ellipseIn: CGRect(x: right.x - r, y: y - r, width: r * 2, height: r * 2)),
-                           with: .color(Theme.accent), style: line)
-            var bridge = Path()
-            bridge.move(to: CGPoint(x: left.x + r + 2, y: y))
-            bridge.addLine(to: CGPoint(x: right.x - r - 2, y: y))
-            context.stroke(bridge, with: .color(Theme.ink), style: StrokeStyle(lineWidth: size.width * 0.035, lineCap: .round))
-        }
-        .environment(\.layoutDirection, .leftToRight)
     }
 }

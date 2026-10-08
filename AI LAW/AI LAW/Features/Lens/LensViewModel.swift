@@ -139,6 +139,10 @@ final class LensViewModel {
         isActive = true
         // Recognition runs on every analysed camera frame (≈30 fps), not on a timer.
         engines.hands.onFrame = { [weak self] frame in self?.handleFrame(frame) }
+        #if DEBUG
+        // Launch argument `-uiLetters YES`: open straight into letters mode (device soak tests).
+        if UserDefaults.standard.bool(forKey: "uiLetters"), !spellLetters { toggleLetters() }
+        #endif
         if isDedicated {
             engines.peer.onMessage = { [weak self] in self?.handleRemote($0) }
             engines.peer.snapshotProvider = { [weak self] in
@@ -255,7 +259,10 @@ final class LensViewModel {
 
         if spellLetters {
             sendResult = nil
-            if alphabet.tick(hand: frame.hands.first, quality: frame.quality, now: now) { letterPulse += 1 }
+            if alphabet.tick(hand: frame.hands.first, quality: frame.quality, now: now) {
+                letterPulse += 1
+                Haptics.accept() // feel each written letter without looking at the screen
+            }
             return
         }
 
