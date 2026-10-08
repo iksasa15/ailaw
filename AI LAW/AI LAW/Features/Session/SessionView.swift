@@ -52,6 +52,12 @@ struct SessionView: View {
             if peer.state == .idle, let raw = defaults.string(forKey: "uiSessionRole"), let role = Role(rawValue: raw) {
                 peer.start(as: role)
                 if defaults.bool(forKey: "uiAutoEnter") { presented = DedicatedRole(role: role) }
+                // `-uiSessionChurn N`: end and restart the link N times (stress check for the MC teardown).
+                for _ in 0..<defaults.integer(forKey: "uiSessionChurn") {
+                    try? await Task.sleep(for: .seconds(1.5))
+                    peer.stop()
+                    peer.start(as: role)
+                }
             }
             #endif
         }
