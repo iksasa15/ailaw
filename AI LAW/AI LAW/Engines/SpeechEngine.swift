@@ -25,9 +25,21 @@ final class SpeechEngine {
     @ObservationIgnored private var heardSinceStart = false
     @ObservationIgnored private var paused = false
     @ObservationIgnored private var resumeTask: Task<Void, Never>?
+    @ObservationIgnored private var startTask: Task<Void, Never>?
 
-    static var isArabicOnDeviceAvailable: Bool {
-        SFSpeechRecognizer(locale: Locale(identifier: "ar-SA"))?.supportsOnDeviceRecognition ?? false
+    /// Once true it stays true (the Arabic model does not disappear while the app runs).
+    private static var onDeviceConfirmed = false
+
+    /// Whether Arabic is recognised on this device without the network. Asking is a synchronous
+    /// call to the speech service (≈0.2 s on a Mac, longer on a phone), so it never runs on the
+    /// main thread; a "no" is asked again next time (the user may have downloaded the model since).
+    static func isArabicOnDeviceAvailable() async -> Bool {
+        if onDeviceConfirmed { return true }
+        let available = await Task.detached(priority: .userInitiated) {
+            SFSpeechRecognizer(locale: Locale(identifier: "ar-SA"))?.supportsOnDeviceRecognition ?? false
+        }.value
+        if available { onDeviceConfirmed = true }
+        return available
     }
 
     static func requestAuthorization() async -> Bool {
@@ -37,25 +49,30 @@ final class SpeechEngine {
     }
 
     func start(using hub: AudioHub) {
-        guard status != .listening else { return }
+        guard status != .listening, startTask == nil else { return }
         self.hub = hub
-        guard let recognizer, recognizer.supportsOnDeviceRecognition else {
-            status = .unavailable
-            return
-        }
-        switch SFSpeechRecognizer.authorizationStatus() {
-        case .authorized:
-            beginTask()
-        case .notDetermined:
-            Task {
-                if await Self.requestAuthorization() { beginTask() } else { status = .denied }
+        startTask = Task { [weak self] in
+            let available = await Self.isArabicOnDeviceAvailable()
+            var authorized = SFSpeechRecognizer.authorizationStatus() == .authorized
+            if available, SFSpeechRecognizer.authorizationStatus() == .notDetermined {
+                authorized = await Self.requestAuthorization()
             }
-        default:
-            status = .denied
+            // stop() while waiting cancels the start.
+            guard let self, !Task.isCancelled else { return }
+            startTask = nil
+            if !available || recognizer == nil {
+                status = .unavailable
+            } else if authorized {
+                beginTask()
+            } else {
+                status = .denied
+            }
         }
     }
 
     func stop() {
+        startTask?.cancel()
+        startTask = nil
         generation += 1
         resumeTask?.cancel()
         paused = false

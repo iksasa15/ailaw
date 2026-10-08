@@ -17,7 +17,20 @@ final class ReadinessChecker {
     var failingCount: Int { items.filter { !$0.ok }.count }
     var allOK: Bool { !items.isEmpty && failingCount == 0 }
 
+    /// Last answer of the (slow, off-main) on-device check; refreshed in the background.
+    private var arabicOnDevice = false
+
     func refresh(peer: PeerSession, speak: SpeakEngine) {
+        build(peer: peer, speak: speak)
+        Task {
+            let available = await SpeechEngine.isArabicOnDeviceAvailable()
+            guard available != arabicOnDevice else { return }
+            arabicOnDevice = available
+            build(peer: peer, speak: speak)
+        }
+    }
+
+    private func build(peer: PeerSession, speak: SpeakEngine) {
         items = [
             ReadinessItem(id: "camera", title: "الكاميرا",
                           ok: AVCaptureDevice.authorizationStatus(for: .video) == .authorized,
@@ -29,7 +42,7 @@ final class ReadinessChecker {
                           ok: SFSpeechRecognizer.authorizationStatus() == .authorized,
                           fix: "الإعدادات ← AI LAW ← فعّل التعرف على الكلام"),
             ReadinessItem(id: "arabicOnDevice", title: "الكلام العربي بدون إنترنت",
-                          ok: SpeechEngine.isArabicOnDeviceAvailable,
+                          ok: arabicOnDevice,
                           fix: "الإعدادات ← عام ← لوحة المفاتيح: أضف العربية وفعّل الإملاء، ثم انتظر تحميل حزمة اللغة مع الإنترنت مرة واحدة"),
             ReadinessItem(id: "arabicVoice", title: "صوت النطق العربي",
                           ok: speak.hasArabicVoice,
