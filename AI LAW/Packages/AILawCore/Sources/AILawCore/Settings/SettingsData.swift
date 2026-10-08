@@ -12,6 +12,7 @@ public struct SettingsData: Codable, Equatable, Sendable {
     public var safetyEnabled = true
     public var arslEnabled = false
     public var onboarded = false
+    public var recognitionSpeed = RecognitionSpeed.balanced
     public var phrasePack = SettingsData.currentPhrasePack
     public var lawyerPhrases = PhraseBook.defaultLawyer
     public var personPhrases = PhraseBook.defaultPerson
@@ -20,7 +21,7 @@ public struct SettingsData: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case fontScale, overlayOpacity, confidence, receiveEnabled, sendEnabled, safetyEnabled
-        case arslEnabled, onboarded, phrasePack, lawyerPhrases, personPhrases
+        case arslEnabled, onboarded, recognitionSpeed, phrasePack, lawyerPhrases, personPhrases
     }
 
     public init(from decoder: Decoder) throws {
@@ -34,6 +35,7 @@ public struct SettingsData: Codable, Equatable, Sendable {
         safetyEnabled = try c.decodeIfPresent(Bool.self, forKey: .safetyEnabled) ?? d.safetyEnabled
         arslEnabled = try c.decodeIfPresent(Bool.self, forKey: .arslEnabled) ?? d.arslEnabled
         onboarded = try c.decodeIfPresent(Bool.self, forKey: .onboarded) ?? d.onboarded
+        recognitionSpeed = (try? c.decodeIfPresent(RecognitionSpeed.self, forKey: .recognitionSpeed)) ?? d.recognitionSpeed
         phrasePack = try c.decodeIfPresent(String.self, forKey: .phrasePack) ?? d.phrasePack
         lawyerPhrases = try c.decodeIfPresent([Int: String].self, forKey: .lawyerPhrases) ?? d.lawyerPhrases
         personPhrases = try c.decodeIfPresent([Int: String].self, forKey: .personPhrases) ?? d.personPhrases
@@ -59,6 +61,8 @@ public struct SettingsData: Codable, Equatable, Sendable {
     public func encoded() -> Data {
         (try? JSONEncoder().encode(self)) ?? Data()
     }
+
+    public var tuning: RecognitionTuning { .preset(recognitionSpeed) }
 
     /// Phrases in use; an entry emptied in Settings falls back to its default.
     public var phraseBook: PhraseBook {

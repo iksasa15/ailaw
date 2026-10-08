@@ -10,6 +10,7 @@ public struct AlphabetWriter: Sendable {
     public private(set) var current: LetterGuess?
     public private(set) var holdProgress: Double = 0
 
+    private var filter = ReadingFilter<String>()
     private var holdLetter: String?
     private var holdStart: Double = 0
     private var lastAppendAt: Double = -.infinity
@@ -22,10 +23,18 @@ public struct AlphabetWriter: Sendable {
 
     /// Returns true on the tick a letter is appended (UI pulse).
     public mutating func tick(hand: HandLandmarks?, quality: TrackingQuality, now: Double) -> Bool {
-        guard quality != .lost, let hit = AlphabetClassifier.classify(hand) else {
+        guard quality != .lost else {
+            filter.reset()
             resetHold()
             return false
         }
+        let raw = AlphabetClassifier.classify(hand)
+        // One misread frame must not restart the hold (ReadingFilter).
+        guard let letter = filter.add(raw?.letter, now: now) else {
+            resetHold()
+            return false
+        }
+        let hit = raw?.letter == letter ? raw! : LetterGuess(letter: letter, confidence: current?.confidence ?? 0.5)
         if holdLetter != hit.letter {
             holdLetter = hit.letter
             holdStart = now
@@ -58,6 +67,7 @@ public struct AlphabetWriter: Sendable {
     public mutating func clear() {
         text = ""
         lastAppendLetter = ""
+        filter.reset()
         resetHold()
     }
 

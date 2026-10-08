@@ -41,6 +41,25 @@ import Testing
         if let confidence = c.confidence { #expect(guess?.confidence == confidence) }
     }
 
+    @Test(arguments: [
+        Case(HandFixture.allFive, "ش"),
+        Case(HandFixture.allFive, "س", spacing: 0.06),
+        Case([.thumb, .index], "ل"),
+        Case([.middle, .ring], "ف"),
+    ])
+    func sameLetterAtAnyDistance(_ c: Case) {
+        // A hand twice as close or twice as far must read the same letter.
+        let pinchNear: Finger? = c.letter == "ف" ? .index : nil
+        let base = HandFixture.hand(extended: c.extended, spacing: c.spacing, thumbTipNear: pinchNear)
+        for scale in [0.5, 2.0] {
+            let wrist = base[.wrist]
+            let scaled = HandLandmarks(points: base.points.map {
+                Point3(wrist.x + ($0.x - wrist.x) * scale, wrist.y + ($0.y - wrist.y) * scale)
+            })!
+            #expect(AlphabetClassifier.classify(scaled)?.letter == c.letter)
+        }
+    }
+
     @Test func pinchFallthroughs() {
         #expect(AlphabetClassifier.classify(HandFixture.hand(extended: [.middle, .ring], thumbTipNear: .index))?.letter == "ف")
         #expect(AlphabetClassifier.classify(HandFixture.hand(extended: [.index, .ring], thumbTipNear: .index))?.letter == "ق")
@@ -71,8 +90,8 @@ import Testing
         var w = AlphabetWriter()
         for k in 0...20 { _ = w.tick(hand: ba, quality: .locked, now: at(k)) }
         #expect(w.holdProgress > 0.6)
-        _ = w.tick(hand: ta, quality: .locked, now: at(21))
-        #expect(w.holdProgress == 0)
+        for k in 21...23 { _ = w.tick(hand: ta, quality: .locked, now: at(k)) }
+        #expect(w.holdProgress < 0.1)
         #expect(w.current?.letter == "ت")
     }
 
@@ -82,6 +101,16 @@ import Testing
         _ = w.tick(hand: ba, quality: .lost, now: at(31))
         #expect(w.current == nil)
         #expect(w.holdProgress == 0)
+        #expect(w.text == "ب")
+    }
+
+    @Test func writerIgnoresSingleMisread() {
+        var w = AlphabetWriter(holdSeconds: 2)
+        var appended: [Int] = []
+        for k in 0...25 where w.tick(hand: k == 8 ? ta : ba, quality: .locked, now: at(k)) {
+            appended.append(k)
+        }
+        #expect(appended == [20])
         #expect(w.text == "ب")
     }
 

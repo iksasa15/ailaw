@@ -10,13 +10,19 @@ public struct LetterGuess: Equatable, Sendable {
 
 /// Approximate Arabic sign-alphabet letter from hand shape (port of web classifyAlphabetLetter).
 /// Branch order matches the web, including branches the switch table makes unreachable.
+/// Distance thresholds are relative to the palm (wrist → middle MCP), so the same shape reads
+/// the same letter whether the hand is near or far from the camera; the web's absolute values
+/// correspond to a palm of 0.30.
 public enum AlphabetClassifier {
     public static func classify(_ hand: HandLandmarks?) -> LetterGuess? {
         guard let hand else { return nil }
         let f = FingerCounter.flags(hand)
-        let spread = tipSpread(hand)
-        let pinch = planarDistance(hand[.thumbTip], hand[.indexTip])
         let wrist = hand[.wrist]
+        let palm = planarDistance(wrist, hand[.middleMCP])
+        guard palm > 1e-6 else { return nil }
+        let k = palm / referencePalm
+        let spread = tipSpread(hand) / k
+        let pinch = planarDistance(hand[.thumbTip], hand[.indexTip]) / k
         func guess(_ letter: String, _ confidence: Double) -> LetterGuess {
             LetterGuess(letter: letter, confidence: confidence)
         }
@@ -47,7 +53,7 @@ public enum AlphabetClassifier {
         if !f.thumb && f.index && f.middle && f.ring && f.little {
             return guess(spread > 0.22 ? "ش" : "ك", 0.7)
         }
-        if f.index && !f.middle && !f.ring && !f.little && planarDistance(hand[.indexTip], wrist) < 0.28 {
+        if f.index && !f.middle && !f.ring && !f.little && planarDistance(hand[.indexTip], wrist) / k < 0.28 {
             return guess("ن", 0.55)
         }
         if f.index && f.little && !f.middle && !f.ring { return guess("لا", 0.75) }
@@ -62,6 +68,8 @@ public enum AlphabetClassifier {
         if n == 0 { return guess("م", 0.5) }
         return nil
     }
+
+    static let referencePalm = 0.30
 
     /// Sum of distances between adjacent fingertips (index → little).
     static func tipSpread(_ hand: HandLandmarks) -> Double {
