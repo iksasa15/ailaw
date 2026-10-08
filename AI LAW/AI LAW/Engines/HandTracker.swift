@@ -29,6 +29,9 @@ final class HandTracker {
         self.camera = camera
         processor.reset()
         let processor = self.processor
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "uiFakeHands") { startSyntheticFrames() }
+        #endif
         camera.addConsumer("hands", interval: 0) { [weak self] buffer, time in
             guard let tracker = self else { return }
             processor.submit(buffer, time: time) { frame in
@@ -46,7 +49,41 @@ final class HandTracker {
         onFrame?(frame)
     }
 
+    #if DEBUG
+    /// `-uiFakeHands YES`: an open hand at 30 fps without a camera (simulator performance checks).
+    @ObservationIgnored private var synthetic: Task<Void, Never>?
+
+    private func startSyntheticFrames() {
+        synthetic?.cancel()
+        synthetic = Task { [weak self] in
+            var t = 0.0
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(33))
+                t += 1.0 / 30
+                self?.apply(Self.syntheticFrame(at: t))
+            }
+        }
+    }
+
+    private static func syntheticFrame(at t: Double) -> HandPoseProcessor.Frame {
+        let jitter = 0.004 * sin(t * 9)
+        func p(_ x: Double, _ y: Double) -> Point3 { Point3(0.5 + x + jitter, 1.2 + y) }
+        var pts = [Point3](repeating: p(0, 0), count: 21)
+        pts[1] = p(-0.10, -0.08); pts[2] = p(-0.18, -0.16); pts[3] = p(-0.25, -0.22); pts[4] = p(-0.33, -0.28)
+        for i in 0..<4 {
+            let bx = (Double(i) - 1.5) * 0.08, base = 5 + 4 * i
+            pts[base] = p(bx, -0.30); pts[base + 1] = p(bx, -0.40); pts[base + 2] = p(bx, -0.47); pts[base + 3] = p(bx, -0.55)
+        }
+        let hands = HandLandmarks(points: pts).map { [$0] } ?? []
+        return HandPoseProcessor.Frame(hands: hands, quality: .locked, fps: 30, aspect: 16.0 / 9.0, time: t)
+    }
+    #endif
+
     func detach() {
+        #if DEBUG
+        synthetic?.cancel()
+        synthetic = nil
+        #endif
         camera?.removeConsumer("hands")
         camera = nil
         hands = []
