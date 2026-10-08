@@ -4,11 +4,14 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
+// VITE_HTTPS=0 → http://localhost (avoids self-signed Connection Failed)
+const useHttps = process.env.VITE_HTTPS !== '0'
+
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    basicSsl(),
+    ...(useHttps ? [basicSsl()] : []),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
