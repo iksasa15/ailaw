@@ -32,7 +32,7 @@ public struct RecognitionTuning: Equatable, Sendable {
     public static func preset(_ speed: RecognitionSpeed) -> RecognitionTuning {
         switch speed {
         case .fast: RecognitionTuning(acceptLocked: 0.45, acceptWeak: 0.7, letterHold: 1.2, roleHold: 2.5)
-        case .balanced: RecognitionTuning(acceptLocked: 0.7, acceptWeak: 1.0, letterHold: 2.0, roleHold: 3.0)
+        case .balanced: RecognitionTuning(acceptLocked: 0.7, acceptWeak: 1.0, letterHold: 1.5, roleHold: 3.0)
         case .accurate: RecognitionTuning(acceptLocked: 1.2, acceptWeak: 1.7, letterHold: 3.0, roleHold: 5.0)
         }
     }

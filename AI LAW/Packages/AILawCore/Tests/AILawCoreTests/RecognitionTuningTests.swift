@@ -7,7 +7,7 @@ import Testing
         let balanced = RecognitionTuning.preset(.balanced)
         #expect(balanced.acceptLocked == 0.7)
         #expect(balanced.acceptWeak == 1.0)
-        #expect(balanced.letterHold == 2.0)
+        #expect(balanced.letterHold == 1.5) // a letter is written after 1.5 s (user request)
         #expect(balanced.roleHold == 3.0)
         #expect(RecognitionTuning.preset(.fast).acceptLocked < balanced.acceptLocked)
         // «دقيق» keeps the web timings (10 polls × 120 ms, 3 s letters, 5 s role hold).
