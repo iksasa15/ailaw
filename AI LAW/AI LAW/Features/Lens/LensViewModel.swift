@@ -22,6 +22,8 @@ final class LensViewModel {
     private(set) var safetyAlert: SafetyAlert?
     private(set) var alphabet = AlphabetWriter()
     private(set) var alphabetSent = false
+    /// Everything said or signed while this screen is open («سجل المحادثة»).
+    private(set) var log = ConversationLog()
     private(set) var pulseToken = 0
     private(set) var letterPulse = 0
     var translateVisible = true
@@ -36,7 +38,6 @@ final class LensViewModel {
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var speechDebounce: Task<Void, Never>?
     @ObservationIgnored private var sentReset: Task<Void, Never>?
-    @ObservationIgnored private var nextFingerTick = 0.0
     @ObservationIgnored private var nextWordTick = 0.0
     @ObservationIgnored private var isActive = false
     @ObservationIgnored private var startTask: Task<Void, Never>?
@@ -51,11 +52,13 @@ final class LensViewModel {
         self.engines = engines
         self.settings = settings
         router = ConversationRouter(mode: mode)
+        let tuning = settings.data.tuning
         if case .dedicated(let locked) = mode {
-            finger = FingerPhraseMachine(lockedRole: locked)
+            finger = FingerPhraseMachine(lockedRole: locked, tuning: tuning)
         } else {
-            finger = FingerPhraseMachine()
+            finger = FingerPhraseMachine(tuning: tuning)
         }
+        alphabet = AlphabetWriter(holdSeconds: tuning.letterHold)
         role = finger.role
     }
 
@@ -84,6 +87,8 @@ final class LensViewModel {
     }
 
     var signToken: String { "\(lawyerPhrase?.id.uuidString ?? "-"):\(spellLetters)" }
+
+    var roleHoldSeconds: Double { settings.data.tuning.roleHold }
 
     var coachVisible: Bool {
         guard translateVisible else { return false }
@@ -132,6 +137,8 @@ final class LensViewModel {
         // Text left over from the Lab or rehearsal must not be sent as new lawyer speech.
         seenSpeech = engines.speech.text
         isActive = true
+        // Recognition runs on every analysed camera frame (≈30 fps), not on a timer.
+        engines.hands.onFrame = { [weak self] frame in self?.handleFrame(frame) }
         if isDedicated {
             engines.peer.onMessage = { [weak self] in self?.handleRemote($0) }
             engines.peer.snapshotProvider = { [weak self] in
@@ -154,6 +161,7 @@ final class LensViewModel {
     func onDisappear() {
         isActive = false
         startTask?.cancel()
+        engines.hands.onFrame = nil
         if isDedicated {
             engines.peer.onMessage = nil
             engines.peer.snapshotProvider = nil
@@ -210,44 +218,13 @@ final class LensViewModel {
 
     // MARK: Tick
 
+    /// Speech and safety (signs are driven per frame by `handleFrame`).
     private func tick() {
-        let now = ProcessInfo.processInfo.systemUptime
-        let hands = engines.hands.hands
-        let quality = engines.hands.quality
         let data = settings.data
 
-        if !sendOn || quality == .lost { router.resetSpoken() }
-
-        if sendOn && !spellLetters && now >= nextFingerTick {
-            nextFingerTick = Self.nextDeadline(after: nextFingerTick, interval: FingerPhraseMachine.tickInterval, now: now)
-            if let newRole = finger.tick(hands: hands, quality: quality, phrases: data.phraseBook, now: now) {
-                perform(router.roleChanged(to: newRole))
-                rolePulse += 1
-                Haptics.roleChanged()
-            }
-            role = finger.role
-            roleHoldProgress = finger.roleHoldProgress
-        }
-
-        if sendOn, data.arslEnabled, !spellLetters, let primary = hands.first, now >= nextWordTick {
-            nextWordTick = Self.nextDeadline(after: nextWordTick, interval: WordSignVoter.tickInterval, now: now)
-            _ = voter.add(WordSignClassifier.classify(primary), quality: quality)
-        }
-
-        if !sendOn || spellLetters {
+        if !sendOn {
+            router.resetSpoken()
             sendResult = nil
-        } else {
-            let picked = SignArbiter.pick(finger: finger.result, word: voter.result, wordEnabled: data.arslEnabled)
-            if picked != nil { debugResult = nil }
-            sendResult = picked ?? debugResult
-            if let picked, picked.accepted {
-                perform(router.signResult(picked, currentRole: finger.role,
-                                          roleHoldProgress: finger.roleHoldProgress, now: Self.nowMs))
-            }
-        }
-
-        if spellLetters && sendOn && alphabet.tick(hand: hands.first, quality: quality, now: now) {
-            letterPulse += 1
         }
 
         if data.receiveEnabled, engines.speech.text != seenSpeech {
@@ -269,17 +246,53 @@ final class LensViewModel {
         }
     }
 
-    /// Fixed-rate polling on a faster loop: 120 ms really means 120 ms (spec §6).
+    /// One analysed camera frame: finger phrases, ArSL words, letters.
+    private func handleFrame(_ frame: HandPoseProcessor.Frame) {
+        guard isActive, sendOn else { return }
+        let now = frame.time
+        let data = settings.data
+        if frame.quality == .lost { router.resetSpoken() }
+
+        if spellLetters {
+            sendResult = nil
+            if alphabet.tick(hand: frame.hands.first, quality: frame.quality, now: now) { letterPulse += 1 }
+            return
+        }
+
+        finger.tuning = data.tuning
+        if let newRole = finger.tick(hands: frame.hands, quality: frame.quality, phrases: data.phraseBook, now: now) {
+            perform(router.roleChanged(to: newRole))
+            rolePulse += 1
+            Haptics.roleChanged()
+        }
+        role = finger.role
+        roleHoldProgress = finger.roleHoldProgress
+
+        if data.arslEnabled, let primary = frame.hands.first, now >= nextWordTick {
+            nextWordTick = Self.nextDeadline(after: nextWordTick, interval: WordSignVoter.tickInterval, now: now)
+            _ = voter.add(WordSignClassifier.classify(primary), quality: frame.quality)
+        }
+
+        let picked = SignArbiter.pick(finger: finger.result, word: voter.result, wordEnabled: data.arslEnabled)
+        if picked != nil { debugResult = nil }
+        sendResult = picked ?? debugResult
+        if let picked, picked.accepted {
+            perform(router.signResult(picked, currentRole: finger.role,
+                                      roleHoldProgress: finger.roleHoldProgress, now: Self.nowMs))
+        }
+    }
+
+    /// Fixed-rate deadline that never drifts behind `now`.
     private static func nextDeadline(after deadline: Double, interval: Double, now: Double) -> Double {
         let next = deadline + interval
         return next > now ? next : now + interval
     }
 
-    /// 0.8 s after the caption stops changing, send the last 12 words to the translator.
+    /// 0.6 s after the caption stops changing, send the last 12 words to the translator.
     private func scheduleSnippet(_ text: String) {
         speechDebounce?.cancel()
         speechDebounce = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(800))
+            try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled, let self, let snippet = SpeechSnippet.latest(in: text) else { return }
             perform(router.speechSnippet(snippet, currentRole: role, now: Self.nowMs))
         }
@@ -292,10 +305,13 @@ final class LensViewModel {
                 engines.speak.speak(text, force: true)
             case .publish(let phrase):
                 engines.peer.send(.phrase(phrase))
+                log.record(phrase)
             case .showLawyerPhrase(let phrase):
                 lawyerPhrase = phrase
+                log.record(phrase)
             case .showRemotePerson(let phrase):
                 remotePerson = phrase
+                log.record(phrase)
             case .pulse:
                 pulseToken += 1
                 Haptics.accept()
@@ -340,8 +356,17 @@ final class LensViewModel {
     func toggleLetters() {
         spellLetters.toggle()
         translateVisible = true
-        alphabet = AlphabetWriter()
+        alphabet = AlphabetWriter(holdSeconds: settings.data.tuning.letterHold)
         resetSigns()
+    }
+
+    /// Typed text from the person (keyboard sheet): spoken, or sent to the lawyer phone.
+    func sendTyped(_ text: String) {
+        perform(router.alphabetSend(text, now: Self.nowMs))
+    }
+
+    func clearLog() {
+        log.clear()
     }
 
     /// Mode changes must not re-speak the last accepted sign (web clears results when disabled).

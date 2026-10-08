@@ -35,11 +35,11 @@ struct HandSkeletonView: View {
         .environment(\.layoutDirection, .leftToRight)
     }
 
-    /// Normalized buffer point → view point under aspect-fill.
+    /// Landmark (image-width units on both axes) → view point under aspect-fill.
     private func map(_ p: Point3, in size: CGSize) -> CGPoint {
         let scale = max(size.width / bufferSize.width, size.height / bufferSize.height)
         let offX = (size.width - bufferSize.width * scale) / 2
         let offY = (size.height - bufferSize.height * scale) / 2
-        return CGPoint(x: p.x * bufferSize.width * scale + offX, y: p.y * bufferSize.height * scale + offY)
+        return CGPoint(x: p.x * bufferSize.width * scale + offX, y: p.y * bufferSize.width * scale + offY)
     }
 }

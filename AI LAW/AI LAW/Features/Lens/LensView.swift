@@ -1,5 +1,6 @@
 import AILawCore
 import SwiftUI
+import UIKit
 
 /// Creates the Lens view model once from the environment.
 struct LensScreen: View {
@@ -27,6 +28,8 @@ struct LensView: View {
     var onClose: (() -> Void)?
     @Environment(AppEngines.self) private var engines
     @Environment(AppSettings.self) private var settings
+    @State private var showLog = false
+    @State private var showTyping = false
 
     var body: some View {
         ZStack {
@@ -83,8 +86,29 @@ struct LensView: View {
         }
         .animation(.easeInOut(duration: 0.25), value: model.coachVisible)
         .animation(.easeInOut(duration: 0.2), value: model.safetyAlert)
-        .onAppear { model.onAppear() }
-        .onDisappear { model.onDisappear() }
+        .onAppear {
+            model.onAppear()
+            // A presentation must not lock the screen mid-conversation.
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            model.onDisappear()
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        .sheet(isPresented: $showLog) {
+            ConversationLogSheet(log: model.log, onClear: model.clearLog)
+                .environment(\.layoutDirection, .rightToLeft)
+                .environment(\.locale, Locale(identifier: "ar@numbers=latn"))
+                .environment(\.appFontScale, settings.data.fontScale)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showTyping) {
+            TypeToSpeakSheet(phrases: settings.data.phraseBook.person, onSend: model.sendTyped)
+                .environment(\.layoutDirection, .rightToLeft)
+                .environment(\.locale, Locale(identifier: "ar@numbers=latn"))
+                .environment(\.appFontScale, settings.data.fontScale)
+                .presentationDetents([.medium, .large])
+        }
     }
 
     private var safetyNear: Bool { model.safetyOn && engines.obstacle.near && model.safetyAlert == nil }
@@ -130,6 +154,10 @@ struct LensView: View {
                     Text(model.subtitle).appFont(12, .medium).foregroundStyle(.white.opacity(0.75))
                 }
                 Spacer()
+                if model.mode != .dedicated(.lawyer) {
+                    circleButton("keyboard", label: "اكتب وانطق") { showTyping = true }
+                }
+                circleButton("text.bubble", label: "سجل المحادثة") { showLog = true }
                 if let onClose {
                     Button(action: onClose) {
                         Image(systemName: "xmark")
@@ -146,6 +174,7 @@ struct LensView: View {
                     GlassChip(model.trackingText, systemImage: "hand.raised.fill", tint: trackingTint)
                         .onLongPressGesture(minimumDuration: 1) { model.showDebug.toggle() }
                     RoleChip(role: model.role, holdProgress: model.roleHoldProgress, pulse: model.rolePulse,
+                             holdSeconds: model.roleHoldSeconds,
                              onTap: model.isDedicated ? nil : { model.tapRole() })
                 }
                 if model.isDedicated {
@@ -154,6 +183,17 @@ struct LensView: View {
                 Spacer(minLength: 0)
             }
         }
+    }
+
+    private func circleButton(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .glassEffect(.regular.interactive(), in: .circle)
+        }
+        .accessibilityLabel(label)
     }
 
     private var trackingTint: Color {

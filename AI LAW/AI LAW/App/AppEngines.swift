@@ -15,5 +15,6 @@ final class AppEngines {
 
     init() {
         speak.onSpeakingChanged = { [weak speech] speaking in speech?.setPaused(speaking) }
+        speak.warmUp()
     }
 }

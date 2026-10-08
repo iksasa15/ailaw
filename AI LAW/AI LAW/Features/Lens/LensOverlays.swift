@@ -6,6 +6,7 @@ struct RoleChip: View {
     let role: Role
     let holdProgress: Double
     let pulse: Int
+    var holdSeconds: Double = 3
     var onTap: (() -> Void)?
 
     var body: some View {
@@ -20,7 +21,7 @@ struct RoleChip: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(role.modeAnnouncement).appFont(14, .bold)
                     if holdProgress > 0.02 {
-                        Text("تثبيت الدور… \(Int((holdProgress * 5).rounded(.up)))/5").appFont(10)
+                        Text("تثبيت الدور… \(Int((holdProgress * holdSeconds).rounded(.up)))/\(Int(holdSeconds.rounded()))").appFont(10)
                     } else if onTap != nil {
                         Text("تبديل").appFont(10).opacity(0.8)
                     }

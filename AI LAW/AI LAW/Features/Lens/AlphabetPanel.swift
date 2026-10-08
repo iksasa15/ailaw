@@ -20,7 +20,7 @@ struct AlphabetPanel: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("كتابة بالحروف").appFont(11, .bold).foregroundStyle(Theme.highlight)
-                    Text(model.alphabet.text.isEmpty ? "ثبّت شكل الحرف 3 ثوانٍ…" : model.alphabet.text)
+                    Text(model.alphabet.text.isEmpty ? "ثبّت شكل الحرف حتى تمتلئ الدائرة…" : model.alphabet.text)
                         .appFont(model.alphabet.text.isEmpty ? 15 : 24, .bold)
                         .foregroundStyle(.white.opacity(model.alphabet.text.isEmpty ? 0.6 : 1))
                         .lineLimit(2)

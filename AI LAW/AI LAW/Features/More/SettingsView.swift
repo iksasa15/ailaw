@@ -9,6 +9,27 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var settings = settings
         MorePage(title: "الإعدادات", subtitle: "العبارات والعرض") {
+            SectionCard(title: "التعرف على الإشارة", systemImage: "hand.raised.fill") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("سرعة التعرف").appFont(15, .medium).foregroundStyle(Theme.ink)
+                    Picker("سرعة التعرف", selection: $settings.data.recognitionSpeed) {
+                        ForEach(RecognitionSpeed.allCases, id: \.self) { speed in
+                            Text(speed.label).tag(speed)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Text(speedHint(settings.data.recognitionSpeed))
+                        .appFont(12)
+                        .foregroundStyle(Theme.muted)
+                }
+                slider("حساسية التعرف", value: $settings.data.confidence, range: 0.2...0.8, step: 0.02,
+                       format: { String(format: "%.2f", $0) })
+                Toggle(isOn: $settings.data.arslEnabled) {
+                    Text("تمييز كلمات ArSL (تجريبي)").appFont(15, .medium).foregroundStyle(Theme.ink)
+                }
+                .tint(Theme.accent)
+            }
+
             phraseEditor("قائمة المحامي", phrases: $settings.data.lawyerPhrases, defaults: PhraseBook.defaultLawyer)
             phraseEditor("قائمة الشخص", phrases: $settings.data.personPhrases, defaults: PhraseBook.defaultPerson)
 
@@ -17,15 +38,6 @@ struct SettingsView: View {
                        format: { "\(Int(($0 * 100).rounded()))%" })
                 slider("شفافية العدسة", value: $settings.data.overlayOpacity, range: 0.3...0.9, step: 0.05,
                        format: { "\(Int(($0 * 100).rounded()))%" })
-            }
-
-            SectionCard(title: "التعرف على الإشارة", systemImage: "hand.raised.fill") {
-                slider("حساسية التعرف", value: $settings.data.confidence, range: 0.2...0.8, step: 0.02,
-                       format: { String(format: "%.2f", $0) })
-                Toggle(isOn: $settings.data.arslEnabled) {
-                    Text("تمييز كلمات ArSL (تجريبي)").appFont(15, .medium).foregroundStyle(Theme.ink)
-                }
-                .tint(Theme.accent)
             }
 
             NavigationLink {
@@ -43,6 +55,14 @@ struct SettingsView: View {
                     Button("إلغاء", role: .cancel) {}
                 }
         }
+    }
+
+    private func speedHint(_ speed: RecognitionSpeed) -> String {
+        let t = RecognitionTuning.preset(speed)
+        let accept = String(format: "%.1f", t.acceptLocked)
+        let letter = String(format: "%.1f", t.letterHold)
+        let role = String(format: "%.1f", t.roleHold)
+        return "قبول العبارة بعد \(accept) ث · الحرف بعد \(letter) ث · تبديل الدور بعد \(role) ث"
     }
 
     private func phraseEditor(_ title: String, phrases: Binding<[Int: String]>, defaults: [Int: String]) -> some View {

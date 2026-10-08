@@ -50,6 +50,15 @@ final class SpeakEngine: NSObject, AVSpeechSynthesizerDelegate {
         isSpeaking = false
     }
 
+    /// The first utterance pays for loading the voice (~0.5 s). Speak one silent utterance
+    /// at launch so the first real phrase is spoken immediately.
+    func warmUp() {
+        let utterance = AVSpeechUtterance(string: "مرحبا")
+        utterance.voice = Self.voice
+        utterance.volume = 0
+        synthesizer.speak(utterance)
+    }
+
     /// Best installed Arabic voice (premium → enhanced → default).
     static let voice: AVSpeechSynthesisVoice? = {
         let arabic = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("ar") }
