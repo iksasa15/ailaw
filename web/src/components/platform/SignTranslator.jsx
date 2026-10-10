@@ -69,23 +69,47 @@ function StatusLine({ status, compact }) {
   )
 }
 
+/**
+ * فيديو الإشارة. رفض التشغيل (iOS بوضع توفير الطاقة يمنع التشغيل التلقائي ولو كان صامتاً) يُعامل
+ * كخطأ التحميل: بطاقة مكتوبة بدل إطار متجمّد.
+ */
+function SignVideo({ src, label, onEnded, onFailed }) {
+  const videoRef = useRef(null)
+  const failedRef = useRef(onFailed)
+  useEffect(() => {
+    failedRef.current = onFailed
+  })
+  useEffect(() => {
+    let mounted = true
+    videoRef.current
+      ?.play?.()
+      ?.catch?.(() => {
+        if (mounted) failedRef.current?.()
+      })
+    return () => {
+      mounted = false
+    }
+  }, [])
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      autoPlay
+      muted
+      playsInline
+      onEnded={onEnded}
+      onError={onFailed}
+      aria-label={label}
+      className="h-full w-full object-contain"
+    />
+  )
+}
+
 /** المسرح: فيديو الإشارة، أو صورة الحرف على أبيض، أو بطاقة الكلمة */
 function Stage({ sign, stepKey, failed, compact, onEnded, onFailed }) {
   if (!sign) return null
   if (sign.kind === 'video' && !failed) {
-    return (
-      <video
-        key={stepKey}
-        src={sign.src}
-        autoPlay
-        muted
-        playsInline
-        onEnded={onEnded}
-        onError={onFailed}
-        aria-label={sign.label}
-        className="h-full w-full object-contain"
-      />
-    )
+    return <SignVideo key={stepKey} src={sign.src} label={sign.label} onEnded={onEnded} onFailed={onFailed} />
   }
   if (sign.kind === 'letter') {
     return <img key={stepKey} src={sign.src} alt={sign.label} className="h-full w-full object-contain p-2" draggable="false" />
