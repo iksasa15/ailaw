@@ -70,6 +70,10 @@ def _snapshot(room: dict[str, Any], room_id: str) -> dict[str, Any]:
     }
 
 
+def _presence(room: dict[str, Any], room_id: str) -> dict[str, Any]:
+    return {"type": "presence", "room": room_id, "count": len(room["clients"])}
+
+
 async def _broadcast(room: dict[str, Any], message: dict[str, Any], exclude: WebSocket | None = None) -> None:
     dead: list[WebSocket] = []
     data = json.dumps(message, ensure_ascii=False)
@@ -157,6 +161,8 @@ async def ws_scene(
     room_state["clients"].add(websocket)
     try:
         await websocket.send_text(json.dumps(_snapshot(room_state, room_id), ensure_ascii=False))
+        # كم جهازاً في الغرفة: يرى الحاسب «الجوال متصل» فور مسح رمز QR.
+        await _broadcast(room_state, _presence(room_state, room_id))
         while True:
             message = await websocket.receive()
             if message.get("type") == "websocket.disconnect":
@@ -192,3 +198,4 @@ async def ws_scene(
         pass
     finally:
         room_state["clients"].discard(websocket)
+        await _broadcast(room_state, _presence(room_state, room_id))

@@ -203,7 +203,8 @@ export default function Home({ lockedRole = null, serverless = false, onConversa
   const onRemotePhrase = useCallback(
     (phrase) => {
       if (!phrase?.text || !phrase?.role) return
-      emitConversation(phrase.role, phrase.text)
+      // الخادم يعيد لكل جهاز عباراته أيضاً: نسجّل عبارات الطرف الآخر فقط.
+      if (!lockedRole || phrase.role !== lockedRole) emitConversation(phrase.role, phrase.text)
       // Remote person → lawyer speaks; remote lawyer → person sees coach (no TTS on person)
       if (lockedRole === 'lawyer' && phrase.role === 'person') {
         const key = `${phrase.at || ''}:${phrase.text}`

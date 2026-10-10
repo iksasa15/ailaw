@@ -25,6 +25,13 @@ export function useSceneSocket({
   const lastOkAtRef = useRef(0)
   const onRemoteRef = useRef(onRemotePhrase)
   const generationRef = useRef(0)
+  // `connected` في ref: لو اعتمدت refreshBadge على الحالة لتغيّرت هويتها عند كل فتح/إغلاق،
+  // فيُعاد تشغيل تأثير الاتصال ← يغلق الاتصال ويفتح غيره بلا نهاية.
+  const connectedRef = useRef(false)
+  const markConnected = useCallback((value) => {
+    connectedRef.current = value
+    setConnected(value)
+  }, [])
 
   onRemoteRef.current = onRemotePhrase
 
@@ -33,9 +40,9 @@ export function useSceneSocket({
     const phraseFresh = now - lastPhraseAtRef.current < 2500
     const backendFresh = now - lastOkAtRef.current < 5000
     if (phraseFresh) setSyncState('synced')
-    else if (backendFresh || connected) setSyncState('waiting')
+    else if (backendFresh || connectedRef.current) setSyncState('waiting')
     else setSyncState('offline')
-  }, [connected])
+  }, [])
 
   const applySnapshot = useCallback((msg) => {
     lastOkAtRef.current = Date.now()
@@ -89,8 +96,8 @@ export function useSceneSocket({
       /* ignore */
     }
     wsRef.current = null
-    setConnected(false)
-  }, [])
+    markConnected(false)
+  }, [markConnected])
 
   const connect = useCallback(() => {
     if (!enabled || !room) return
@@ -112,7 +119,7 @@ export function useSceneSocket({
       if (gen !== generationRef.current) return
       lastOkAtRef.current = Date.now()
       retryRef.current = 0
-      setConnected(true)
+      markConnected(true)
       refreshBadge()
     }
 
@@ -133,7 +140,7 @@ export function useSceneSocket({
 
     ws.onclose = () => {
       if (gen !== generationRef.current) return
-      setConnected(false)
+      markConnected(false)
       if (intentionalCloseRef.current) return
       setSyncState('offline')
       if (retryRef.current < 8) {
@@ -148,7 +155,7 @@ export function useSceneSocket({
     ws.onerror = () => {
       /* onclose handles retry */
     }
-  }, [enabled, room, role, applySnapshot, applyPhrase, refreshBadge])
+  }, [enabled, room, role, applySnapshot, applyPhrase, refreshBadge, markConnected])
 
   useEffect(() => {
     if (!enabled || !room) {

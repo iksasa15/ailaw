@@ -12,6 +12,7 @@ import PairJoin from './pages/PairJoin'
 import Lab from './pages/Lab'
 import Landing from './pages/public/Landing'
 import Login from './pages/public/Login'
+import JoinSession from './pages/public/JoinSession'
 import RoleHome from './pages/app/RoleHome'
 import LawyersDirectory from './pages/app/LawyersDirectory'
 import LawyerProfile from './pages/app/LawyerProfile'
@@ -33,6 +34,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/join" element={<JoinSession />} />
 
         <Route
           path="/app"

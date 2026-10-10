@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { checkHealth } from '../../services/api'
+import { publishScenePhrase } from '../../services/api'
+import { useSettings } from '../../app/SettingsContext'
+import { LinkDeviceDialog } from '../../components/platform/LinkDeviceDialog'
 import { appendEntry, CHANNEL_LABELS, isEcho } from '../../platform/logic'
 import { usePlatform } from '../../platform/PlatformContext'
 import { useNow } from '../../platform/useNow'
@@ -29,7 +31,10 @@ export default function SessionRoom() {
   const [startedAt] = useState(() => Date.now())
   const [entries, setEntries] = useState([])
   const [panelOpen, setPanelOpen] = useState(false)
-  const [linkError, setLinkError] = useState('')
+  // جوال مرتبط عبر QR: { room, hostRole } — العدسة هنا تصبح شاشة دور هذا الحاسب في غرفة الخادم.
+  const [link, setLink] = useState(null)
+  const [linkOpen, setLinkOpen] = useState(false)
+  const { update: updateSettings } = useSettings()
   const now = useNow(1000)
   const listRef = useRef(null)
   const [focused, toggleFocus] = useFocusMode()
@@ -42,16 +47,21 @@ export default function SessionRoom() {
     [],
   )
 
-  // اكتب وانطق: الشخص يكتب أو يختار رداً، فيُنطق للمحامي ويُسجَّل في المحضر.
+  // اكتب وانطق: يُسجَّل في المحضر. بدون جوال مرتبط يكتب الشخص فيُنطق للمحامي؛
+  // مع جوال مرتبط يكتب دور هذا الحاسب ويصل للجوال (الشخص يراه بالإشارة).
   const say = useCallback(
     (text) => {
       const message = String(text || '').trim()
       if (!message) return
-      unlock()
-      speak(message, { force: true })
-      setEntries((list) => appendEntry(list, { role: 'person', text: message, at: Date.now() }))
+      const role = link ? link.hostRole : 'person'
+      if (role === 'person') {
+        unlock()
+        speak(message, { force: true })
+      }
+      if (link) publishScenePhrase({ role, text: message, fingers: null, room: link.room }).catch(() => {})
+      setEntries((list) => appendEntry(list, { role, text: message, at: Date.now() }))
     },
-    [speak, unlock],
+    [speak, unlock, link],
   )
 
   useEffect(() => {
@@ -84,14 +94,10 @@ export default function SessionRoom() {
     if (result.ok) navigate(`/app/session/${booking.id}/record`, { replace: true })
   }
 
-  const linkDevice = async () => {
-    setLinkError('')
-    try {
-      await checkHealth()
-      navigate('/screens')
-    } catch {
-      setLinkError('ربط جهاز ثانٍ يتطلب تشغيل الخادم. الجلسة تعمل على هذا الجهاز بدونه.')
-    }
+  const startLinked = (room, hostRole) => {
+    updateSettings({ roomId: room, receiveEnabled: true })
+    setLink({ room, hostRole })
+    setLinkOpen(false)
   }
 
   const panel = (
@@ -165,7 +171,7 @@ export default function SessionRoom() {
         }}
       >
         <div className="flex items-center gap-1.5 text-sm font-bold text-[#f9bd29]">
-          <Icon name="volume" size={16} /> اكتب وانطق
+          <Icon name="volume" size={16} /> {link?.hostRole === 'lawyer' ? 'اكتب للشخص (يراه بالإشارة على جواله)' : 'اكتب وانطق'}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {QUICK_REPLIES.map((r) => (
@@ -199,9 +205,18 @@ export default function SessionRoom() {
         </div>
       </form>
 
-      {linkError ? <div className="rounded-xl bg-amber-400/15 px-3 py-2 text-xs font-bold text-amber-200">{linkError}</div> : null}
+      {link ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 animate-pulse rounded-full bg-emerald-400" /> مرتبط بجوال · هذا الحاسب: {link.hostRole === 'lawyer' ? 'المحامي' : 'الشخص'}
+          </span>
+          <button type="button" onClick={() => setLink(null)} className="rounded-lg px-2 py-1 text-white/80 hover:bg-white/10">
+            فصل
+          </button>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-2">
-        <Button variant="dark" onClick={linkDevice}>
+        <Button variant="dark" onClick={() => setLinkOpen(true)}>
           <Icon name="link" size={18} /> ربط جهاز ثانٍ (QR)
         </Button>
         <Button variant="danger" size="lg" onClick={end}>
@@ -214,7 +229,11 @@ export default function SessionRoom() {
   return (
     <div className={`${focused ? FOCUS_CLASS : 'relative h-full'} bg-black lg:grid lg:grid-cols-[1fr_380px]`}>
       <div className="relative h-full min-h-0">
-        <Home serverless onConversation={onConversation} />
+        {link ? (
+          <Home key={link.room} lockedRole={link.hostRole} onConversation={onConversation} />
+        ) : (
+          <Home key="solo" serverless onConversation={onConversation} />
+        )}
       </div>
       <aside className="hidden h-full min-h-0 border-r border-white/10 lg:block">{panel}</aside>
 
@@ -235,6 +254,16 @@ export default function SessionRoom() {
           <Icon name="x" size={20} />
         </Button>
       </div>
+      {linkOpen ? (
+        <LinkDeviceDialog
+          booking={booking}
+          lawyer={lawyer}
+          person={person}
+          onServer={(base) => updateSettings({ apiBase: base })}
+          onLinked={startLinked}
+          onClose={() => setLinkOpen(false)}
+        />
+      ) : null}
       {panelOpen ? (
         <div className="fixed inset-0 z-50 flex flex-col lg:hidden" role="dialog" aria-modal="true" aria-label="لوحة الجلسة">
           <button type="button" className="h-24 shrink-0 bg-black/50" aria-label="إغلاق" onClick={() => setPanelOpen(false)} />
