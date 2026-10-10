@@ -6,7 +6,7 @@ import { LawyerCard } from '../../components/platform/LawyerCard'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Icon } from '../../components/ui/Icon'
 
-export const SPECIALTIES = ['مرور', 'تعويضات', 'أسرة', 'عمل', 'جنائي', 'عقود']
+const SPECIALTIES = ['مرور', 'تعويضات', 'أسرة', 'عمل', 'جنائي', 'عقود']
 
 export default function LawyersDirectory() {
   const { state } = usePlatform()
