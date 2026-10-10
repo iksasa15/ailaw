@@ -105,35 +105,50 @@ const normalizeArabic = (t) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-/**
- * على جهاز واحد يلتقط المايك ما تنطقه العدسة: عبارة «محامٍ» تطابق (أو جزء من) عبارة أشار بها
- * الشخص خلال `windowMs`، أو تنبيهاً منطوقاً، هي صدى وليست كلاماً.
- */
-export function isEcho(entries, entry, windowMs = 10_000) {
-  if (entry?.role !== 'lawyer') return false
-  const text = normalizeArabic(entry.text)
-  if (!text) return false
-  if (SPOKEN_PROMPTS.some((p) => normalizeArabic(p).startsWith(text))) return true
-  return entries.some((e) => {
-    if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) return false
-    const spoken = normalizeArabic(e.text)
-    return spoken.includes(text) || text.includes(spoken)
-  })
-}
-
-/** كلمات النص (الأصلية ومطبّعتها كلمةً كلمة)؛ ما لا يبقى منه إلا علامات ترقيم يُسقَط */
+/** كلمات النص (الأصلية ومطبّعتها للمقارنة: أ إ آ ٱ ← ا، ة ← ه، ى ← ي)؛ ما لا يبقى منه إلا علامات ترقيم يُسقَط */
 const wordsOf = (text) =>
   String(text || '')
     .split(/\s+/)
-    .map((word) => ({ word, norm: normalizeArabic(word).replace(/ /g, '') }))
+    .map((word) => ({
+      word,
+      norm: normalizeArabic(word)
+        .replace(/[أإآٱ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/ /g, ''),
+    }))
     .filter((t) => t.norm)
 
-/** موضع أول ظهور متتالٍ لـ `needle` داخل `hay` (كلمات مطبّعة)، أو -1 */
+/** موضع أول ظهور متتالٍ لـ `needle` داخل `hay` (كلمات كاملة مطبّعة)، أو -1 */
 function indexOfRun(hay, needle) {
+  if (!needle.length) return -1
   for (let i = 0; i + needle.length <= hay.length; i++) {
     if (needle.every((n, k) => hay[i + k].norm === n.norm)) return i
   }
   return -1
+}
+
+const PROMPT_WORDS = SPOKEN_PROMPTS.map(wordsOf)
+/** كلمات `words` هي بداية العبارة المنطوقة كلمةً كلمة (تنمو عبارة التنبيه كلمةً بعد كلمة) */
+const isPromptStart = (words) =>
+  PROMPT_WORDS.some((prompt) => words.length <= prompt.length && words.every((w, i) => w.norm === prompt[i].norm))
+
+/**
+ * على جهاز واحد يلتقط المايك ما تنطقه العدسة: عبارة «محامٍ» تطابق (أو جزء من) عبارة أشار بها
+ * الشخص خلال `windowMs`، أو تنبيهاً منطوقاً، هي صدى وليست كلاماً. المطابقة بالكلمات الكاملة
+ * (كلمات متتالية إحداهما داخل الأخرى) وبعد توحيد الهمزة والتاء المربوطة والياء، فلا تُعدّ «الاوراق»
+ * صدى لـ«لا»، وتُعدّ «احتاج مساعده» صدى لـ«أحتاج مساعدة».
+ */
+export function isEcho(entries, entry, windowMs = 10_000) {
+  if (entry?.role !== 'lawyer') return false
+  const words = wordsOf(entry.text)
+  if (!words.length) return false
+  if (isPromptStart(words)) return true
+  return entries.some((e) => {
+    if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) return false
+    const spoken = wordsOf(e.text)
+    return indexOfRun(words, spoken) >= 0 || indexOfRun(spoken, words) >= 0
+  })
 }
 
 /**
@@ -148,7 +163,7 @@ export function removeEcho(entries, entry, windowMs = 10_000) {
   for (const e of entries) {
     if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) continue
     const phrase = wordsOf(e.text)
-    const at = phrase.length ? indexOfRun(words, phrase) : -1
+    const at = indexOfRun(words, phrase)
     if (at < 0) continue
     words = [...words.slice(0, at), ...words.slice(at + phrase.length)]
     removed = true

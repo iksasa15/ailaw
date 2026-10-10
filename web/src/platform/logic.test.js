@@ -242,3 +242,41 @@ describe('removeEcho', () => {
     expect(removeEcho([said], e)).toBe(e)
   })
 })
+
+describe('echo matching is word-aware', () => {
+  const said = (text) => [{ role: 'person', text, at: 1000 }]
+  const lawyer = (text) => ({ role: 'lawyer', text, at: 3000 })
+
+  test('a short reply is not an echo of a longer word that merely contains its letters', () => {
+    for (const text of ['الاوراق مهمة', 'الان نبدأ']) {
+      expect(isEcho(said('لا'), lawyer(text))).toBe(false)
+      const entry = lawyer(text)
+      expect(removeEcho(said('لا'), entry)).toBe(entry)
+    }
+    const entry = lawyer('نعمل على قضيتك')
+    expect(isEcho(said('نعم'), entry)).toBe(false)
+    expect(removeEcho(said('نعم'), entry)).toBe(entry)
+  })
+
+  test('hamza, ta marbuta and ya spellings still match as the same words', () => {
+    expect(isEcho(said('أحتاج مساعدة'), lawyer('احتاج مساعده'))).toBe(true)
+    expect(removeEcho(said('أحتاج مساعدة'), lawyer('احتاج مساعده'))).toBeNull()
+    expect(removeEcho(said('أحتاج مساعدة'), lawyer('احتاج مساعده حسناً سأساعدك الآن')).text).toBe('حسناً سأساعدك الآن')
+  })
+
+  test('a whole-word run inside a longer sentence is still an echo, in either direction', () => {
+    expect(isEcho(said('أنا كنت أقود'), lawyer('كنت أقود'))).toBe(true)
+    expect(isEcho(said('نعم'), lawyer('نعم أفهم'))).toBe(true)
+  })
+
+  test('an empty person phrase never makes anything an echo', () => {
+    expect(isEcho(said('  '), lawyer('أين وقع الحادث'))).toBe(false)
+  })
+
+  test('spoken prompts match whole words, with any hamza spelling', () => {
+    expect(isEcho([], lawyer('وضع'))).toBe(true)
+    expect(isEcho([], lawyer('احذر حاجز'))).toBe(true)
+    expect(isEcho([], lawyer('أحذر حاجز قريب'))).toBe(true)
+    expect(isEcho([], lawyer('وض'))).toBe(false)
+  })
+})
