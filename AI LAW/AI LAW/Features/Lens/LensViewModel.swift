@@ -71,7 +71,7 @@ final class LensViewModel {
 
     var title: String {
         switch mode {
-        case .solo: "النظارة الذكية"
+        case .solo: "العدسة"
         case .dedicated(.lawyer): "شاشة المحامي"
         case .dedicated(.person): "شاشة الشخص"
         }

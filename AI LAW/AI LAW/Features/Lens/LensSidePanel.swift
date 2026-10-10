@@ -89,7 +89,7 @@ struct LensSidePanel: View {
 
     private var background: some View {
         ZStack {
-            Color(hex: 0x061217)
+            Color(hex: 0x0B1630)
             LinearGradient(colors: [Theme.accent.opacity(0.22), .clear], startPoint: .top, endPoint: .center)
         }
         .overlay(alignment: .leading) {

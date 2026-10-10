@@ -1,13 +1,13 @@
 import SwiftUI
 import UIKit
 
-/// Brand palette carried over from the web app (index.css), with dark-mode counterparts.
+/// «المحامون العرب» palette from the logo (blue, purple, orange), shared with the web platform.
 enum Theme {
-    static let accent = Color(hex: 0x0F766E)
-    static let accentSoft = Color(hex: 0x14B8A6)
-    static let accent2 = Color(hex: 0x1E5BB8)
+    static let accent = Color(hex: 0x136FB0) // logo blue: primary, the person
+    static let accentSoft = Color(hex: 0x1C86C2)
+    static let accent2 = Color(hex: 0xA22897) // logo purple: the lawyer
     static let danger = Color(hex: 0xDC2626)
-    static let highlight = Color(hex: 0x5EEAD4)
+    static let highlight = Color(hex: 0xF9BD29) // logo orange: highlights on dark
     static let locked = Color(hex: 0x3ECF8E)
     static let weak = Color(hex: 0xFBBF24)
 

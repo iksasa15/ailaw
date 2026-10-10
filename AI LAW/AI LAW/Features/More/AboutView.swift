@@ -11,7 +11,7 @@ struct AboutView: View {
                     BrandIcon()
                         .frame(width: 44, height: 44)
                         .clipShape(.rect(cornerRadius: 11, style: .continuous))
-                    Text("النظارة الذكية").appFont(20, .black).foregroundStyle(Theme.ink)
+                    Text("المحامون العرب").appFont(20, .black).foregroundStyle(Theme.ink)
                 }
                 Text("تطبيق جوال يحاكي نظارة ذكية: كاميرا ومايك كعدسة، كلام يتحول إلى نص، وإشارات مرئية/صوت، مع تنبيهات بصرية لأصوات الخطر.")
                     .appFont(15)
