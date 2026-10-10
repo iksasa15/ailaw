@@ -75,7 +75,7 @@ export function BrandMark({ height = 28, tone = 'brand', className = '' }) {
       viewBox="92 380 840 270"
       height={height}
       width={(height * 840) / 270}
-      className={className}
+      className={`h-auto max-w-full ${className}`}
       role="img"
       aria-label="شعار النظارة الذكية"
     >

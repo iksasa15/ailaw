@@ -11,7 +11,6 @@ import {
   mergePhraseMap,
 } from '../hooks/useFingerPhrases'
 import { useSettings } from '../app/SettingsContext'
-import { PageHeader } from '../components/layout/PageHeader'
 
 const HOW_TO_VOCAB = [
   'فعّل زر «إرسال» من الشريط السفلي.',
@@ -108,9 +107,8 @@ export default function Guide() {
   }))
 
   return (
-    <div className="h-full overflow-y-auto  px-4 py-6 text-[var(--ink)]">
-      <div className="mx-auto max-w-lg space-y-5 pb-10">
-        <PageHeader title="التعليمات" subtitle="كيف تستخدم العدسة والإشارات" backTo="/more" />
+    <div className="text-[var(--ink)]">
+      <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
 
         <p className="app-surface rounded-2xl px-4 py-3 leading-7 text-[var(--ink)]/85">
           سيناريو قضية: بدّل الدور بالتثبيت 5 ثوانٍ، ثم تحدّث بعبارات الأصابع.
@@ -217,7 +215,7 @@ export default function Guide() {
 
         <div className="flex flex-wrap gap-2 pt-2">
           <Link
-            to="/"
+            to="/app/lens"
             className="min-h-11 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
           >
             العدسة
@@ -229,7 +227,7 @@ export default function Guide() {
             المقاطع
           </a>
           <Link
-            to="/settings"
+            to="/app/settings"
             className="min-h-11 rounded-xl bg-white/80 px-4 py-2 text-sm text-[var(--ink)]"
           >
             الإعدادات

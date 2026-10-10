@@ -7,7 +7,6 @@ import { useBrowserStt } from '../hooks/useBrowserStt'
 import { useTts } from '../hooks/useTts'
 import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
 import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
-import { PageHeader } from '../components/layout/PageHeader'
 import { checkHealth } from '../services/api'
 import {
   CASE_SCENARIO,
@@ -160,9 +159,9 @@ export default function Lab() {
   const progress = stepIdx < 0 ? 0 : Math.round(((stepIdx + 1) / CASE_SCENARIO.length) * 100)
 
   return (
-    <div className="h-full overflow-y-auto px-4 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))]">
-      <div className="mx-auto flex min-h-full max-w-md flex-col gap-4">
-        <PageHeader title="المعمل" subtitle="سيناريو قضية واقعي + مترجم إشارة" />
+    <div>
+      <p className="mb-5 text-[var(--muted)]">سيناريو قضية واقعي + مترجم إشارة — جرّب جلسة كاملة بدون كاميرا.</p>
+      <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
 
         <section className="app-surface rounded-2xl p-4 ring-1 ring-[rgba(15,118,110,0.22)]">
           <div className="mb-1 flex items-start justify-between gap-2">
@@ -398,7 +397,7 @@ export default function Lab() {
 
         <Link
           to="/screens"
-          className="rounded-xl bg-white/80 px-4 py-2.5 text-center text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--ring)]"
+          className="block rounded-xl bg-white/80 px-4 py-2.5 text-center text-sm font-semibold text-[var(--ink)] ring-1 ring-[var(--ring)]"
         >
           جلسة بجهازين (محامي ↔ شخص)
         </Link>

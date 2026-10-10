@@ -1,70 +1,74 @@
-import { useEffect, useState } from 'react'
-import { fetchVocab } from '../services/api'
-import { PageHeader } from '../components/layout/PageHeader'
+import { BrandIcon, BrandMark } from '../components/brand/BrandMark'
+import { Card, SectionTitle } from '../components/ui/Card'
+import { Icon } from '../components/ui/Icon'
+import { COURSES } from '../platform/courses'
+
+const DIRECTIONS = [
+  ['ear', 'استقبال', 'كلام المحامي ← نص على العدسة ومترجم إشارة'],
+  ['hand', 'إرسال', 'إشارة الشخص (أصابع، حروف، كلمات) ← صوت مسموع'],
+  ['shield', 'أمان', 'صفارة أو حاجز قريب ← وميض وتنبيه'],
+]
+const TECH = [
+  ['MediaPipe Hands', 'تتبع 21 نقطة لليد داخل المتصفح'],
+  ['التعرف على الكلام', 'Web Speech API للعربية'],
+  ['النطق', 'Speech Synthesis بصوت عربي'],
+  ['React + Vite', 'منصة ويب تعمل على الجوال والحاسب'],
+  ['تطبيق iOS أصلي', 'Vision + Speech + SoundAnalysis على الجهاز'],
+]
 
 export default function About() {
-  const [vocab, setVocab] = useState(null)
-
-  useEffect(() => {
-    fetchVocab()
-      .then(setVocab)
-      .catch(() => setVocab(null))
-  }, [])
-
+  const words = COURSES.find((c) => c.id === 'words').lessons
   return (
-    <div className="h-full overflow-y-auto px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))]">
-      <div className="mx-auto max-w-md space-y-4">
-        <PageHeader title="عن المشروع" subtitle="عدسة AR للصم والبكم" backTo="/more" />
-
-        <div className="app-surface overflow-hidden rounded-2xl">
-          <div className="flex items-center gap-3 border-b border-[var(--ring)] bg-[var(--accent)]/8 px-4 py-3">
-            <svg viewBox="0 0 88 40" className="h-7 w-14" aria-hidden>
-              <circle cx="28" cy="20" r="14" fill="none" stroke="var(--accent-2)" strokeWidth="3" />
-              <circle cx="60" cy="20" r="14" fill="none" stroke="var(--accent)" strokeWidth="3" />
-              <path d="M42 20h4" stroke="var(--ink)" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            <p className="font-brand text-base font-bold text-[var(--ink)]">النظارة الذكية</p>
-          </div>
-          <p className="px-4 py-4 leading-7 text-[var(--ink)]">
-            تطبيق جوال يحاكي نظارة ذكية: كاميرا ومايك كعدسة، كلام يتحول إلى نص، وإشارات مرئية/صوت، مع
-            تنبيهات بصرية لأصوات الخطر.
-          </p>
-        </div>
-
-        <section className="app-surface rounded-2xl p-4">
-          <h2 className="text-lg font-bold text-[var(--ink)]">الاتجاهات</h2>
-          <ul className="mt-3 space-y-2.5">
-            {[
-              'استقبال: كلام → نص على العدسة',
-              'إرسال: إشارة → نطق مسموع',
-              'أمان: صفارة/إنذار → وميض + اهتزاز',
-            ].map((line) => (
-              <li key={line} className="flex items-start gap-2 text-[var(--muted)]">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" aria-hidden />
-                <span className="leading-6">{line}</span>
+    <div className="flex flex-col gap-5">
+      <div className="hero-bg flex flex-col items-center gap-4 rounded-[24px] px-6 py-10 text-center text-white">
+        <BrandIcon size={84} />
+        <h2 className="text-3xl font-black">النظارة الذكية</h2>
+        <p className="max-w-2xl leading-8 text-white/80">
+          عدسة واقع معزّز ومنصة عدالة للصم والبكم: تحوّل كلام المحامي إلى نص وإشارة، وإشارة الشخص إلى صوت،
+          وتنظّم الجلسات من الحجز حتى المحضر.
+        </p>
+        <BrandMark height={46} tone="white" />
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card>
+          <SectionTitle title="الاتجاهات الثلاثة" />
+          <ul className="flex flex-col gap-3">
+            {DIRECTIONS.map(([icon, title, text]) => (
+              <li key={title} className="flex items-center gap-3 rounded-2xl bg-[var(--bg)] p-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-white text-[var(--accent)]">
+                  <Icon name={icon === 'ear' ? 'mic' : icon} size={20} />
+                </span>
+                <div>
+                  <div className="font-black">{title}</div>
+                  <div className="text-sm text-[var(--muted)]">{text}</div>
+                </div>
               </li>
             ))}
           </ul>
-        </section>
-
-        <section className="app-surface rounded-2xl p-4">
-          <h2 className="text-lg font-bold text-[var(--ink)]">مفردات الديمو</h2>
-          {vocab ? (
-            <ul className="mt-3 grid grid-cols-2 gap-2">
-              {vocab.words.map((w) => (
-                <li
-                  key={w.index}
-                  className="rounded-xl bg-white px-3 py-2.5 text-sm font-medium text-[var(--ink)] ring-1 ring-[var(--ring)]"
-                >
-                  {w.display}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-2 text-sm text-[var(--muted)]">شغّل الـ Backend لعرض المفردات.</p>
-          )}
-        </section>
+        </Card>
+        <Card>
+          <SectionTitle title="التقنية" />
+          <ul className="flex flex-col gap-2">
+            {TECH.map(([name, text]) => (
+              <li key={name} className="flex justify-between gap-3 border-b border-[var(--ring)] py-2 last:border-0">
+                <span className="font-bold">{name}</span>
+                <span className="text-left text-sm text-[var(--muted)]">{text}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
+      <Card>
+        <SectionTitle title="مفردات ArSL" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {words.map((w) => (
+            <figure key={w.id} className="rounded-2xl bg-[var(--bg)] p-2 text-center">
+              <img src={w.image} alt={w.title} className="h-24 w-full rounded-xl object-contain" loading="lazy" />
+              <figcaption className="mt-1 text-sm font-bold">{w.title}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </Card>
     </div>
   )
 }

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useSettings } from '../app/SettingsContext'
 import { checkHealth, getApiBase, setApiBase } from '../services/api'
 import { LAWYER_PHRASES, PERSON_PHRASES } from '../hooks/useFingerPhrases'
-import { PageHeader } from '../components/layout/PageHeader'
+import { useNavigate } from 'react-router-dom'
+import { usePlatform } from '../platform/PlatformContext'
 
 function PhraseEditor({ title, phrases, onChange, onReset }) {
   return (
@@ -76,9 +77,9 @@ export default function Settings() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))]">
-      <div className="mx-auto max-w-md space-y-5">
-        <PageHeader title="الإعدادات" subtitle="الخادم والعبارات والعرض" backTo="/more" />
+    <div>
+      <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+        <DemoDataCard />
 
         <label className="app-surface block space-y-2 rounded-2xl p-4">
           <span className="text-sm text-[var(--muted)]">عنوان Backend</span>
@@ -196,5 +197,41 @@ export default function Settings() {
         </button>
       </div>
     </div>
+  )
+}
+
+/** بيانات العرض: إعادة الحجوزات والتوفر والتقدّم إلى حالتها الأصلية قبل العرض، والخروج. */
+function DemoDataCard() {
+  const { me, state, resetDemo, logout } = usePlatform()
+  const navigate = useNavigate()
+  return (
+    <section className="app-surface space-y-3 rounded-2xl p-4 ring-1 ring-[rgba(15,118,110,0.22)]">
+      <h2 className="text-lg font-bold text-[var(--ink)]">بيانات العرض</h2>
+      <p className="text-sm leading-6 text-[var(--muted)]">
+        الحساب الحالي: <b className="text-[var(--ink)]">{me?.name}</b> · {state.bookings.length} حجوزات محفوظة في هذا المتصفح.
+        قبل العرض أعد البيانات لتبدأ من الحجوزات الأصلية (جلسة مؤكدة اليوم، طلب معلّق، محضر جاهز).
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('إعادة كل الحجوزات والتوفر والتقدّم إلى بيانات العرض الأصلية؟')) resetDemo()
+          }}
+          className="btn-primary min-h-11 rounded-xl px-4"
+        >
+          إعادة بيانات العرض
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            logout()
+            navigate('/')
+          }}
+          className="min-h-11 rounded-xl border border-[var(--ring)] bg-white/70 px-4 text-[var(--ink)]"
+        >
+          تسجيل الخروج
+        </button>
+      </div>
+    </section>
   )
 }
