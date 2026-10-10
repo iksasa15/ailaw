@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   appendEntry,
   availableSlots,
+  isEcho,
   buildRecord,
   courseProgress,
   nextSession,
@@ -186,5 +187,31 @@ describe('appendEntry', () => {
 
   test('blank text is ignored', () => {
     expect(appendEntry([], e('person', '   ', 1))).toEqual([])
+  })
+})
+
+describe('isEcho', () => {
+  const person = { role: 'person', text: 'أنا كنت أقود', at: 10_000 }
+
+  test('the mic hearing the spoken sign phrase is an echo, also while it grows', () => {
+    expect(isEcho([person], { role: 'lawyer', text: 'أنا كنت', at: 12_000 })).toBe(true)
+    expect(isEcho([person], { role: 'lawyer', text: 'أنا كنت أقود.', at: 13_000 })).toBe(true)
+  })
+
+  test('spoken prompts are echoes', () => {
+    expect(isEcho([], { role: 'lawyer', text: 'وضع المحامي', at: 1 })).toBe(true)
+    expect(isEcho([], { role: 'lawyer', text: 'احذر حاجز قريب', at: 1 })).toBe(true)
+  })
+
+  test('real lawyer speech is kept', () => {
+    expect(isEcho([person], { role: 'lawyer', text: 'هل أصيب أحد؟', at: 12_000 })).toBe(false)
+  })
+
+  test('the same words long after the sign are kept', () => {
+    expect(isEcho([person], { role: 'lawyer', text: 'أنا كنت أقود', at: 30_000 })).toBe(false)
+  })
+
+  test('person entries are never echoes', () => {
+    expect(isEcho([person], { role: 'person', text: 'أنا كنت أقود', at: 11_000 })).toBe(false)
   })
 })

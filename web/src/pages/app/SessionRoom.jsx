@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { checkHealth } from '../../services/api'
-import { appendEntry, CHANNEL_LABELS } from '../../platform/logic'
+import { appendEntry, CHANNEL_LABELS, isEcho } from '../../platform/logic'
 import { usePlatform } from '../../platform/PlatformContext'
 import { useNow } from '../../platform/useNow'
 import Home from '../Home'
@@ -30,7 +30,11 @@ export default function SessionRoom() {
   const now = useNow(1000)
   const listRef = useRef(null)
 
-  const onConversation = useCallback((entry) => setEntries((list) => appendEntry(list, entry)), [])
+  // ما تنطقه العدسة ويلتقطه المايك على نفس الجهاز لا يُسجَّل ككلام المحامي.
+  const onConversation = useCallback(
+    (entry) => setEntries((list) => (isEcho(list, entry) ? list : appendEntry(list, entry))),
+    [],
+  )
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })

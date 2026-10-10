@@ -95,6 +95,32 @@ export function appendEntry(entries, entry) {
   return [...entries, next]
 }
 
+/** عبارات تنطقها العدسة بنفسها (ليست كلام المحامي). */
+const SPOKEN_PROMPTS = ['وضع المحامي', 'وضع الشخص', 'احذر، حاجز قريب']
+const normalizeArabic = (t) =>
+  String(t || '')
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[^\u0600-\u06FF0-9\s]/g, ' ')
+    .replace(/[،؟؛]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+/**
+ * على جهاز واحد يلتقط المايك ما تنطقه العدسة: عبارة «محامٍ» تطابق (أو جزء من) عبارة أشار بها
+ * الشخص خلال `windowMs`، أو تنبيهاً منطوقاً، هي صدى وليست كلاماً.
+ */
+export function isEcho(entries, entry, windowMs = 10_000) {
+  if (entry?.role !== 'lawyer') return false
+  const text = normalizeArabic(entry.text)
+  if (!text) return false
+  if (SPOKEN_PROMPTS.some((p) => normalizeArabic(p).startsWith(text))) return true
+  return entries.some((e) => {
+    if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) return false
+    const spoken = normalizeArabic(e.text)
+    return spoken.includes(text) || text.includes(spoken)
+  })
+}
+
 const uniqueTexts = (entries, role) => [...new Set(entries.filter((e) => e.role === role).map((e) => e.text))]
 
 /** المحضر من سجل المحادثة. */
