@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  appendEntry,
   availableSlots,
   buildRecord,
   courseProgress,
@@ -158,5 +159,32 @@ describe('courseProgress', () => {
     expect(courseProgress(course, { a: true })).toBe(33)
     expect(courseProgress(course, { a: true, b: true, c: true })).toBe(100)
     expect(courseProgress(course, undefined)).toBe(0)
+  })
+})
+
+describe('appendEntry', () => {
+  const e = (role, text, at = 0) => ({ role, text, at })
+
+  test('growing lawyer speech replaces the previous partial sentence', () => {
+    let list = appendEntry([], e('lawyer', 'ماذا', 1))
+    list = appendEntry(list, e('lawyer', 'ماذا حدث', 2))
+    list = appendEntry(list, e('lawyer', 'ماذا حدث بالضبط؟', 3))
+    expect(list).toEqual([e('lawyer', 'ماذا حدث بالضبط؟', 3)])
+  })
+
+  test('a new sentence or another role is appended', () => {
+    let list = appendEntry([], e('lawyer', 'ماذا حدث؟', 1))
+    list = appendEntry(list, e('person', 'اصطدم بي', 2))
+    list = appendEntry(list, e('lawyer', 'أين؟', 3))
+    expect(list.map((x) => x.text)).toEqual(['ماذا حدث؟', 'اصطدم بي', 'أين؟'])
+  })
+
+  test('the same phrase twice in a row is kept once', () => {
+    const list = appendEntry([e('person', 'نعم', 1)], e('person', 'نعم', 2))
+    expect(list).toHaveLength(1)
+  })
+
+  test('blank text is ignored', () => {
+    expect(appendEntry([], e('person', '   ', 1))).toEqual([])
   })
 })

@@ -28,7 +28,11 @@ import { AlphabetWriteOverlay } from '../components/overlay/AlphabetWriteOverlay
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
 
-export default function Home({ lockedRole = null }) {
+/**
+ * العدسة. داخل المنصة: `serverless` (لا خادم: لا غرفة ولا Whisper ولا تحليل أصوات عبر الخادم)
+ * و`onConversation({ role, text, at })` لكل عبارة تُقال أو يُشار بها (محادثة الجلسة والمحضر).
+ */
+export default function Home({ lockedRole = null, serverless = false, onConversation = null }) {
   const dedicated = lockedRole === 'lawyer' || lockedRole === 'person'
   const { settings, update } = useSettings()
   const [backendWhisper, setBackendWhisper] = useState(false)
@@ -47,6 +51,13 @@ export default function Home({ lockedRole = null }) {
   const lastRoleSpokenRef = useRef('')
   const lastRemoteSpokenRef = useRef('')
   const sceneMarkRef = useRef(null)
+  const conversationRef = useRef(onConversation)
+  useEffect(() => {
+    conversationRef.current = onConversation
+  }, [onConversation])
+  const emitConversation = useCallback((role, text) => {
+    if (role === 'lawyer' || role === 'person') conversationRef.current?.({ role, text, at: Date.now() })
+  }, [])
 
   // Ensure a room id exists for dedicated screens
   useEffect(() => {
@@ -62,6 +73,7 @@ export default function Home({ lockedRole = null }) {
   }, [dedicated, settings.sendEnabled, update])
 
   useEffect(() => {
+    if (serverless) return undefined
     let cancelled = false
     checkHealth()
       .then((h) => {
@@ -73,7 +85,7 @@ export default function Home({ lockedRole = null }) {
     return () => {
       cancelled = true
     }
-  }, [settings.apiBase])
+  }, [settings.apiBase, serverless])
 
   const needMic = settings.receiveEnabled || settings.safetyEnabled
   const mic = useSharedMic({ enabled: needMic })
@@ -141,13 +153,16 @@ export default function Home({ lockedRole = null }) {
     setAlphabetSent(false)
     unlockTts()
     try {
-      await publishScenePhrase({
-        role: 'person',
-        text: msg,
-        fingers: null,
-        room: settings.roomId || undefined,
-      })
-      sceneMarkRef.current?.()
+      emitConversation('person', msg)
+      if (!serverless) {
+        await publishScenePhrase({
+          role: 'person',
+          text: msg,
+          fingers: null,
+          room: settings.roomId || undefined,
+        })
+        sceneMarkRef.current?.()
+      }
       // شاشة الشخص: المحامي يسمع عبر الغرفة. غير ذلك انطق محلياً.
       if (lockedRole !== 'person') {
         speak(msg, { force: true })
@@ -167,10 +182,12 @@ export default function Home({ lockedRole = null }) {
     settings.roomId,
     speak,
     unlockTts,
+    serverless,
+    emitConversation,
   ])
 
   const ambient = useAmbient({
-    enabled: settings.safetyEnabled && mic.status === 'ready',
+    enabled: !serverless && settings.safetyEnabled && mic.status === 'ready',
     stream: mic.stream,
   })
   const obstacle = useObstacleProximity({
@@ -186,6 +203,7 @@ export default function Home({ lockedRole = null }) {
   const onRemotePhrase = useCallback(
     (phrase) => {
       if (!phrase?.text || !phrase?.role) return
+      emitConversation(phrase.role, phrase.text)
       // Remote person → lawyer speaks; remote lawyer → person sees coach (no TTS on person)
       if (lockedRole === 'lawyer' && phrase.role === 'person') {
         const key = `${phrase.at || ''}:${phrase.text}`
@@ -195,11 +213,11 @@ export default function Home({ lockedRole = null }) {
         speak(phrase.text, { force: true })
       }
     },
-    [lockedRole, speak, unlockTts],
+    [lockedRole, speak, unlockTts, emitConversation],
   )
 
   const scene = useSceneSocket({
-    enabled: Boolean(settings.roomId) && (dedicated || settings.receiveEnabled),
+    enabled: !serverless && Boolean(settings.roomId) && (dedicated || settings.receiveEnabled),
     room: settings.roomId || '',
     role: lockedRole || null,
     onRemotePhrase,
@@ -271,6 +289,7 @@ export default function Home({ lockedRole = null }) {
     lastSpokenRef.current = key
     const spokenRole = r.role || finger.role
     const room = settings.roomId || undefined
+    emitConversation(spokenRole, r.display)
     if (spokenRole === 'lawyer' || spokenRole === 'person') {
       if (spokenRole === 'lawyer') {
         setLocalLawyerPhrase({
@@ -279,14 +298,16 @@ export default function Home({ lockedRole = null }) {
           at: Date.now(),
         })
       }
-      publishScenePhrase({
-        role: spokenRole,
-        text: r.display,
-        fingers: r.fingers ?? null,
-        room,
-      })
-        .then(() => sceneMarkRef.current?.())
-        .catch(() => {})
+      if (!serverless) {
+        publishScenePhrase({
+          role: spokenRole,
+          text: r.display,
+          fingers: r.fingers ?? null,
+          room,
+        })
+          .then(() => sceneMarkRef.current?.())
+          .catch(() => {})
+      }
     }
     if (lockedRole !== 'person') {
       speak(r.display, { force: true })
@@ -304,6 +325,8 @@ export default function Home({ lockedRole = null }) {
     dedicated,
     lockedRole,
     settings.roomId,
+    serverless,
+    emitConversation,
   ])
 
   // كلام المحامي (STT) → مترجم الإشارة عند الشخص
@@ -333,8 +356,9 @@ export default function Home({ lockedRole = null }) {
         text: snippet,
         at: Date.now(),
       })
+      emitConversation('lawyer', snippet)
       // المحامي فقط ينشر للغرفة؛ الشخص يعرض الإشارات محلياً
-      if (!isLawyerTalking) return
+      if (!isLawyerTalking || serverless) return
       publishScenePhrase({
         role: 'lawyer',
         text: snippet,
@@ -352,6 +376,8 @@ export default function Home({ lockedRole = null }) {
     finger.role,
     settings.receiveEnabled,
     settings.roomId,
+    serverless,
+    emitConversation,
   ])
 
   const sttStatus =

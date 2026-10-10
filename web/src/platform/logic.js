@@ -79,6 +79,22 @@ function dedupeConsecutive(entries) {
   return out
 }
 
+/**
+ * يضيف عبارة إلى محادثة الجلسة. كلام المحامي يصل متنامياً («ماذا» ← «ماذا حدث»…)، فالجملة
+ * الأطول تحلّ محل الجزء السابق بدل تكراره؛ نفس العبارة مرتين متتاليتين تُحفظ مرة.
+ */
+export function appendEntry(entries, entry) {
+  const text = String(entry?.text || '').trim()
+  if (!text) return entries
+  const next = { ...entry, text }
+  const last = entries[entries.length - 1]
+  if (last && last.role === next.role) {
+    if (last.text === text) return entries
+    if (next.role === 'lawyer' && text.startsWith(last.text)) return [...entries.slice(0, -1), next]
+  }
+  return [...entries, next]
+}
+
 const uniqueTexts = (entries, role) => [...new Set(entries.filter((e) => e.role === role).map((e) => e.text))]
 
 /** المحضر من سجل المحادثة. */

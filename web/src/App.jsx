@@ -18,6 +18,8 @@ import LawyerProfile from './pages/app/LawyerProfile'
 import Sessions from './pages/app/Sessions'
 import Requests from './pages/app/Requests'
 import Availability from './pages/app/Availability'
+import SessionRoom from './pages/app/SessionRoom'
+import SessionRecord from './pages/app/SessionRecord'
 
 export default function App() {
   return (
@@ -68,7 +70,9 @@ export default function App() {
               </RequireRole>
             }
           />
-          <Route path="lens" element={<Home />} />
+          <Route path="session/:id" element={<SessionRoom />} />
+          <Route path="session/:id/record" element={<SessionRecord />} />
+          <Route path="lens" element={<Home serverless />} />
           <Route path="lab" element={<Lab />} />
           <Route path="guide" element={<Guide />} />
           <Route path="settings" element={<Settings />} />
