@@ -20,7 +20,7 @@ export const SIGN_VOCABULARY = [
   { clip: 'word-paper', label: 'ورقة', words: ['ورقة', 'أوراق', 'ورق', 'تقرير', 'مستند', 'مستندات', 'وثيقة'] },
   { clip: 'word-evidence', label: 'دليل', words: ['دليل', 'أدلة', 'إثبات'] },
   { clip: 'word-witness', label: 'شاهد', words: ['شاهد', 'شهود'] },
-  { clip: 'word-help', label: 'مساعدة', words: ['مساعدة', 'ساعد', 'أساعد', 'نساعد'] },
+  { clip: 'word-help', label: 'مساعدة', words: ['مساعدة', 'ساعد', 'أساعد', 'نساعد', 'سأساعد', 'سنساعد'] },
   { clip: 'word-protect', label: 'حماية', words: ['حماية', 'أحمي', 'نحمي', 'نحميك'] },
   { clip: 'word-follow', label: 'متابعة', words: ['متابعة', 'تابع', 'أتابع', 'سنتابع', 'سأتابع'] },
   { clip: 'word-write', label: 'اكتب', words: ['اكتب', 'كتابة'] },

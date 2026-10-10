@@ -70,6 +70,12 @@ describe('word by word', () => {
     expect(labels(translateToSigns('نعمة'))).toEqual(['ن', 'ع', 'م', 'ة'])
     expect(srcs(translateToSigns('محاميه'))).toEqual([V('word-lawyer')])
   })
+  test('the future prefix س is understood for help', () => {
+    for (const text of ['سأساعدك', 'سنساعدك']) {
+      const r = translateToSigns(text)
+      expect(r.steps.map((s) => [s.kind, s.src]), text).toEqual([['video', V('word-help')]])
+    }
+  })
   test('a stripped stem shorter than 3 letters is not a match', () => {
     expect(labels(translateToSigns('كما'))).toEqual(['ك', 'م', 'ا'])
   })
