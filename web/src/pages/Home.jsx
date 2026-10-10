@@ -13,6 +13,7 @@ import { useObstacleProximity } from '../hooks/useObstacleProximity'
 import { useSceneSocket } from '../hooks/useSceneSocket'
 import { useSettings } from '../app/SettingsContext'
 import { checkHealth, makeLocalRoomId, publishScenePhrase } from '../services/api'
+import { createSpeechBuffer, speechStateOf } from '../platform/speechBuffer'
 import { HandLandmarkCanvas, PermissionGate, VideoFeed } from '../components/camera/Camera'
 import {
   AlertToast,
@@ -31,8 +32,16 @@ import { BottomBar } from '../components/controls/BottomBar'
 /**
  * العدسة. داخل المنصة: `serverless` (لا خادم: لا غرفة ولا Whisper ولا تحليل أصوات عبر الخادم)
  * و`onConversation({ role, text, at })` لكل عبارة تُقال أو يُشار بها (محادثة الجلسة والمحضر).
+ * `hideSignCoach` يخفي مربع المترجم الصغير (حين تعرضه الشاشة في لوحة أكبر)، و
+ * `onSpeechState({ state, partial, error, retry })` يُبلّغ حالة الاستماع لكلام المحامي.
  */
-export default function Home({ lockedRole = null, serverless = false, onConversation = null }) {
+export default function Home({
+  lockedRole = null,
+  serverless = false,
+  onConversation = null,
+  hideSignCoach = false,
+  onSpeechState = null,
+}) {
   const dedicated = lockedRole === 'lawyer' || lockedRole === 'person'
   const { settings, update } = useSettings()
   const [backendWhisper, setBackendWhisper] = useState(false)
@@ -331,61 +340,102 @@ export default function Home({ lockedRole = null, serverless = false, onConversa
   ])
 
   // كلام المحامي (STT) → مترجم الإشارة عند الشخص
-  // - شاشة المحامي: يبث للغرفة
-  // - شاشة الشخص / استقبال: يترجم محلياً فوراً (وضع فردي أو كلام في المايك)
-  const lastPublishedSttRef = useRef('')
+  // - كل جزء نهائي من التعرف يدخل مخزناً واحداً، وتخرج الجملة منه مرة واحدة فقط
+  //   (عند سكون المتحدث أو بلوغ 12 كلمة) — فلا تُعاد قراءة الكلام السابق
+  // - شاشة المحامي: تبث للغرفة
+  // - شاشة الشخص / استقبال: تترجم محلياً فوراً (وضع فردي أو كلام في المايك)
+  const isLawyerTalking =
+    lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer')
+  const isPersonListening =
+    lockedRole === 'person' || (!dedicated && finger.role === 'person')
+  const speechActive = settings.receiveEnabled && (isLawyerTalking || isPersonListening)
+
+  // الجملة الخارجة من المخزن (آخر قيم المكوّن عبر ref فيبقى المخزن واحداً)
+  const sentenceRef = useRef(null)
   useEffect(() => {
-    if (!settings.receiveEnabled) return undefined
-    const isLawyerTalking =
-      lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer')
-    const isPersonListening =
-      lockedRole === 'person' || (!dedicated && finger.role === 'person')
-    if (!isLawyerTalking && !isPersonListening) return undefined
-
-    const raw = (stt.text || '').trim()
-    if (!raw || raw.length < 2) return undefined
-    // Take the latest sentence/chunk (caption accumulates)
-    const parts = raw.split(/\s+/).filter(Boolean)
-    const snippet = parts.slice(-12).join(' ')
-    if (!snippet || snippet === lastPublishedSttRef.current) return undefined
-
-    const t = window.setTimeout(() => {
-      if (snippet === lastPublishedSttRef.current) return
-      lastPublishedSttRef.current = snippet
+    sentenceRef.current = (text) => {
       setLocalLawyerPhrase({
         fingers: null,
-        text: snippet,
+        text,
         at: Date.now(),
       })
-      emitConversation('lawyer', snippet)
+      emitConversation('lawyer', text)
       // المحامي فقط ينشر للغرفة؛ الشخص يعرض الإشارات محلياً
       if (!isLawyerTalking || serverless) return
       publishScenePhrase({
         role: 'lawyer',
-        text: snippet,
+        text,
         fingers: null,
         room: settings.roomId || undefined,
       })
         .then(() => sceneMarkRef.current?.())
         .catch(() => {})
-    }, 800)
-    return () => window.clearTimeout(t)
-  }, [
-    stt.text,
-    lockedRole,
-    dedicated,
-    finger.role,
-    settings.receiveEnabled,
-    settings.roomId,
-    serverless,
-    emitConversation,
-  ])
+    }
+  })
+  const speechBufferRef = useRef(null)
+  useEffect(() => {
+    const buffer = createSpeechBuffer({ onSentence: (t) => sentenceRef.current?.(t) })
+    speechBufferRef.current = buffer
+    return () => {
+      buffer.cancel()
+      speechBufferRef.current = null
+    }
+  }, [])
+  // توقف الاستماع (إطفاء الاستقبال / خروج من الدور) يُسقط ما لم يخرج من المخزن بعد
+  useEffect(() => {
+    if (!speechActive) speechBufferRef.current?.cancel()
+  }, [speechActive])
+
+  // كل جزء نهائي يُمرَّر مرة واحدة فقط (المفتاح يُسجَّل قبل فحص الشروط فلا يعود متأخراً)
+  const lastFinalKeyRef = useRef('')
+  useEffect(() => {
+    const f = stt.final
+    if (!f) return
+    const key = `${useWs ? 'ws' : 'browser'}:${f.id}`
+    if (lastFinalKeyRef.current === key) return
+    lastFinalKeyRef.current = key
+    if (!speechActive) return
+    speechBufferRef.current?.push(f.text)
+  }, [stt.final, useWs, speechActive])
 
   const sttStatus =
     needMic && (mic.status === 'denied' || mic.status === 'error')
       ? 'error'
       : stt.status
   const sttError = mic.error || stt.error
+
+  // حالة الاستماع لكلام المحامي → لوحة المترجم («يستمع للمحامي»)
+  const speechState = speechStateOf({
+    receiveEnabled: settings.receiveEnabled,
+    supported:
+      backendWhisper ||
+      Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    status: sttStatus,
+  })
+  const onSpeechStateRef = useRef(onSpeechState)
+  useEffect(() => {
+    onSpeechStateRef.current = onSpeechState
+  }, [onSpeechState])
+  const retrySpeechRef = useRef(null)
+  useEffect(() => {
+    retrySpeechRef.current = () => {
+      if (speechState === 'off') {
+        update({ receiveEnabled: true })
+      } else {
+        mic.start()
+        stt.start?.()
+      }
+    }
+  })
+  const retrySpeech = useCallback(() => retrySpeechRef.current?.(), [])
+  useEffect(() => {
+    onSpeechStateRef.current?.({
+      state: speechState,
+      partial: stt.partial,
+      error: sttError,
+      retry: retrySpeech,
+    })
+  }, [speechState, stt.partial, sttError, retrySpeech])
 
   const title =
     lockedRole === 'lawyer'
@@ -493,6 +543,7 @@ export default function Home({ lockedRole = null, serverless = false, onConversa
       ) : null}
       <SignCoachAvatar
         visible={
+          !hideSignCoach &&
           translateVisible &&
           (lockedRole === 'person' ||
             (!dedicated && (finger.role === 'person' || Boolean(lastLawyerPhrase?.text))))

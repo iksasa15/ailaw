@@ -5,6 +5,7 @@ const TRANSIENT = new Set(['no-speech', 'aborted', 'audio-capture'])
 export function useBrowserStt({ enabled = false, language = 'ar-SA' } = {}) {
   const [text, setText] = useState('')
   const [partial, setPartial] = useState('')
+  const [final, setFinal] = useState(null)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState(null)
   const recRef = useRef(null)
@@ -68,8 +69,11 @@ export function useBrowserStt({ enabled = false, language = 'ar-SA' } = {}) {
       }
       if (interim) setPartial(interim)
       if (finalChunk) {
+        const chunk = finalChunk.trim()
         setPartial('')
         setText((prev) => `${prev} ${finalChunk}`.trim().slice(-280))
+        // كل جزء نهائي يصل مرة واحدة بمعرّف متزايد — يستهلكه من يريد الجملة لا النص المتراكم
+        if (chunk) setFinal((f) => ({ id: (f?.id || 0) + 1, text: chunk }))
       }
     }
 
@@ -101,6 +105,7 @@ export function useBrowserStt({ enabled = false, language = 'ar-SA' } = {}) {
   return {
     text,
     partial,
+    final,
     status,
     error,
     start,

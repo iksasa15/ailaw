@@ -17,6 +17,7 @@ export function useSttSocket({
 } = {}) {
   const [text, setText] = useState('')
   const [partial, setPartial] = useState('')
+  const [final, setFinal] = useState(null)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState(null)
   const wsRef = useRef(null)
@@ -150,8 +151,11 @@ export function useSttSocket({
           const msg = JSON.parse(ev.data)
           if (msg.type === 'partial') setPartial(msg.text || '')
           if (msg.type === 'final' && msg.text) {
+            const chunk = String(msg.text).trim()
             setPartial('')
             setText((prev) => `${prev} ${msg.text}`.trim().slice(-280))
+            // كل جزء نهائي يصل مرة واحدة بمعرّف متزايد — يستهلكه من يريد الجملة لا النص المتراكم
+            if (chunk) setFinal((f) => ({ id: (f?.id || 0) + 1, text: chunk }))
           }
         } catch {
           /* ignore */
@@ -210,5 +214,5 @@ export function useSttSocket({
     setPartial('')
   }, [])
 
-  return { text, partial, status, error, start, stop, clearText }
+  return { text, partial, final, status, error, start, stop, clearText }
 }
