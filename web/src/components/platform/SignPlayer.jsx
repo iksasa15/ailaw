@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { resolveSignClips } from '../../data/signLexicon'
+import { resolveSignClips, STEP_MS } from '../../platform/signTranslate'
 import { Button } from '../ui/Button'
 import { Icon } from '../ui/Icon'
-
-const LETTER_MS = 900
 
 /**
  * يعرض قائمة عبارات بلغة الإشارة: فيديو لكل عبارة معروفة، وتهجئة حرفاً حرفاً لغيرها.
@@ -24,10 +22,10 @@ export function SignPlayer({ title, phrases, onClose }) {
     }
   }
 
-  // الحروف صور: تتقدّم كل 0.9 ث. الفيديو يتقدّم عند انتهائه.
+  // الحروف والبطاقات المكتوبة تتقدّم بمؤقّت. الفيديو يتقدّم عند انتهائه.
   useEffect(() => {
     if (!current || current.type === 'video') return undefined
-    const t = window.setTimeout(nextClip, LETTER_MS)
+    const t = window.setTimeout(nextClip, current.type === 'word' ? STEP_MS.word : STEP_MS.letter)
     return () => window.clearTimeout(t)
   })
 
@@ -54,6 +52,10 @@ export function SignPlayer({ title, phrases, onClose }) {
         <div className="m-5 flex aspect-video items-center justify-center overflow-hidden rounded-2xl bg-black">
           {current?.type === 'video' ? (
             <video key={`${index}-${clip}`} src={current.src} autoPlay muted playsInline onEnded={nextClip} onError={nextClip} className="h-full w-full object-contain" />
+          ) : current?.type === 'word' ? (
+            <span key={`${index}-${clip}`} className="flex h-full w-full items-center justify-center bg-[#0b1630] p-6 text-center text-5xl font-black leading-tight text-white">
+              {current.label}
+            </span>
           ) : current ? (
             <img key={`${index}-${clip}`} src={current.src} alt={current.label} className="h-full w-full object-contain p-6" />
           ) : (
@@ -62,7 +64,7 @@ export function SignPlayer({ title, phrases, onClose }) {
         </div>
         <div className="px-6 text-center">
           <div className="text-2xl font-black leading-snug">{phrases[index]}</div>
-          {current ? <div className="mt-1 text-sm font-bold text-[#f9bd29]">{current.type === 'video' ? current.label : `حرف ${current.label}`}</div> : null}
+          {current && current.type !== 'word' ? <div className="mt-1 text-sm font-bold text-[#f9bd29]">{current.type === 'video' ? current.label : `حرف ${current.label}`}</div> : null}
           <div className="mt-3 flex justify-center gap-1">
             {clips.map((c, i) => (
               <span key={`${c.src}-${i}`} className={`h-1.5 rounded-full transition-all ${i === clip ? 'w-6 bg-[#f9bd29]' : 'w-1.5 bg-white/25'}`} />

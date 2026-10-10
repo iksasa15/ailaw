@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { resolveSignClips } from '../../data/signLexicon'
+import { resolveSignClips, STEP_MS } from '../../platform/signTranslate'
 
 const LETTER_MS = 900
 const VIDEO_FALLBACK_MS = 2800
@@ -25,6 +25,7 @@ export function SignCoachAvatar({
   const current = hasSign ? clips[stepIdx] || clips[0] : null
   const isLetterMode = clips?.some((c) => c.type === 'letter')
   const isImage = current?.type === 'letter' || current?.type === 'image'
+  const isCard = current?.type === 'word'
 
   useEffect(() => {
     if (!visible || !clips?.length) return undefined
@@ -44,17 +45,17 @@ export function SignCoachAvatar({
     return undefined
   }, [current?.src, stepIdx, isImage])
 
-  // Auto-advance for letter images (and video fallback if onEnded never fires)
+  // Auto-advance for letter images and written cards (and video fallback if onEnded never fires)
   useEffect(() => {
     if (!visible || !clips?.length || !current) return undefined
-    if (isImage || mediaMissing) {
+    if (isImage || isCard || mediaMissing) {
       const id = window.setTimeout(() => {
         setStepIdx((i) => (i + 1) % clips.length)
-      }, isImage ? LETTER_MS : VIDEO_FALLBACK_MS)
+      }, isCard ? STEP_MS.word : isImage ? LETTER_MS : VIDEO_FALLBACK_MS)
       return () => window.clearTimeout(id)
     }
     return undefined
-  }, [visible, clips, current, stepIdx, isImage, mediaMissing])
+  }, [visible, clips, current, stepIdx, isImage, isCard, mediaMissing])
 
   const advance = () => {
     if (!clips?.length) return
@@ -97,7 +98,7 @@ export function SignCoachAvatar({
           />
         ) : null}
 
-        {hasSign && current && !mediaMissing && !isImage ? (
+        {hasSign && current && !mediaMissing && !isImage && !isCard ? (
           <video
             key={`${current.src}-${stepIdx}`}
             ref={videoRef}
@@ -113,7 +114,18 @@ export function SignCoachAvatar({
           />
         ) : null}
 
-        {hasSign && current && mediaMissing ? (
+        {hasSign && current && isCard ? (
+          <div
+            key={`card-${stepIdx}`}
+            className="absolute inset-0 flex items-center justify-center bg-[#0b1630] px-2 text-center"
+          >
+            <p className={`font-black leading-tight text-white ${mode === 'panel' ? 'text-5xl' : 'text-xl'}`}>
+              {current.label}
+            </p>
+          </div>
+        ) : null}
+
+        {hasSign && current && !isCard && mediaMissing ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center">
             <p className={`font-bold text-white ${mode === 'panel' ? 'text-4xl' : 'text-lg'}`}>{current.label}</p>
             {mode === 'panel' ? <p className="text-sm text-white/55">تعذّر تحميل صورة الحرف</p> : null}
@@ -137,7 +149,7 @@ export function SignCoachAvatar({
           </div>
         ) : null}
 
-        {hasSign && current && !mediaMissing ? (
+        {hasSign && current && !isCard && !mediaMissing ? (
           <div
             className={`pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent ${
               mode === 'panel' ? 'px-3 pb-3 pt-8' : 'px-1.5 pb-1.5 pt-4'

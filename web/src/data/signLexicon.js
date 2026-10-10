@@ -1,5 +1,3 @@
-import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
-
 /** مقطع فيديو إشارة تحت /signs/videos/ */
 const S = (file, label) => ({
   src: `/signs/videos/${file}.mp4`,
@@ -104,48 +102,4 @@ export function fingerspellText(text, { maxLetters = 48 } = {}) {
     i += 1
   }
   return clips
-}
-
-/**
- * حوّل عبارة إلى تسلسل إشارات.
- * - داخل النص (1–10 / مطابقة عبارة): فيديوهات السيناريو
- * - خارج النص أو spellLetters: تهجئة أبجدية لغة الإشارة
- * @returns {{ src: string, label: string, type: string }[] | null}
- */
-export function resolveSignClips(lawyerPhrase, { spellLetters = false } = {}) {
-  if (!lawyerPhrase?.text && !(lawyerPhrase?.fingers >= 1)) return null
-
-  const raw = normalize(lawyerPhrase.text)
-
-  // زر «حروف» يجبر التهجئة الأبجدية دائماً
-  if (spellLetters) {
-    const text = raw || (lawyerPhrase?.fingers ? String(lawyerPhrase.fingers) : '')
-    const spelled = fingerspellText(text)
-    return spelled.length ? spelled : null
-  }
-
-  const fingers = Number(lawyerPhrase.fingers)
-  if (fingers >= 1 && fingers <= 10 && LAWYER_SIGN_CLIPS[fingers]) {
-    return LAWYER_SIGN_CLIPS[fingers]
-  }
-
-  if (!raw) return null
-
-  for (let i = 1; i <= 10; i += 1) {
-    if (normalize(LAWYER_PHRASES[i]) === raw && LAWYER_SIGN_CLIPS[i]) {
-      return LAWYER_SIGN_CLIPS[i]
-    }
-  }
-
-  for (let i = 1; i <= 10; i += 1) {
-    const p = normalize(LAWYER_PHRASES[i])
-    // فقط إذا احتوى الكلام على العبارة كاملة (تجنّب مطابقة كلمات قصيرة)
-    if (p && raw.includes(p) && LAWYER_SIGN_CLIPS[i]) {
-      return LAWYER_SIGN_CLIPS[i]
-    }
-  }
-
-  // خارج النص المكتوب → تهجئة إشارة حرفاً حرفاً
-  const spelled = fingerspellText(raw)
-  return spelled.length ? spelled : null
 }
