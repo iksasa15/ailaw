@@ -16,6 +16,8 @@ import RoleHome from './pages/app/RoleHome'
 import LawyersDirectory from './pages/app/LawyersDirectory'
 import LawyerProfile from './pages/app/LawyerProfile'
 import Sessions from './pages/app/Sessions'
+import Requests from './pages/app/Requests'
+import Availability from './pages/app/Availability'
 
 export default function App() {
   return (
@@ -50,6 +52,22 @@ export default function App() {
             }
           />
           <Route path="sessions" element={<Sessions />} />
+          <Route
+            path="requests"
+            element={
+              <RequireRole role="lawyer">
+                <Requests />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="availability"
+            element={
+              <RequireRole role="lawyer">
+                <Availability />
+              </RequireRole>
+            }
+          />
           <Route path="lens" element={<Home />} />
           <Route path="lab" element={<Lab />} />
           <Route path="guide" element={<Guide />} />
