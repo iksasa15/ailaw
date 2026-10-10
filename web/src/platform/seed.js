@@ -9,6 +9,7 @@ const everyWorkday = (hours) => Object.fromEntries(WORKDAYS.map((d) => [d, [...h
 const LAWYERS = [
   {
     id: 'l1',
+    onlineNow: true,
     name: 'أ. سارة القحطاني',
     title: 'محامية ومستشارة قانونية',
     specialties: ['مرور', 'تعويضات'],
@@ -43,6 +44,7 @@ const LAWYERS = [
   },
   {
     id: 'l3',
+    onlineNow: true,
     name: 'أ. نورة الدوسري',
     title: 'محامية أحوال شخصية',
     specialties: ['أسرة'],
@@ -94,6 +96,7 @@ const LAWYERS = [
   },
   {
     id: 'l6',
+    onlineNow: true,
     name: 'أ. عبدالله المطيري',
     title: 'محامٍ ومستشار',
     specialties: ['مرور', 'جنائي'],
@@ -116,7 +119,35 @@ const USERS = {
   l1: { id: 'l1', role: 'lawyer', name: 'أ. سارة القحطاني', city: 'الرياض' },
   p2: { id: 'p2', role: 'person', name: 'منى الحربي', city: 'الرياض' },
   p3: { id: 'p3', role: 'person', name: 'سلطان العنزي', city: 'الخرج' },
+  p4: { id: 'p4', role: 'person', name: 'فيصل الدوسري', city: 'جدة' },
+  p5: { id: 'p5', role: 'person', name: 'هند القرني', city: 'الدمام' },
 }
+
+/** عبارات قصيرة لمحاضر الجلسات السابقة (للوحة الأثر). */
+const TALK = {
+  مرور: [['lawyer', 'أين وقع الحادث؟'], ['person', 'عند الإشارة'], ['lawyer', 'هل لديك تقرير المرور؟'], ['person', 'نعم معي التقرير']],
+  جنائي: [['lawyer', 'متى حدثت الواقعة؟'], ['person', 'يوم الخميس مساءً'], ['lawyer', 'هل يوجد شهود؟'], ['person', 'نعم شخصان']],
+  أسرة: [['lawyer', 'ما طلبك في القضية؟'], ['person', 'أريد حضانة أطفالي'], ['lawyer', 'سنرفع الطلب للمحكمة']],
+  عمل: [['lawyer', 'متى انتهى عقدك؟'], ['person', 'قبل شهرين'], ['lawyer', 'هل استلمت مستحقاتك؟'], ['person', 'لا لم أستلم']],
+  عقود: [['lawyer', 'هل العقد موثّق؟'], ['person', 'نعم موثّق'], ['lawyer', 'سأراجع البنود']],
+  تعويضات: [['lawyer', 'ما قيمة الضرر؟'], ['person', 'خمسون ألف ريال'], ['lawyer', 'سنطالب بالتعويض']],
+}
+
+/** جلسات مكتملة خلال الأسابيع الماضية: [أسابيع مضت، يوم في الأسبوع، محامٍ، موكّل، نوع القضية، دقائق]. */
+const HISTORY = [
+  [7, 1, 'l2', 'p4', 'جنائي', 18],
+  [6, 2, 'l3', 'p5', 'أسرة', 25],
+  [6, 4, 'l1', 'p2', 'مرور', 14],
+  [5, 0, 'l4', 'p2', 'عمل', 22],
+  [4, 1, 'l5', 'p4', 'عقود', 16],
+  [4, 3, 'l1', 'p3', 'تعويضات', 28],
+  [3, 2, 'l6', 'p5', 'مرور', 12],
+  [3, 4, 'l3', 'p4', 'أسرة', 20],
+  [2, 0, 'l1', 'p5', 'مرور', 19],
+  [2, 3, 'l2', 'p3', 'جنائي', 24],
+  [1, 1, 'l4', 'p4', 'عمل', 21],
+  [1, 2, 'l1', 'p2', 'تعويضات', 26],
+]
 
 const at = (base, dayOffset, hour, minute = 0) =>
   new Date(base.getFullYear(), base.getMonth(), base.getDate() + dayOffset, hour, minute)
@@ -126,6 +157,27 @@ function accidentRecord(start) {
   const t0 = start.getTime()
   const entries = CASE_SCENARIO.map((line, i) => ({ role: line.role, text: line.text, at: t0 + (i + 1) * 40_000 }))
   return buildRecord(entries, t0, t0 + 12 * 60_000)
+}
+
+function historyBookings(now) {
+  return HISTORY.map(([weeksAgo, weekday, lawyerId, personId, caseType, minutes], i) => {
+    const start = at(now, -now.getDay() - weeksAgo * 7 + weekday, 10 + (i % 5))
+    const t0 = start.getTime()
+    const entries = TALK[caseType].map(([role, text], k) => ({ role, text, at: t0 + (k + 1) * 60_000 }))
+    return {
+      id: `h-${i + 1}`,
+      personId,
+      lawyerId,
+      start: start.toISOString(),
+      durationMin: 30,
+      caseType,
+      description: '',
+      channel: i % 3 ? 'sign' : 'text',
+      status: 'completed',
+      createdAt: start.toISOString(),
+      record: buildRecord(entries, t0, t0 + minutes * 60_000),
+    }
+  })
 }
 
 export function buildSeed(now) {
@@ -146,7 +198,7 @@ export function buildSeed(now) {
     ...extra,
   })
   return {
-    version: 1,
+    version: 2,
     role: null,
     users: structuredClone(USERS),
     lawyers: structuredClone(LAWYERS),
@@ -170,6 +222,7 @@ export function buildSeed(now) {
           oldStart.getTime() + 8 * 60_000,
         ),
       }),
+      ...historyBookings(now),
     ],
   }
 }

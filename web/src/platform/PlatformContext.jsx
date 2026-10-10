@@ -14,6 +14,7 @@ const storage = () => {
 const ERROR_MESSAGES = {
   'slot-taken': 'هذا الموعد لم يعد متاحاً، اختر وقتاً آخر.',
   'invalid-transition': 'لا يمكن تنفيذ هذا الإجراء على الحجز في حالته الحالية.',
+  'invalid-rating': 'تم تقييم هذه الجلسة من قبل.',
 }
 
 export function PlatformProvider({ children }) {
@@ -63,6 +64,12 @@ export function PlatformProvider({ children }) {
         const r = attempt({ type: 'book', lawyerId, start, caseType, description, channel, now: new Date() })
         return r.ok ? { ok: true, id: r.state.lastBookingId } : r
       },
+      /** جلسة مؤكدة تبدأ الآن مع محامٍ متصل (الاستشارة الفورية). */
+      instant: (lawyerId, caseType) => {
+        const r = attempt({ type: 'instant', lawyerId, caseType, now: new Date() })
+        return r.ok ? { ok: true, id: r.state.lastBookingId } : r
+      },
+      rate: (id, stars, text) => attempt({ type: 'rate', id, stars, text, now: new Date() }),
       accept: (id) => attempt({ type: 'accept', id }),
       decline: (id) => attempt({ type: 'decline', id }),
       cancel: (id) => attempt({ type: 'cancel', id }),

@@ -2,7 +2,7 @@ import { availableSlots, buildRecord, transition } from './logic'
 import { buildSeed } from './seed'
 
 export const STORAGE_KEY = 'sg-platform-v1'
-const VERSION = 1
+const VERSION = 2
 
 /** الحالة المحفوظة، أو بيانات العرض إن كانت مفقودة/تالفة/من إصدار آخر. */
 export function loadState(storage, now) {
@@ -63,6 +63,45 @@ export function reducer(state, action) {
         createdAt: action.now.toISOString(),
       }
       return { ...state, bookings: [...state.bookings, booking], lastBookingId: booking.id }
+    }
+    case 'instant': {
+      const booking = {
+        id: newId(),
+        personId: 'p1',
+        lawyerId: action.lawyerId,
+        start: action.now.toISOString(),
+        durationMin: 30,
+        caseType: action.caseType,
+        description: 'استشارة فورية',
+        channel: 'sign',
+        status: 'confirmed',
+        kind: 'instant',
+        createdAt: action.now.toISOString(),
+      }
+      return { ...state, bookings: [...state.bookings, booking], lastBookingId: booking.id }
+    }
+    case 'rate': {
+      const booking = state.bookings.find((b) => b.id === action.id)
+      const stars = Math.max(1, Math.min(5, Math.round(action.stars)))
+      if (!booking || booking.status !== 'completed' || booking.rating) throw new Error('invalid-rating')
+      const text = String(action.text || '').trim().slice(0, 300)
+      const author = (state.users[booking.personId]?.name || 'موكّل').split(' ')[0]
+      return {
+        ...state,
+        bookings: state.bookings.map((b) =>
+          b.id === action.id ? { ...b, rating: { stars, text, at: action.now.toISOString() } } : b,
+        ),
+        lawyers: state.lawyers.map((l) => {
+          if (l.id !== booking.lawyerId) return l
+          const count = l.reviewsCount + 1
+          return {
+            ...l,
+            reviewsCount: count,
+            rating: Math.round(((l.rating * l.reviewsCount + stars) / count) * 10) / 10,
+            reviews: [{ author, stars, text: text || 'بدون تعليق' }, ...l.reviews],
+          }
+        }),
+      }
     }
     case 'accept':
     case 'decline':

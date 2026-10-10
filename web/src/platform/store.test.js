@@ -16,7 +16,7 @@ function memoryStorage(initial) {
 describe('seed', () => {
   test('demo data: two users, six lawyers, bookings in each state', () => {
     const s = buildSeed(NOW)
-    expect(s.version).toBe(1)
+    expect(s.version).toBe(2)
     expect(s.role).toBeNull()
     expect(s.users.p1.name).toBe('أحمد العتيبي')
     expect(s.users.l1.name).toBe('أ. سارة القحطاني')
@@ -27,6 +27,16 @@ describe('seed', () => {
     expect(statuses).toContain('completed')
     const done = s.bookings.find((b) => b.status === 'completed')
     expect(done.record.summary.facts.length).toBeGreaterThan(5)
+  })
+
+  test('three lawyers are online for instant consultations', () => {
+    expect(buildSeed(NOW).lawyers.filter((l) => l.onlineNow).map((l) => l.id)).toEqual(['l1', 'l3', 'l6'])
+  })
+
+  test('past completed sessions over the last weeks feed the impact charts', () => {
+    const history = buildSeed(NOW).bookings.filter((b) => b.status === 'completed' && b.id.startsWith('h-'))
+    expect(history.length).toBeGreaterThanOrEqual(10)
+    expect(history.every((b) => b.record.entries.length >= 2 && new Date(b.start) < NOW)).toBe(true)
   })
 
   test("today's confirmed session moves to tomorrow late in the day", () => {
@@ -47,6 +57,11 @@ describe('loadState', () => {
 
   test('old version seeds', () => {
     expect(loadState(memoryStorage(JSON.stringify({ version: 0 })), NOW).lawyers).toHaveLength(6)
+  })
+
+  test('version 1 data (before instant consultations) is replaced by the new seed', () => {
+    const old = { ...buildSeed(NOW), version: 1 }
+    expect(loadState(memoryStorage(JSON.stringify(old)), NOW).version).toBe(2)
   })
 
   test('saved state round-trips', () => {
