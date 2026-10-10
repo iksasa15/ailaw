@@ -14,6 +14,7 @@ import { useSceneSocket } from '../hooks/useSceneSocket'
 import { useSettings } from '../app/SettingsContext'
 import { checkHealth, makeLocalRoomId, publishScenePhrase } from '../services/api'
 import { createSpeechBuffer, speechStateOf } from '../platform/speechBuffer'
+import { removeEcho } from '../platform/logic'
 import { HandLandmarkCanvas, PermissionGate, VideoFeed } from '../components/camera/Camera'
 import {
   AlertToast,
@@ -28,6 +29,9 @@ import { SignCoachAvatar } from '../components/overlay/SignCoachAvatar'
 import { AlphabetWriteOverlay } from '../components/overlay/AlphabetWriteOverlay'
 import { ROLE_LABELS } from '../hooks/useFingerPhrases'
 import { BottomBar } from '../components/controls/BottomBar'
+
+/** مدة حفظ عبارات الشخص التي نطقتها هذه الشاشة، لإسقاط صداها حين يلتقطه المايك */
+const PERSON_ECHO_MS = 10_000
 
 /**
  * العدسة. داخل المنصة: `serverless` (لا خادم: لا غرفة ولا Whisper ولا تحليل أصوات عبر الخادم)
@@ -64,8 +68,19 @@ export default function Home({
   useEffect(() => {
     conversationRef.current = onConversation
   }, [onConversation])
+  // كل عبارة شخص تعرفها هذه الشاشة (أشار بها هنا أو وصلت من الغرفة) في آخر 10 ث: قد تنطقها
+  // الشاشة فيلتقطها مايكها، فتُسقَط من كلام المحامي قبل عرضه أو نشره (انظر sentenceRef)
+  const recentPersonRef = useRef([])
   const emitConversation = useCallback((role, text) => {
-    if (role === 'lawyer' || role === 'person') conversationRef.current?.({ role, text, at: Date.now() })
+    if (role !== 'lawyer' && role !== 'person') return
+    const at = Date.now()
+    if (role === 'person') {
+      recentPersonRef.current = [
+        ...recentPersonRef.current.filter((e) => at - e.at <= PERSON_ECHO_MS),
+        { role, text, at },
+      ]
+    }
+    conversationRef.current?.({ role, text, at })
   }, [])
 
   // Ensure a room id exists for dedicated screens
@@ -351,14 +366,22 @@ export default function Home({
   const isPersonListening = !dedicated && finger.role === 'person'
   const speechActive = settings.receiveEnabled && (isLawyerTalking || isPersonListening)
 
-  // الجملة الخارجة من المخزن (آخر قيم المكوّن عبر ref فيبقى المخزن واحداً)
+  // الجملة الخارجة من المخزن (آخر قيم المكوّن عبر ref فيبقى المخزن واحداً).
+  // ما نطقته هذه الشاشة من كلام الشخص (أو تنبيهاتها) وسمعه مايكها ليس كلام محامٍ: صدى كامل
+  // يُسقَط كله، وصدى في أول الجملة أو آخرها يُحذف منها — قبل العرض والتسجيل والنشر للغرفة، فلا
+  // يرى الشخص كلامه بالإشارة على جواله كأنه كلام المحامي.
   const sentenceRef = useRef(null)
   useEffect(() => {
-    sentenceRef.current = (text) => {
+    sentenceRef.current = (heard) => {
+      const at = Date.now()
+      recentPersonRef.current = recentPersonRef.current.filter((e) => at - e.at <= PERSON_ECHO_MS)
+      const clean = removeEcho(recentPersonRef.current, { role: 'lawyer', text: heard, at }, PERSON_ECHO_MS)
+      if (!clean) return
+      const { text } = clean
       setLocalLawyerPhrase({
         fingers: null,
         text,
-        at: Date.now(),
+        at,
       })
       emitConversation('lawyer', text)
       // المحامي فقط ينشر للغرفة؛ الشخص يعرض الإشارات محلياً
