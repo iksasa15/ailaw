@@ -38,6 +38,8 @@ const PERSON_ECHO_MS = 10_000
  * و`onConversation({ role, text, at })` لكل عبارة تُقال أو يُشار بها (محادثة الجلسة والمحضر).
  * `hideSignCoach` يخفي مربع المترجم الصغير (حين تعرضه الشاشة في لوحة أكبر)، و
  * `onSpeechState({ state, partial, error, retry })` يُبلّغ حالة الاستماع لكلام المحامي.
+ * `preferBrowserStt`: تعرّف المتصفح على الكلام (إن وُجد) ولو كان Whisper متاحاً — يُرجع جزءاً
+ * نهائياً عند كل سكون فتُجمع الجملة كاملة، بينما يُرجع Whisper جزءاً كل ~3.5 ث فتتقطّع الجمل.
  */
 export default function Home({
   lockedRole = null,
@@ -45,6 +47,7 @@ export default function Home({
   onConversation = null,
   hideSignCoach = false,
   onSpeechState = null,
+  preferBrowserStt = false,
 }) {
   const dedicated = lockedRole === 'lawyer' || lockedRole === 'person'
   const { settings, update } = useSettings()
@@ -122,8 +125,11 @@ export default function Home({
     pulseToken,
   })
 
-  const useWs = settings.receiveEnabled && backendWhisper
-  const useBrowser = settings.receiveEnabled && !backendWhisper
+  // Whisper حين يتاح، إلا إن طلبت الشاشة محرك المتصفح ووُجد (preferBrowserStt)
+  const browserStt = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
+  const whisper = backendWhisper && !(preferBrowserStt && browserStt)
+  const useWs = settings.receiveEnabled && whisper
+  const useBrowser = settings.receiveEnabled && !whisper
 
   const sttWs = useSttSocket({
     enabled: useWs && mic.status === 'ready',
@@ -431,9 +437,7 @@ export default function Home({
   // حالة الاستماع لكلام المحامي → لوحة المترجم («يستمع للمحامي»)
   const speechState = speechStateOf({
     receiveEnabled: settings.receiveEnabled,
-    supported:
-      backendWhisper ||
-      Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    supported: whisper || browserStt,
     status: sttStatus,
   })
   const onSpeechStateRef = useRef(onSpeechState)

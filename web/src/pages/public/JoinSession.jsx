@@ -91,11 +91,15 @@ export default function JoinSession() {
             <SignTranslator compact sentences={sentences} />
           </div>
           <div className="relative min-h-0 flex-1">
-            {ready ? <Home key={invite.room} lockedRole={invite.role} hideSignCoach onConversation={onConversation} /> : null}
+            {ready ? (
+              <Home key={invite.room} lockedRole={invite.role} hideSignCoach onConversation={onConversation} preferBrowserStt />
+            ) : null}
           </div>
         </main>
       ) : (
-        <main className="relative min-h-0 flex-1">{ready ? <Home key={invite.room} lockedRole={invite.role} /> : null}</main>
+        <main className="relative min-h-0 flex-1">
+          {ready ? <Home key={invite.room} lockedRole={invite.role} preferBrowserStt /> : null}
+        </main>
       )}
 
       {invite.role === 'person' ? (

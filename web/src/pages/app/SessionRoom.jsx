@@ -301,9 +301,16 @@ export default function SessionRoom() {
         ) : null}
         <div className="relative min-h-0 flex-1 lg:h-full">
           {link ? (
-            <Home key={link.room} lockedRole={link.hostRole} hideSignCoach onConversation={onConversation} />
+            <Home key={link.room} lockedRole={link.hostRole} hideSignCoach onConversation={onConversation} preferBrowserStt />
           ) : (
-            <Home key="solo" serverless hideSignCoach onConversation={onConversation} onSpeechState={setSpeech} />
+            <Home
+              key="solo"
+              serverless
+              hideSignCoach
+              onConversation={onConversation}
+              onSpeechState={setSpeech}
+              preferBrowserStt
+            />
           )}
         </div>
       </div>
