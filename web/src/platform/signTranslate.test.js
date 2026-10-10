@@ -19,6 +19,20 @@ describe('scenario sentences', () => {
     expect(srcs(translateToSigns('سأتابعُ القضيةَ غداً'))).toEqual([V('word-follow'), V('word-case')])
     expect(srcs(translateToSigns('طيب، هل لديك تقرير شرطة؟ أخبرني'))).toEqual([V('word-ask'), V('word-paper')])
   })
+  test('every scenario sentence in one chunk is played, in spoken order', () => {
+    expect(srcs(translateToSigns('سنطالب بالتعويض وبعدها سأتابع القضية غداً'))).toEqual([
+      V('word-protect'),
+      V('word-case'),
+      V('word-follow'),
+      V('word-case'),
+    ])
+    expect(srcs(translateToSigns('سأتابع القضية غداً ثم سنطالب بالتعويض'))).toEqual([
+      V('word-follow'),
+      V('word-case'),
+      V('word-protect'),
+      V('word-case'),
+    ])
+  })
 })
 
 describe('word by word', () => {
@@ -50,6 +64,12 @@ describe('word by word', () => {
   })
   test('short unknown words are spelled, لا counts as one letter', () => {
     expect(labels(translateToSigns('علاج'))).toEqual(['ع', 'لا', 'ج'])
+  })
+  test('spelling follows the spoken word: ة and ى keep their own hand-shapes', () => {
+    expect(labels(translateToSigns('سنة'))).toEqual(['س', 'ن', 'ة'])
+    expect(labels(translateToSigns('سَنَةٌ'))).toEqual(['س', 'ن', 'ة'])
+    expect(labels(translateToSigns('ليلة شرطة'))).toEqual(['ل', 'ي', 'ل', 'ة', 'ش', 'ر', 'ط', 'ة'])
+    expect(labels(translateToSigns('هدى'))).toEqual(['ه', 'د', 'ى'])
   })
   test('longer unknown words and numbers become a written card', () => {
     expect(translateToSigns('المستشفى').steps).toEqual([{ kind: 'word', label: 'المستشفى', token: 0, span: 1 }])

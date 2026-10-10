@@ -20,13 +20,16 @@ const MAX_WINDOW = 3
 const HAS_DIGIT = /[0-9٠-٩]/
 const EDGE_PUNCTUATION = /^[^\p{L}\p{N}\p{M}]+|[^\p{L}\p{N}\p{M}]+$/gu
 
-/** تطبيع للبحث فقط: بلا تشكيل ولا تطويل، وتوحيد الهمزات والتاء المربوطة والألف المقصورة */
-function normalizeWord(word) {
+/** بلا تشكيل ولا تطويل، وتوحيد أشكال الألف فقط (أ إ آ ٱ ← ا) */
+function foldAlef(word) {
   return String(word || '')
     .replace(/[ً-ٰٟـ]/g, '')
     .replace(/[أإآٱ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
+}
+
+/** تطبيع للبحث فقط: يزيد على ما سبق توحيد التاء المربوطة والألف المقصورة */
+function normalizeWord(word) {
+  return foldAlef(word).replace(/ة/g, 'ه').replace(/ى/g, 'ي')
 }
 
 /** كلمات النص كما قيلت (بلا علامات الترقيم على الأطراف) مع صيغتها المطبّعة */
@@ -49,15 +52,11 @@ for (const entry of SIGN_VOCABULARY) {
   }
 }
 
-/** جمل السيناريو العشر مطبّعة، لمطابقتها داخل الكلام */
+/** جمل السيناريو العشر ككلمات مطبّعة، لمطابقتها داخل الكلام */
 const SCENARIOS = Object.keys(LAWYER_PHRASES)
   .filter((n) => LAWYER_SIGN_CLIPS[n])
-  .map((n) => ({
-    n,
-    key: tokenize(LAWYER_PHRASES[n])
-      .map((t) => t.norm)
-      .join(' '),
-  }))
+  .map((n) => ({ n, words: tokenize(LAWYER_PHRASES[n]).map((t) => t.norm) }))
+  .filter((s) => s.words.length)
 
 /** صيغ الجذر بعد حذف لاحقة واحدة (مع بديل ت ← ه لآخر الجذر) */
 function suffixForms(stem) {
@@ -111,10 +110,14 @@ const videoStep = (entry, token, span) => ({
   span,
 })
 
-/** كلمة غير معروفة: تهجئة إن كانت قصيرة، وإلا بطاقة مكتوبة (والأرقام دائماً بطاقة) */
+/**
+ * كلمة غير معروفة: تهجئة إن كانت قصيرة، وإلا بطاقة مكتوبة (والأرقام دائماً بطاقة).
+ * التهجئة من الكلمة كما قيلت (ة وى لهما إشارتان خاصتان)، لا من صيغة البحث المطبّعة.
+ */
 function unknownWordSteps({ word, norm }, token) {
   if (!HAS_DIGIT.test(norm)) {
-    const bare = norm.startsWith('ال') && norm.length - 2 >= MIN_STEM ? norm.slice(2) : norm
+    const spoken = foldAlef(word)
+    const bare = spoken.startsWith('ال') && spoken.length - 2 >= MIN_STEM ? spoken.slice(2) : spoken
     if (bare.length <= MAX_SPELLED) {
       const letters = fingerspellText(bare)
       if (letters.length) {
@@ -125,12 +128,29 @@ function unknownWordSteps({ word, norm }, token) {
   return [{ kind: 'word', label: word, token, span: 1 }]
 }
 
-/** جملة سيناريو داخل الكلام (كاملة وعلى حدود الكلمات) ← خطواتها، وإلا null */
+/**
+ * كل جملة سيناريو وردت كاملة في الكلام (على حدود الكلمات)، بلا تداخل وبترتيب الكلام ← خطواتها.
+ * ما خرج عن جمل السيناريو يُسقَط. null إن لم تَرِد أي جملة.
+ */
 function scenarioSteps(tokens) {
-  const speech = ` ${tokens.map((t) => t.norm).join(' ')} `
-  const hit = SCENARIOS.find(({ key }) => key && speech.includes(` ${key} `))
-  if (!hit) return null
-  return LAWYER_SIGN_CLIPS[hit.n].map(({ src, label }) => ({ kind: 'video', src, label, token: null, span: 0 }))
+  const norms = tokens.map((t) => t.norm)
+  const steps = []
+  let i = 0
+  while (i < norms.length) {
+    const hit = SCENARIOS.filter(({ words }) => words.every((w, k) => norms[i + k] === w)).reduce(
+      (best, s) => (!best || s.words.length > best.words.length ? s : best),
+      null,
+    )
+    if (!hit) {
+      i += 1
+      continue
+    }
+    for (const { src, label } of LAWYER_SIGN_CLIPS[hit.n]) {
+      steps.push({ kind: 'video', src, label, token: null, span: 0 })
+    }
+    i += hit.words.length
+  }
+  return steps.length ? steps : null
 }
 
 /**
