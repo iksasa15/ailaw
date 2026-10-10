@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../app/SettingsContext'
 import { publishScenePhrase, setApiBase } from '../../services/api'
 import { parseJoinParams } from '../../platform/linkSession'
 import Home from '../Home'
+import { SignTranslator } from '../../components/platform/SignTranslator'
 import { BrandIcon } from '../../components/brand/BrandMark'
 import { Icon } from '../../components/ui/Icon'
 
@@ -21,6 +22,12 @@ export default function JoinSession() {
   const { settings, update } = useSettings()
   const [draft, setDraft] = useState('')
   const [sent, setSent] = useState('')
+  // جمل المحامي التي تصل للغرفة، بنفس شكل معرّفات غرفة الجلسة على الحاسب ليترجمها المترجم مرة واحدة
+  const [sentences, setSentences] = useState([])
+  const onConversation = useCallback((entry) => {
+    if (entry.role !== 'lawyer') return
+    setSentences((list) => [...list, { id: `${entry.at}:${entry.text}`, text: entry.text }])
+  }, [])
 
   // مرة واحدة لكل دعوة: `update` يتغيّر مع كل تغيير في الإعدادات، فالحارس يمنع حلقة
   // تحديث ← إعادة رسم ← إعادة اتصال بالغرفة.
@@ -77,7 +84,19 @@ export default function JoinSession() {
         </span>
       </header>
 
-      <main className="relative min-h-0 flex-1">{ready ? <Home key={invite.room} lockedRole={invite.role} /> : null}</main>
+      {invite.role === 'person' ? (
+        // الأصم يرى المحامي بالإشارة: المترجم في الأعلى (أكبر جزء من الشاشة) والعدسة تحته
+        <main className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 shrink-0 basis-[55%]">
+            <SignTranslator compact sentences={sentences} />
+          </div>
+          <div className="relative min-h-0 flex-1">
+            {ready ? <Home key={invite.room} lockedRole={invite.role} hideSignCoach onConversation={onConversation} /> : null}
+          </div>
+        </main>
+      ) : (
+        <main className="relative min-h-0 flex-1">{ready ? <Home key={invite.room} lockedRole={invite.role} /> : null}</main>
+      )}
 
       {invite.role === 'person' ? (
         <form
