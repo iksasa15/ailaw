@@ -1,103 +1,58 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { SettingsProvider, useSettings } from './app/SettingsContext'
+import { SettingsProvider } from './app/SettingsContext'
 import { AppShell } from './components/layout/AppShell'
+import { PlatformShell } from './components/platform/PlatformShell'
+import { RequireRole } from './components/platform/RequireRole'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import About from './pages/About'
 import Guide from './pages/Guide'
-import Onboarding from './pages/Onboarding'
 import ScreenPick from './pages/ScreenPick'
 import PairJoin from './pages/PairJoin'
 import Lab from './pages/Lab'
-import More from './pages/More'
-
-function Gate({ children }) {
-  const { settings } = useSettings()
-  if (!settings.onboarded) return <Navigate to="/onboarding" replace />
-  return children
-}
+import Landing from './pages/public/Landing'
+import Login from './pages/public/Login'
+import RoleHome from './pages/app/RoleHome'
 
 export default function App() {
   return (
     <SettingsProvider>
       <Routes>
-        <Route element={<AppShell />}>
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/pair" element={<PairJoin />} />
-          <Route
-            path="/"
-            element={
-              <Gate>
-                <Home />
-              </Gate>
-            }
-          />
-          <Route
-            path="/screens"
-            element={
-              <Gate>
-                <ScreenPick />
-              </Gate>
-            }
-          />
-          <Route
-            path="/screen/lawyer"
-            element={
-              <Gate>
-                <Home lockedRole="lawyer" />
-              </Gate>
-            }
-          />
-          <Route
-            path="/screen/person"
-            element={
-              <Gate>
-                <Home lockedRole="person" />
-              </Gate>
-            }
-          />
-          <Route
-            path="/lab"
-            element={
-              <Gate>
-                <Lab />
-              </Gate>
-            }
-          />
-          <Route
-            path="/more"
-            element={
-              <Gate>
-                <More />
-              </Gate>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <Gate>
-                <Settings />
-              </Gate>
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <Gate>
-                <About />
-              </Gate>
-            }
-          />
-          <Route
-            path="/guide"
-            element={
-              <Gate>
-                <Guide />
-              </Gate>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+
+        <Route
+          path="/app"
+          element={
+            <RequireRole>
+              <PlatformShell />
+            </RequireRole>
+          }
+        >
+          <Route index element={<RoleHome />} />
+          <Route path="lens" element={<Home />} />
+          <Route path="lab" element={<Lab />} />
+          <Route path="guide" element={<Guide />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="about" element={<About />} />
+          <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>
+
+        {/* جلسة الجهازين الحالية (غرف الخادم + QR) */}
+        <Route element={<AppShell />}>
+          <Route path="/pair" element={<PairJoin />} />
+          <Route path="/screens" element={<ScreenPick />} />
+          <Route path="/screen/lawyer" element={<Home lockedRole="lawyer" />} />
+          <Route path="/screen/person" element={<Home lockedRole="person" />} />
+        </Route>
+
+        <Route path="/onboarding" element={<Navigate to="/login" replace />} />
+        <Route path="/more" element={<Navigate to="/app" replace />} />
+        <Route path="/lab" element={<Navigate to="/app/lab" replace />} />
+        <Route path="/guide" element={<Navigate to="/app/guide" replace />} />
+        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+        <Route path="/about" element={<Navigate to="/app/about" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </SettingsProvider>
   )

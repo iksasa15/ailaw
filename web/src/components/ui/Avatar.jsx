@@ -1,9 +1,12 @@
 const COLORS = ['#0f766e', '#1e5bb8', '#7c3aed', '#c2410c', '#0e7490', '#be185d']
 
-/** دائرة بالحرفين الأولين من الاسم (بدون «أ.»). */
+/** دائرة بالحرفين الأولين من الاسم (بدون «أ.» و«ال»). */
 export function Avatar({ name = '', size = 44, className = '' }) {
   const words = name.replace(/^أ\.\s*/, '').trim().split(/\s+/).filter(Boolean)
-  const initials = words.slice(0, 2).map((w) => w[0]).join(' ')
+  const initials = words
+    .slice(0, 2)
+    .map((w) => (w.startsWith('ال') && w.length > 2 ? w[2] : w[0]))
+    .join(' ')
   let hash = 0
   for (const ch of name) hash = (hash * 31 + ch.codePointAt(0)) >>> 0
   return (

@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 /**
  * شعار «النظارة الذكية»: نظارة، في العدسة اليمنى صوت (أعمدة) وفي اليسرى يد تشير.
  * نفس هندسة `AI LAW/AI LAW/Components/BrandMark.swift` (فضاء 1024).
@@ -84,6 +86,8 @@ export function BrandMark({ height = 28, tone = 'brand', className = '' }) {
 
 /** أيقونة التطبيق المربعة بخلفيتها المتدرجة. */
 export function BrandIcon({ size = 48, className = '' }) {
+  // معرّفات فريدة: نسخة مخفية (display:none) لا يجوز أن تحمل التدرج الذي تستعمله نسخة ظاهرة.
+  const id = useId().replace(/:/g, '')
   return (
     <svg
       viewBox="46.5 52.5 931 931"
@@ -94,17 +98,17 @@ export function BrandIcon({ size = 48, className = '' }) {
       aria-label="النظارة الذكية"
     >
       <defs>
-        <linearGradient id="brand-bg" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#13897F" />
           <stop offset="1" stopColor="#0B4F4A" />
         </linearGradient>
-        <radialGradient id="brand-shine" cx="0.25" cy="0.12" r="0.65">
+        <radialGradient id={`${id}-shine`} cx="0.25" cy="0.12" r="0.65">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0.16" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect x="46.5" y="52.5" width="931" height="931" fill="url(#brand-bg)" />
-      <rect x="46.5" y="52.5" width="931" height="931" fill="url(#brand-shine)" />
+      <rect x="46.5" y="52.5" width="931" height="931" fill={`url(#${id}-bg)`} />
+      <rect x="46.5" y="52.5" width="931" height="931" fill={`url(#${id}-shine)`} />
       <Glyph {...TONES.white} />
     </svg>
   )

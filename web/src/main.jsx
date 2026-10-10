@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.jsx'
+import { PlatformProvider } from './platform/PlatformContext'
 
 registerSW({
   immediate: true,
@@ -19,7 +20,9 @@ registerSW({
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <PlatformProvider>
+        <App />
+      </PlatformProvider>
     </BrowserRouter>
   </StrictMode>,
 )
