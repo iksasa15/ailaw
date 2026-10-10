@@ -39,7 +39,7 @@ function Practice({ practice, onDone }) {
             cy="40"
             r="34"
             fill="none"
-            stroke={check.done ? '#3ecf8e' : '#5eead4'}
+            stroke={check.done ? '#3ecf8e' : '#f9bd29'}
             strokeWidth="7"
             strokeLinecap="round"
             strokeDasharray={circumference}

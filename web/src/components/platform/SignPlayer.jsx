@@ -39,10 +39,10 @@ export function SignPlayer({ title, phrases, onClose }) {
   return (
     <div className="no-print fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="absolute inset-0 bg-[#0b1c24]/70 backdrop-blur-sm" aria-label="إغلاق" onClick={onClose} />
-      <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-[#061217] text-white shadow-2xl">
+      <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-[#0b1630] text-white shadow-2xl">
         <div className="flex items-center justify-between px-6 pt-5">
           <div>
-            <div className="text-sm font-bold text-[#5eead4]">{title}</div>
+            <div className="text-sm font-bold text-[#f9bd29]">{title}</div>
             <div className="text-xs text-white/60 tabular-nums">
               العبارة {index + 1} من {phrases.length}
             </div>
@@ -62,10 +62,10 @@ export function SignPlayer({ title, phrases, onClose }) {
         </div>
         <div className="px-6 text-center">
           <div className="text-2xl font-black leading-snug">{phrases[index]}</div>
-          {current ? <div className="mt-1 text-sm font-bold text-[#5eead4]">{current.type === 'video' ? current.label : `حرف ${current.label}`}</div> : null}
+          {current ? <div className="mt-1 text-sm font-bold text-[#f9bd29]">{current.type === 'video' ? current.label : `حرف ${current.label}`}</div> : null}
           <div className="mt-3 flex justify-center gap-1">
             {clips.map((c, i) => (
-              <span key={`${c.src}-${i}`} className={`h-1.5 rounded-full transition-all ${i === clip ? 'w-6 bg-[#5eead4]' : 'w-1.5 bg-white/25'}`} />
+              <span key={`${c.src}-${i}`} className={`h-1.5 rounded-full transition-all ${i === clip ? 'w-6 bg-[#f9bd29]' : 'w-1.5 bg-white/25'}`} />
             ))}
           </div>
         </div>

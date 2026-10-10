@@ -163,7 +163,7 @@ export default function Lab() {
       <p className="mb-5 text-[var(--muted)]">سيناريو قضية واقعي + مترجم إشارة — جرّب جلسة كاملة بدون كاميرا.</p>
       <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
 
-        <section className="app-surface rounded-2xl p-4 ring-1 ring-[rgba(15,118,110,0.22)]">
+        <section className="app-surface rounded-2xl p-4 ring-1 ring-[rgba(19,111,176,0.22)]">
           <div className="mb-1 flex items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-[var(--ink)]">{SCENARIO_TITLE}</h2>
@@ -220,8 +220,8 @@ export default function Lab() {
             <div
               className={`mt-4 rounded-xl px-3 py-3 ${
                 current.role === 'lawyer'
-                  ? 'bg-[rgba(15,118,110,0.1)] ring-1 ring-[rgba(15,118,110,0.32)]'
-                  : 'bg-[rgba(30,91,184,0.1)] ring-1 ring-[rgba(30,91,184,0.28)]'
+                  ? 'bg-[rgba(19,111,176,0.1)] ring-1 ring-[rgba(19,111,176,0.32)]'
+                  : 'bg-[rgba(162,40,151,0.1)] ring-1 ring-[rgba(162,40,151,0.28)]'
               }`}
             >
               <div className="mb-1 flex items-center justify-between gap-2">
@@ -289,7 +289,7 @@ export default function Lab() {
           </section>
         ) : null}
 
-        <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(15,118,110,0.2)]">
+        <section className="app-surface rounded-2xl p-3 ring-1 ring-[rgba(19,111,176,0.2)]">
           <div className="mb-2 flex items-center justify-between gap-2 px-1">
             <h2 className="text-base font-bold text-[var(--ink)]">مترجم الإشارة (للموكّل)</h2>
             <button

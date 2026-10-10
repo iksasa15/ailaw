@@ -250,7 +250,7 @@ export default function ScreenPick() {
       <div className="mx-auto flex max-w-md flex-col gap-5">
         <div>
           <p className="font-brand text-[0.8rem] font-bold tracking-wide text-[var(--accent)]">
-            النظارة الذكية
+            المحامون العرب
           </p>
           <h1 className="mt-1 text-[1.65rem] font-extrabold leading-tight">جلسة جوالين</h1>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
@@ -335,7 +335,7 @@ export default function ScreenPick() {
             </button>
           </section>
         ) : (
-          <section className="flex flex-col items-center gap-4 rounded-2xl app-surface p-5 ring-1 ring-[rgba(15,118,110,0.28)]">
+          <section className="flex flex-col items-center gap-4 rounded-2xl app-surface p-5 ring-1 ring-[rgba(19,111,176,0.28)]">
             <div className="w-full text-center">
               <p className="text-sm text-[var(--accent)]">الجلسة نشطة</p>
               <h2 className="mt-1 text-xl font-bold">

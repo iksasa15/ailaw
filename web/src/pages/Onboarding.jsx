@@ -17,13 +17,13 @@ export default function Onboarding() {
         aria-hidden
         style={{
           background:
-            'radial-gradient(70% 50% at 50% 0%, rgba(15,118,110,0.18), transparent 60%), radial-gradient(50% 40% at 90% 80%, rgba(30,91,184,0.12), transparent 55%)',
+            'radial-gradient(70% 50% at 50% 0%, rgba(19,111,176,0.18), transparent 60%), radial-gradient(50% 40% at 90% 80%, rgba(162,40,151,0.12), transparent 55%)',
         }}
       />
 
       <div className="relative z-10 flex flex-1 flex-col items-center justifying-center text-center">
         <div
-          className="mb-7 flex h-20 w-20 items-center justify-center rounded-[1.35rem] bg-white/80 shadow-[0_12px_36px_rgba(15,118,110,0.18)] ring-1 ring-white/90"
+          className="mb-7 flex h-20 w-20 items-center justify-center rounded-[1.35rem] bg-white/80 shadow-[0_12px_36px_rgba(19,111,176,0.18)] ring-1 ring-white/90"
           aria-hidden
         >
           <svg viewBox="0 0 88 40" className="h-9 w-20">
@@ -35,7 +35,7 @@ export default function Onboarding() {
 
         <p className="text-xs font-bold tracking-wide text-[var(--accent)]">عدسة مساعدة للصم</p>
         <h1 className="font-brand mt-2 text-[2.65rem] font-bold leading-[1.15] text-[var(--ink)]">
-          النظارة الذكية
+          المحامون العرب
         </h1>
         <p className="mx-auto mt-4 max-w-[17rem] text-[0.95rem] leading-7 text-[var(--muted)]">
           كلام المحامي يصبح إشارة مرئية — وإشارتك تُسمَع صوتاً واضحاً.

@@ -56,7 +56,7 @@ export function GestureArt({ name, number, emoji }) {
       <span className="text-6xl leading-none" aria-hidden>
         {face}
       </span>
-      <span className="rounded-full bg-[rgba(15,118,110,0.14)] px-3 py-0.5 text-sm font-bold text-[var(--accent)]">
+      <span className="rounded-full bg-[rgba(19,111,176,0.14)] px-3 py-0.5 text-sm font-bold text-[var(--accent)]">
         {n}
       </span>
     </div>

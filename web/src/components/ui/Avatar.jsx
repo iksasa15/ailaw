@@ -1,4 +1,4 @@
-const COLORS = ['#0f766e', '#1e5bb8', '#7c3aed', '#c2410c', '#0e7490', '#be185d']
+const COLORS = ['#136fb0', '#a22897', '#7c3aed', '#c2410c', '#0e7490', '#be185d']
 
 /** دائرة بالحرفين الأولين من الاسم (بدون «أ.» و«ال»). */
 export function Avatar({ name = '', size = 44, className = '' }) {

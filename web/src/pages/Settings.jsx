@@ -205,7 +205,7 @@ function DemoDataCard() {
   const { me, state, resetDemo, logout } = usePlatform()
   const navigate = useNavigate()
   return (
-    <section className="app-surface space-y-3 rounded-2xl p-4 ring-1 ring-[rgba(15,118,110,0.22)]">
+    <section className="app-surface space-y-3 rounded-2xl p-4 ring-1 ring-[rgba(19,111,176,0.22)]">
       <h2 className="text-lg font-bold text-[var(--ink)]">بيانات العرض</h2>
       <p className="text-sm leading-6 text-[var(--muted)]">
         الحساب الحالي: <b className="text-[var(--ink)]">{me?.name}</b> · {state.bookings.length} حجوزات محفوظة في هذا المتصفح.

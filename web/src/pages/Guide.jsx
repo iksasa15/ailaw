@@ -116,7 +116,7 @@ export default function Guide() {
 
         <section
           id="vocab"
-          className="space-y-4 rounded-2xl border border-[rgba(15,118,110,0.3)] bg-[var(--accent)]/8 p-4"
+          className="space-y-4 rounded-2xl border border-[rgba(19,111,176,0.3)] bg-[var(--accent)]/8 p-4"
         >
           <div>
             <p className="text-xs font-semibold text-[var(--accent)]">إرسال · قضية</p>

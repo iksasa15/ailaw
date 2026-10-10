@@ -49,9 +49,9 @@ export default function Certificate() {
             </div>
           </div>
           <div>
-            <div className="text-sm font-black tracking-wide text-[var(--accent)]">النظارة الذكية · مركز تعلّم لغة الإشارة</div>
+            <div className="text-sm font-black tracking-wide text-[var(--accent)]">المحامون العرب · مركز تعلّم لغة الإشارة</div>
             <h1 className="mt-3 text-5xl font-black text-[var(--ink)]">شهادة إتمام</h1>
-            <p className="mt-6 text-lg text-[var(--muted)]">تشهد منصة النظارة الذكية بأن</p>
+            <p className="mt-6 text-lg text-[var(--muted)]">تشهد منصة المحامون العرب بأن</p>
             <div className="mt-2 text-4xl font-black text-[var(--accent-2)]">{person.name}</div>
             <p className="mt-4 text-lg text-[var(--muted)]">أتمّ بنجاح دورة</p>
             <div className="mt-1 text-3xl font-black text-[var(--ink)]">{course.title}</div>
@@ -62,9 +62,9 @@ export default function Certificate() {
               <div className="text-[var(--muted)]">تاريخ الإصدار</div>
               <div className="font-bold">{formatDate(new Date())}</div>
             </div>
-            <BrandMark height={34} />
+            <BrandMark height={64} />
             <div>
-              <div className="border-t border-[var(--ink)]/30 px-6 pt-1 font-bold">منصة النظارة الذكية</div>
+              <div className="border-t border-[var(--ink)]/30 px-6 pt-1 font-bold">منصة المحامون العرب</div>
               <div className="text-xs text-[var(--muted)]">{me?.role === 'lawyer' ? '' : 'تحقّق برقم الشهادة'}</div>
             </div>
           </div>

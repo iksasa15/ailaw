@@ -42,7 +42,7 @@ export default function Availability() {
                         aria-label={`${d} ${hourLabel(h)}`}
                         onClick={() => toggleAvailability(weekday, h)}
                         className={`flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold transition ${
-                          on ? 'bg-[var(--accent)] text-white hover:bg-[#0d6b64]' : 'bg-black/[0.04] text-[var(--muted)] hover:bg-black/[0.08]'
+                          on ? 'bg-[var(--accent)] text-white hover:bg-[#0f5f97]' : 'bg-black/[0.04] text-[var(--muted)] hover:bg-black/[0.08]'
                         }`}
                       >
                         {on ? <Icon name="check" size={18} strokeWidth={3} /> : 'مغلق'}

@@ -18,7 +18,7 @@ export function NavItems({ onNavigate }) {
           className={({ isActive }) =>
             `flex min-h-11 items-center gap-3 rounded-2xl px-3.5 text-[15px] font-bold transition-colors ${
               isActive
-                ? 'bg-[var(--accent)] text-white shadow-[0_6px_16px_rgba(15,118,110,0.25)]'
+                ? 'bg-[var(--accent)] text-white shadow-[0_6px_16px_rgba(19,111,176,0.25)]'
                 : 'text-[var(--ink)]/80 hover:bg-[var(--accent)]/8'
             }`
           }
@@ -41,7 +41,7 @@ export function Sidebar() {
       <Link to="/" className="mb-6 flex items-center gap-3 px-2">
         <BrandIcon size={42} />
         <div className="leading-tight">
-          <div className="text-lg font-black text-[var(--ink)]">النظارة الذكية</div>
+          <div className="text-lg font-black text-[var(--ink)]">المحامون العرب</div>
           <div className="text-xs font-bold text-[var(--accent)]">منصة الصم والعدالة</div>
         </div>
       </Link>

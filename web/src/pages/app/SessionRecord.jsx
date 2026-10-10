@@ -75,11 +75,11 @@ export default function SessionRecord() {
       <Card className="print-sheet p-8">
         <header className="flex items-start justify-between gap-4 border-b border-[var(--ring)] pb-5">
           <div>
-            <div className="text-sm font-bold text-[var(--accent)]">النظارة الذكية · منصة الصم والعدالة</div>
+            <div className="text-sm font-bold text-[var(--accent)]">المحامون العرب · منصة الصم والعدالة</div>
             <h2 className="mt-1 text-3xl font-black">محضر جلسة</h2>
             <div className="mt-1 text-sm text-[var(--muted)]">رقم الحجز: {booking.id}</div>
           </div>
-          <BrandMark height={40} />
+          <BrandMark height={72} />
         </header>
 
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-[var(--ring)] py-5 md:grid-cols-3">
@@ -156,7 +156,7 @@ export default function SessionRecord() {
         </section>
 
         <footer className="mt-8 flex justify-between border-t border-[var(--ring)] pt-4 text-xs text-[var(--muted)]">
-          <span>أُنشئ تلقائياً من محادثة الجلسة — النظارة الذكية</span>
+          <span>أُنشئ تلقائياً من محادثة الجلسة — المحامون العرب</span>
           <span>{formatDate(r.endedAt)}</span>
         </footer>
       </Card>

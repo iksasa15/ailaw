@@ -391,7 +391,7 @@ export default function Home({ lockedRole = null, serverless = false, onConversa
       ? 'شاشة المحامي'
       : lockedRole === 'person'
         ? 'شاشة الشخص'
-        : 'النظارة الذكية'
+        : 'العدسة'
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">

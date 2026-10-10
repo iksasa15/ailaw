@@ -5,9 +5,9 @@ import { useNow } from '../../platform/useNow'
 import { Card } from '../../components/ui/Card'
 import { Stat } from '../../components/ui/Stat'
 
-// ألوان مُتحقَّق منها (validate_palette: كل الفحوص ناجحة على الخلفية الفاتحة).
-const SIGN = '#0d9488' // الشخص: إشارة ← صوت (وأيضاً لون السلسلة الواحدة)
-const VOICE = '#1e5bb8' // المحامي: صوت ← إشارة
+// ألوان الشعار مُتحقَّق منها (validate_palette: #1c86c2 + #a22897 كل الفحوص ناجحة، ΔE عمى الألوان 8).
+const SIGN = '#1c86c2' // الشخص: إشارة ← صوت (وأيضاً لون السلسلة الواحدة)
+const VOICE = '#a22897' // المحامي: صوت ← إشارة
 const GRID = '#e3eaee'
 const LOCALE = 'ar-SA-u-nu-latn-ca-gregory'
 const shortDate = (key) => new Date(`${key}T12:00:00`).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' })
@@ -166,7 +166,7 @@ export default function Impact() {
     <div className="flex flex-col gap-5">
       <div className="hero-bg flex flex-col gap-2 rounded-[24px] p-6 text-white md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-sm font-bold text-[#5eead4]">أثر المنصة</div>
+          <div className="text-sm font-bold text-[#f9bd29]">أثر المنصة</div>
           <div className="mt-1 text-6xl font-black tabular-nums">{s.phrases.toLocaleString('en-US')}</div>
           <div className="text-white/80">عبارة تُرجمت بين لغة الإشارة والكلام في جلسات حقيقية</div>
         </div>

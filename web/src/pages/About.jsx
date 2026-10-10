@@ -22,12 +22,12 @@ export default function About() {
     <div className="flex flex-col gap-5">
       <div className="hero-bg flex flex-col items-center gap-4 rounded-[24px] px-6 py-10 text-center text-white">
         <BrandIcon size={84} />
-        <h2 className="text-3xl font-black">النظارة الذكية</h2>
+        <h2 className="text-3xl font-black">المحامون العرب</h2>
         <p className="max-w-2xl leading-8 text-white/80">
           عدسة واقع معزّز ومنصة عدالة للصم والبكم: تحوّل كلام المحامي إلى نص وإشارة، وإشارة الشخص إلى صوت،
           وتنظّم الجلسات من الحجز حتى المحضر.
         </p>
-        <BrandMark height={46} tone="white" />
+        <BrandMark height={70} tone="white" />
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>

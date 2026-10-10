@@ -148,7 +148,7 @@ const ROLE_NAMES = { person: 'الشخص', lawyer: 'المحامي' }
 export function recordToText({ booking, lawyer, person }) {
   const r = booking.record
   const lines = [
-    'محضر جلسة — النظارة الذكية',
+    'محضر جلسة — المحامون العرب',
     `رقم الحجز: ${booking.id}`,
     `المحامي: ${lawyer?.name || '—'}`,
     `الموكّل: ${person?.name || '—'}`,

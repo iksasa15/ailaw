@@ -47,17 +47,17 @@
   --surface-solid: #ffffff;
   --ink: #0b1c24;
   --muted: #4a6570;
-  --accent: #0f766e;
+  --accent: #136fb0;
   --accent-ink: #f0fdfa;
-  --accent-soft: #14b8a6;
-  --accent-2: #1e5bb8;
+  --accent-soft: #1c86c2;
+  --accent-2: #a22897;
   --accent-2-ink: #eff6ff;
   --danger: #dc2626;
   --ring: rgba(11, 28, 36, 0.1);
   --caption-bg: rgba(11, 28, 36, 0.82);
   --panel: rgba(11, 28, 36, 0.92);
-  --panel-ring: rgba(15, 118, 110, 0.4);
-  --highlight: #5eead4;
+  --panel-ring: rgba(19, 111, 176, 0.4);
+  --highlight: #f9bd29;
   --font-scale: 1;
   --tabbar-h: 4.25rem;
   --font-ui: "Thmanyah Sans", system-ui, sans-serif;
@@ -92,8 +92,8 @@ body {
 
 .app-bg {
   background:
-    radial-gradient(110% 75% at 100% -8%, rgba(30, 91, 184, 0.12), transparent 55%),
-    radial-gradient(85% 65% at -12% 108%, rgba(15, 118, 110, 0.14), transparent 52%),
+    radial-gradient(110% 75% at 100% -8%, rgba(162, 40, 151, 0.12), transparent 55%),
+    radial-gradient(85% 65% at -12% 108%, rgba(19, 111, 176, 0.14), transparent 52%),
     linear-gradient(168deg, var(--bg-soft) 0%, var(--bg) 52%, #dce9ee 100%);
 }
 
@@ -109,7 +109,7 @@ body {
   background: linear-gradient(165deg, var(--accent-soft) 0%, var(--accent) 100%);
   color: var(--accent-ink);
   font-weight: 700;
-  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
+  box-shadow: 0 8px 20px rgba(19, 111, 176, 0.25);
 }
 
 .btn-primary:active {
@@ -120,7 +120,7 @@ body {
   background: linear-gradient(165deg, #3b82f6 0%, var(--accent-2) 100%);
   color: var(--accent-2-ink);
   font-weight: 700;
-  box-shadow: 0 8px 20px rgba(30, 91, 184, 0.22);
+  box-shadow: 0 8px 20px rgba(162, 40, 151, 0.22);
 }
 
 .caption-text {
@@ -522,16 +522,16 @@ body {
 /* ── المنصة ─────────────────────────────────────────── */
 .platform-bg {
   background:
-    radial-gradient(70% 50% at 100% 0%, rgba(20, 184, 166, 0.12), transparent 60%),
-    radial-gradient(60% 50% at 0% 100%, rgba(30, 91, 184, 0.08), transparent 60%),
+    radial-gradient(70% 50% at 100% 0%, rgba(28, 134, 194, 0.12), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgba(162, 40, 151, 0.08), transparent 60%),
     var(--bg);
 }
 
 .hero-bg {
   background:
-    radial-gradient(60% 80% at 85% 10%, rgba(94, 234, 212, 0.28), transparent 60%),
-    radial-gradient(50% 60% at 10% 90%, rgba(30, 91, 184, 0.35), transparent 60%),
-    linear-gradient(160deg, #0b4f4a 0%, #0b1c24 100%);
+    radial-gradient(60% 80% at 85% 10%, rgba(249, 189, 41, 0.28), transparent 60%),
+    radial-gradient(50% 60% at 10% 90%, rgba(162, 40, 151, 0.35), transparent 60%),
+    linear-gradient(160deg, #0c3d6b 0%, #0b1c24 100%);
 }
 
 .print-only {

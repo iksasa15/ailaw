@@ -123,7 +123,7 @@ export function SignCoachAvatar({
         {!hasSign ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center">
             <div
-              className={`flex items-center justify-center rounded-full bg-[rgba(15,118,110,0.22)] text-[var(--highlight)] ${
+              className={`flex items-center justify-center rounded-full bg-[rgba(19,111,176,0.22)] text-[var(--highlight)] ${
                 mode === 'panel' ? 'h-20 w-20 text-3xl' : 'h-10 w-10 text-lg'
               }`}
             >

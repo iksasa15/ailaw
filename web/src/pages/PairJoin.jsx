@@ -30,7 +30,7 @@ export default function PairJoin() {
     return (
       <div className="app-bg flex h-full flex-col items-center justify-center gap-5 px-6 text-center">
         <div className="app-surface w-full max-w-sm rounded-2xl p-6">
-          <p className="font-brand text-sm font-bold text-[var(--accent)]">النظارة الذكية</p>
+          <p className="font-brand text-sm font-bold text-[var(--accent)]">المحامون العرب</p>
           <p className="mt-3 text-lg font-bold text-[var(--danger)]">{error}</p>
           <a href="/screens" className="btn-primary mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl text-base">
             العودة للجلسة

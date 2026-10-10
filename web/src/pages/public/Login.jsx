@@ -44,7 +44,7 @@ export default function Login() {
       <div className="w-full max-w-3xl">
         <Link to="/" className="mx-auto mb-8 flex w-fit items-center gap-3">
           <BrandIcon size={52} />
-          <span className="text-2xl font-black text-[var(--ink)]">النظارة الذكية</span>
+          <span className="text-2xl font-black text-[var(--ink)]">المحامون العرب</span>
         </Link>
         <h1 className="text-center text-3xl font-black text-[var(--ink)]">ادخل المنصة</h1>
         <p className="mt-2 text-center text-[var(--muted)]">اختر حساب العرض الذي تريد الدخول به — يمكنك التبديل بينهما في أي وقت.</p>

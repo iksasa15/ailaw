@@ -5,7 +5,7 @@ export function PageHeader({ title, subtitle, backTo = null, backLabel = 'رجو
     <header className="mb-5 flex items-start justify-between gap-3">
       <div className="min-w-0 text-right">
         <p className="font-brand text-[0.8rem] font-bold tracking-wide text-[var(--accent)]">
-          النظارة الذكية
+          المحامون العرب
         </p>
         <h1 className="mt-1 truncate text-[1.65rem] font-extrabold leading-tight text-[var(--ink)]">
           {title}

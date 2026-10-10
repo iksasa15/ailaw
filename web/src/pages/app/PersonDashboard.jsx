@@ -37,7 +37,7 @@ export default function PersonDashboard({ learning, badges }) {
         {next ? (
           <div className="hero-bg relative overflow-hidden rounded-[24px] p-6 text-white">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[#5eead4]">جلستك القادمة</span>
+              <span className="text-sm font-bold text-[#f9bd29]">جلستك القادمة</span>
               <StatusBadge status={next.status} />
             </div>
             <div className="mt-4 flex items-center gap-4">
@@ -59,14 +59,14 @@ export default function PersonDashboard({ learning, badges }) {
               {next.status === 'confirmed' ? (
                 <Link
                   to={`/app/session/${next.id}/check`}
-                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[#5eead4] px-6 font-black text-[#0b1c24] hover:bg-[#7ff0dd]"
+                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[#f9bd29] px-6 font-black text-[#0b1c24] hover:bg-[#fbcd55]"
                 >
                   <Icon name="video" size={20} /> ادخل الجلسة
                 </Link>
               ) : (
                 <span className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold">بانتظار تأكيد المحامي</span>
               )}
-              <span className="text-lg font-black text-[#5eead4]">{relativeStart(next.start, now)}</span>
+              <span className="text-lg font-black text-[#f9bd29]">{relativeStart(next.start, now)}</span>
             </div>
           </div>
         ) : (

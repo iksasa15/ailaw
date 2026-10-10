@@ -39,7 +39,7 @@ export function pageTitle(pathname, role) {
   const exact = items.find((i) => i.to === pathname)
   if (exact) return exact.label
   const prefix = items.filter((i) => !i.end && pathname.startsWith(i.to)).sort((a, b) => b.to.length - a.to.length)[0]
-  return prefix?.label || 'النظارة الذكية'
+  return prefix?.label || 'المحامون العرب'
 }
 
 /** العدسة وغرفة الجلسة تملآن المساحة بلا هوامش. */

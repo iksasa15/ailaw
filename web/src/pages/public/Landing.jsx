@@ -32,25 +32,25 @@ export default function Landing() {
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-5 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
             <BrandIcon size={42} />
-            <span className="text-xl font-black">النظارة الذكية</span>
+            <span className="text-xl font-black">المحامون العرب</span>
           </Link>
           <nav className="hidden items-center gap-7 text-[15px] font-bold text-white/80 md:flex">
             <a href="#how" className="hover:text-white">كيف تعمل</a>
             <a href="#features" className="hover:text-white">المميزات</a>
             <a href="#lawyers" className="hover:text-white">المحامون</a>
           </nav>
-          <Link to={enter} className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#0b4f4a] hover:bg-white/90">
+          <Link to={enter} className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#0c3d6b] hover:bg-white/90">
             {state.role ? 'لوحتي' : 'دخول'}
           </Link>
         </div>
 
         <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-5 pb-20 pt-10 lg:grid-cols-[1.1fr_1fr] lg:px-8 lg:pb-28 lg:pt-16">
           <div>
-            <Badge tone="green" className="!bg-white/12 !text-[#5eead4]">منصة عدالة للصم والبكم</Badge>
+            <Badge tone="green" className="!bg-white/12 !text-[#f9bd29]">منصة عدالة للصم والبكم</Badge>
             <h1 className="mt-5 text-4xl font-black leading-[1.25] lg:text-6xl">
               كلام المحامي يصبح إشارة
               <br />
-              <span className="text-[#5eead4]">وإشارتك تُسمَع صوتاً</span>
+              <span className="text-[#f9bd29]">وإشارتك تُسمَع صوتاً</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-white/80">
               احجز جلسة مع محامٍ، وادخلها بترجمة فورية بين لغة الإشارة والكلام، واستلم محضراً موثّقاً — كل ذلك من متصفحك.
@@ -58,7 +58,7 @@ export default function Landing() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to={state.role ? '/app/lawyers' : '/login?next=/app/lawyers'}
-                className="inline-flex min-h-13 items-center gap-2 rounded-2xl bg-[#5eead4] px-7 text-base font-black text-[#0b1c24] hover:bg-[#7ff0dd]"
+                className="inline-flex min-h-13 items-center gap-2 rounded-2xl bg-[#f9bd29] px-7 text-base font-black text-[#0b1c24] hover:bg-[#fbcd55]"
               >
                 <Icon name="calendar" size={20} /> احجز جلسة
               </Link>
@@ -72,14 +72,14 @@ export default function Landing() {
           </div>
           <div className="relative">
             <div className="rounded-[28px] bg-white/8 p-6 ring-1 ring-white/15 backdrop-blur">
-              <BrandMark height={110} tone="white" className="mx-auto" />
+              <BrandMark height={150} tone="white" className="mx-auto" />
               <div className="mt-6 grid gap-3">
                 <div className="rounded-2xl bg-black/25 p-4">
-                  <div className="text-xs font-bold text-[#5eead4]">المحامي (صوت ← إشارة)</div>
+                  <div className="text-xs font-bold text-[#f9bd29]">المحامي (صوت ← إشارة)</div>
                   <div className="mt-1 text-lg font-bold">من كان يقود السيارة؟</div>
                 </div>
-                <div className="rounded-2xl bg-[#0f766e]/60 p-4">
-                  <div className="text-xs font-bold text-[#a7f3d0]">الشخص (إشارة ← صوت) · 5 أصابع</div>
+                <div className="rounded-2xl bg-[#136fb0]/60 p-4">
+                  <div className="text-xs font-bold text-[#bfe3f7]">الشخص (إشارة ← صوت) · 5 أصابع</div>
                   <div className="mt-1 text-lg font-bold">أنا كنت أقود</div>
                 </div>
               </div>
@@ -176,7 +176,7 @@ export default function Landing() {
           <div className="flex items-center gap-3">
             <BrandIcon size={36} />
             <div>
-              <div className="font-black">النظارة الذكية</div>
+              <div className="font-black">المحامون العرب</div>
               <div className="text-sm text-white/65">عدسة AR ومنصة عدالة للصم والبكم</div>
             </div>
           </div>
