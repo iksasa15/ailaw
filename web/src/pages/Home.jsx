@@ -343,11 +343,12 @@ export default function Home({
   // - كل جزء نهائي من التعرف يدخل مخزناً واحداً، وتخرج الجملة منه مرة واحدة فقط
   //   (عند سكون المتحدث أو بلوغ 12 كلمة) — فلا تُعاد قراءة الكلام السابق
   // - شاشة المحامي: تبث للغرفة
-  // - شاشة الشخص / استقبال: تترجم محلياً فوراً (وضع فردي أو كلام في المايك)
+  // - شاشة الشخص المخصّصة (QR أو جلسة الحاسب): لا تحوّل مايكها لجمل محامٍ — تأخذ جمل المحامي
+  //   من الغرفة فقط، فلا تُترجم الجملة مرتين ولا يُعاد سماع نطق جهاز آخر وترجمته للشخص
+  // - العدسة الحرة بدور الشخص: تترجم محلياً فوراً (وضع فردي أو كلام في المايك)
   const isLawyerTalking =
     lockedRole === 'lawyer' || (!dedicated && finger.role === 'lawyer')
-  const isPersonListening =
-    lockedRole === 'person' || (!dedicated && finger.role === 'person')
+  const isPersonListening = !dedicated && finger.role === 'person'
   const speechActive = settings.receiveEnabled && (isLawyerTalking || isPersonListening)
 
   // الجملة الخارجة من المخزن (آخر قيم المكوّن عبر ref فيبقى المخزن واحداً)
