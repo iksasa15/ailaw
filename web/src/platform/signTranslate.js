@@ -52,10 +52,30 @@ for (const entry of SIGN_VOCABULARY) {
   }
 }
 
-/** جمل السيناريو العشر ككلمات مطبّعة، لمطابقتها داخل الكلام */
+/** موضع أول ظهور متتالٍ لكلمات `needle` داخل `hay` (كلمات مطبّعة)، أو -1 */
+function indexOfRun(hay, needle) {
+  if (!needle.length) return -1
+  for (let i = 0; i + needle.length <= hay.length; i += 1) {
+    if (needle.every((w, k) => hay[i + k] === w)) return i
+  }
+  return -1
+}
+
+/**
+ * جمل السيناريو العشر ككلمات مطبّعة، لمطابقتها داخل الكلام، ومع كل مقطع موضعُ كلماته في الجملة
+ * (`offset` و`span` من اسمه) ليُميَّز في النص؛ إن لم يُعثر على اسمه متتالياً فالجملة كلها.
+ */
 const SCENARIOS = Object.keys(LAWYER_PHRASES)
   .filter((n) => LAWYER_SIGN_CLIPS[n])
-  .map((n) => ({ n, words: tokenize(LAWYER_PHRASES[n]).map((t) => t.norm) }))
+  .map((n) => {
+    const words = tokenize(LAWYER_PHRASES[n]).map((t) => t.norm)
+    const clips = LAWYER_SIGN_CLIPS[n].map(({ src, label }) => {
+      const run = tokenize(label).map((t) => t.norm)
+      const at = indexOfRun(words, run)
+      return at >= 0 ? { src, label, offset: at, span: run.length } : { src, label, offset: 0, span: words.length }
+    })
+    return { n, words, clips }
+  })
   .filter((s) => s.words.length)
 
 /** صيغ الجذر بعد حذف لاحقة واحدة (مع بديل ت ← ه لآخر الجذر) */
@@ -129,8 +149,8 @@ function unknownWordSteps({ word, norm }, token) {
 }
 
 /**
- * كل جملة سيناريو وردت كاملة في الكلام (على حدود الكلمات)، بلا تداخل وبترتيب الكلام ← خطواتها.
- * ما خرج عن جمل السيناريو يُسقَط. null إن لم تَرِد أي جملة.
+ * كل جملة سيناريو وردت كاملة في الكلام (على حدود الكلمات)، بلا تداخل وبترتيب الكلام ← خطواتها،
+ * وكل خطوة تشير لكلماتها داخل الكلام. ما خرج عن جمل السيناريو يُسقَط. null إن لم تَرِد أي جملة.
  */
 function scenarioSteps(tokens) {
   const norms = tokens.map((t) => t.norm)
@@ -145,8 +165,8 @@ function scenarioSteps(tokens) {
       i += 1
       continue
     }
-    for (const { src, label } of LAWYER_SIGN_CLIPS[hit.n]) {
-      steps.push({ kind: 'video', src, label, token: null, span: 0 })
+    for (const { src, label, offset, span } of hit.clips) {
+      steps.push({ kind: 'video', src, label, token: i + offset, span })
     }
     i += hit.words.length
   }
@@ -157,8 +177,8 @@ function scenarioSteps(tokens) {
  * ترجمة كلام عربي إلى خطوات إشارة.
  * @param {string} text
  * @returns {{ tokens: string[], steps: Array<
- *   | { kind: 'video' | 'letter', src: string, label: string, token: number | null, span: number }
- *   | { kind: 'word', label: string, token: number | null, span: number }> }}
+ *   | { kind: 'video' | 'letter', src: string, label: string, token: number, span: number }
+ *   | { kind: 'word', label: string, token: number, span: number }> }}
  */
 export function translateToSigns(text) {
   const words = tokenize(text)

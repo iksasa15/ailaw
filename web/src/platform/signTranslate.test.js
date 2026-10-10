@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { resolveSignClips, STEP_MS, translateToSigns } from './signTranslate'
 import { SIGN_VOCABULARY } from '../data/signVocabulary'
+import { LAWYER_SIGN_CLIPS } from '../data/signLexicon'
+import { LAWYER_PHRASES } from '../hooks/useFingerPhrases'
 
 const V = (clip) => `/signs/videos/${clip}.mp4`
 const kinds = (r) => r.steps.map((s) => s.kind)
@@ -13,7 +15,18 @@ describe('scenario sentences', () => {
   test('a full scenario sentence plays its sentence clips', () => {
     const r = translateToSigns('السلام عليكم، أنا محاميك')
     expect(srcs(r)).toEqual([V('word-hello'), V('word-lawyer')])
-    expect(r.steps.every((s) => s.token === null)).toBe(true)
+    expect(r.steps.map((s) => [s.token, s.span])).toEqual([[0, 2], [2, 2]])
+  })
+  test('each scenario clip highlights its own words inside longer speech', () => {
+    const r = translateToSigns('طيب، هل لديك تقرير شرطة؟ أخبرني')
+    expect(r.steps.map((s) => [s.token, s.span])).toEqual([[1, 2], [3, 2]])
+  })
+  test('in every scenario sentence each clip highlights exactly the words of its label', () => {
+    for (const [n, phrase] of Object.entries(LAWYER_PHRASES)) {
+      const r = translateToSigns(phrase)
+      const highlighted = r.steps.map((s) => r.tokens.slice(s.token, s.token + s.span).join(' '))
+      expect(highlighted, `sentence ${n}`).toEqual(LAWYER_SIGN_CLIPS[n].map((c) => c.label))
+    }
   })
   test('diacritics, and a scenario sentence inside longer speech', () => {
     expect(srcs(translateToSigns('سأتابعُ القضيةَ غداً'))).toEqual([V('word-follow'), V('word-case')])
