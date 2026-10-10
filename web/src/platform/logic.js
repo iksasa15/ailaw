@@ -160,28 +160,39 @@ export function isEcho(entries, entry, windowMs = 10_000) {
   })
 }
 
+/** كلمات `run` متتالية في `words` بدءاً من الموضع `at` */
+const runAt = (words, run, at) => at >= 0 && run.every((r, k) => words[at + k]?.norm === r.norm)
+
 /**
  * يُسقط صدى العدسة من عبارة «محامٍ»: ليست صدى ← العبارة نفسها. صدى كامل أو جزئي أو تنبيه منطوق
- * (عبارة الشخص ليست داخلها كاملةً) ← `null`. وإن وردت عبارة الشخص متتاليةً داخل كلام أطول
- * (المحامي تكلم بعد الصدى مباشرة) تُحذف منه، ويُحفظ الباقي إن بقيت كلمتان فأكثر وإلا `null`.
- * عبارة الشخص من كلمة واحدة لا تُحذف أبداً من جملة أطول (حذف «لا» يقلب المعنى): هي صدى فقط
- * حين تكون الجملة هي الكلمة نفسها، فيُسقَط الكل.
+ * (كلام المحامي كله جزء من عبارة الشخص) ← `null`. وإن وردت عبارة الشخص في أول كلام أطول أو في
+ * آخره (المحامي تكلم بعد الصدى أو قبله مباشرة) تُحذف منه، ويُحفظ الباقي إن بقيت كلمتان فأكثر وإلا
+ * `null`. أما إن وردت في وسطه فقط فالمحامي يقتبس كلام الشخص («إذا التأمين رفض الدفع سنرفع دعوى»)
+ * فتبقى العبارة نفسها. عبارة الشخص من كلمة واحدة لا تُحذف أبداً من جملة أطول (حذف «لا» يقلب
+ * المعنى): هي صدى فقط حين تكون الجملة هي الكلمة نفسها، فيُسقَط الكل.
  */
 export function removeEcho(entries, entry, windowMs = 10_000) {
   if (!isEcho(entries, entry, windowMs)) return entry
-  let words = wordsOf(entry.text)
+  const heard = wordsOf(entry.text)
+  const phrases = entries
+    .filter((e) => e.role === 'person' && entry.at >= e.at && entry.at - e.at <= windowMs)
+    .map((e) => wordsOf(e.text))
+  if (isPromptStart(heard) || phrases.some((phrase) => indexOfRun(phrase, heard) >= 0)) return null
+  // حذف من الطرفين حتى لا يبقى صدى على أي منهما (صدى عبارتين متتاليتين بأي ترتيب)
+  let words = heard
   let removed = false
-  for (const e of entries) {
-    if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) continue
-    const phrase = wordsOf(e.text)
-    if (phrase.length < 2) continue
-    const at = indexOfRun(words, phrase)
-    if (at < 0) continue
-    words = [...words.slice(0, at), ...words.slice(at + phrase.length)]
-    removed = true
+  for (let again = true; again; ) {
+    again = false
+    for (const phrase of phrases) {
+      if (phrase.length < 2 || phrase.length > words.length) continue
+      if (runAt(words, phrase, 0)) words = words.slice(phrase.length)
+      else if (runAt(words, phrase, words.length - phrase.length)) words = words.slice(0, -phrase.length)
+      else continue
+      removed = again = true
+    }
   }
-  if (!removed || words.length < 2) return null
-  return { ...entry, text: words.map((t) => t.word).join(' ') }
+  if (!removed) return entry
+  return words.length < 2 ? null : { ...entry, text: words.map((t) => t.word).join(' ') }
 }
 
 const uniqueTexts = (entries, role) => [...new Set(entries.filter((e) => e.role === role).map((e) => e.text))]

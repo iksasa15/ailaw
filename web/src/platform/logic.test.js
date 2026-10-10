@@ -234,6 +234,25 @@ describe('removeEcho', () => {
     expect(removeEcho([grown], { role: 'lawyer', text: 'أنا كنت', at: 3000 })).toBeNull()
     expect(removeEcho([], { role: 'lawyer', text: 'وضع المحامي', at: 3000 })).toBeNull()
   })
+  test('an echo heard at the end of the lawyer sentence is trimmed too', () => {
+    expect(removeEcho([said], { role: 'lawyer', text: 'حسناً سأساعدك الآن أحتاج مساعدة', at: 3000 }).text).toBe(
+      'حسناً سأساعدك الآن',
+    )
+  })
+  test('the person phrase quoted in the middle of a lawyer sentence is kept', () => {
+    const quoted = { role: 'person', text: 'التأمين رفض الدفع', at: 1000 }
+    const e = { role: 'lawyer', text: 'إذا التأمين رفض الدفع سنرفع دعوى', at: 3000 }
+    expect(removeEcho([quoted], e)).toBe(e)
+  })
+  test('two echoes on the same side are both trimmed, in any order', () => {
+    const entries = [
+      { role: 'person', text: 'انتظر لحظة', at: 1000 },
+      { role: 'person', text: 'أحتاج مساعدة', at: 1500 },
+    ]
+    expect(removeEcho(entries, { role: 'lawyer', text: 'حسناً سأساعدك الآن انتظر لحظة أحتاج مساعدة', at: 3000 }).text).toBe(
+      'حسناً سأساعدك الآن',
+    )
+  })
   test('a single leftover word is not enough to keep', () => {
     expect(removeEcho([said], { role: 'lawyer', text: 'أحتاج مساعدة شكراً', at: 3000 })).toBeNull()
   })
