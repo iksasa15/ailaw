@@ -20,6 +20,8 @@ import Requests from './pages/app/Requests'
 import Availability from './pages/app/Availability'
 import SessionRoom from './pages/app/SessionRoom'
 import SessionRecord from './pages/app/SessionRecord'
+import LearnHome from './pages/app/LearnHome'
+import Lesson from './pages/app/Lesson'
 
 export default function App() {
   return (
@@ -72,6 +74,8 @@ export default function App() {
           />
           <Route path="session/:id" element={<SessionRoom />} />
           <Route path="session/:id/record" element={<SessionRecord />} />
+          <Route path="learn" element={<LearnHome />} />
+          <Route path="learn/:course/:lesson" element={<Lesson />} />
           <Route path="lens" element={<Home serverless />} />
           <Route path="lab" element={<Lab />} />
           <Route path="guide" element={<Guide />} />
