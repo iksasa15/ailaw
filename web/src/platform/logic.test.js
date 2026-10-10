@@ -264,9 +264,31 @@ describe('echo matching is word-aware', () => {
     expect(removeEcho(said('أحتاج مساعدة'), lawyer('احتاج مساعده حسناً سأساعدك الآن')).text).toBe('حسناً سأساعدك الآن')
   })
 
-  test('a whole-word run inside a longer sentence is still an echo, in either direction', () => {
+  test('a multi-word person phrase is an echo when it or the lawyer text is a whole-word run inside the other', () => {
     expect(isEcho(said('أنا كنت أقود'), lawyer('كنت أقود'))).toBe(true)
-    expect(isEcho(said('نعم'), lawyer('نعم أفهم'))).toBe(true)
+    expect(isEcho(said('كنت أقود'), lawyer('أنا كنت أقود'))).toBe(true)
+  })
+
+  test('a one-word person reply is an echo only when the lawyer text is exactly that word', () => {
+    expect(isEcho(said('لا'), lawyer('لا'))).toBe(true)
+    expect(removeEcho(said('لا'), lawyer('لا'))).toBeNull()
+    expect(isEcho(said('أجل'), lawyer('اجل.'))).toBe(true)
+    expect(removeEcho(said('أجل'), lawyer('اجل.'))).toBeNull()
+    expect(isEcho(said('نعم'), lawyer('نعم أفهم'))).toBe(false)
+  })
+
+  test('a one-word person reply is never trimmed out of a longer lawyer sentence', () => {
+    const entry = lawyer('لا تتحدث مع الطرف الآخر')
+    expect(isEcho(said('لا'), entry)).toBe(false)
+    expect(removeEcho(said('لا'), entry)).toBe(entry)
+  })
+
+  test('only the multi-word phrase is trimmed when the person also said a one-word reply', () => {
+    const entries = [
+      { role: 'person', text: 'لا', at: 1000 },
+      { role: 'person', text: 'أحتاج مساعدة', at: 2000 },
+    ]
+    expect(removeEcho(entries, lawyer('لا تتحدث أحتاج مساعدة')).text).toBe('لا تتحدث')
   })
 
   test('an empty person phrase never makes anything an echo', () => {

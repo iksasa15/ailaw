@@ -134,10 +134,20 @@ const isPromptStart = (words) =>
   PROMPT_WORDS.some((prompt) => words.length <= prompt.length && words.every((w, i) => w.norm === prompt[i].norm))
 
 /**
+ * هل `words` (كلام المحامي) صدى لعبارة الشخص `spoken`؟ عبارة من كلمتين فأكثر: كلمات متتالية إحداهما
+ * داخل الأخرى. عبارة من كلمة واحدة («لا»، «نعم»): صدى فقط إن كان كلام المحامي هذه الكلمة بعينها،
+ * فلا تُعدّ «لا تتحدث مع الطرف الآخر» صدى لـ«لا».
+ */
+const echoesPhrase = (words, spoken) =>
+  spoken.length === 1
+    ? words.length === 1 && words[0].norm === spoken[0].norm
+    : indexOfRun(words, spoken) >= 0 || indexOfRun(spoken, words) >= 0
+
+/**
  * على جهاز واحد يلتقط المايك ما تنطقه العدسة: عبارة «محامٍ» تطابق (أو جزء من) عبارة أشار بها
  * الشخص خلال `windowMs`، أو تنبيهاً منطوقاً، هي صدى وليست كلاماً. المطابقة بالكلمات الكاملة
- * (كلمات متتالية إحداهما داخل الأخرى) وبعد توحيد الهمزة والتاء المربوطة والياء، فلا تُعدّ «الاوراق»
- * صدى لـ«لا»، وتُعدّ «احتاج مساعده» صدى لـ«أحتاج مساعدة».
+ * وبعد توحيد الهمزة والتاء المربوطة والياء، فلا تُعدّ «الاوراق» صدى لـ«لا»، وتُعدّ «احتاج مساعده»
+ * صدى لـ«أحتاج مساعدة».
  */
 export function isEcho(entries, entry, windowMs = 10_000) {
   if (entry?.role !== 'lawyer') return false
@@ -146,8 +156,7 @@ export function isEcho(entries, entry, windowMs = 10_000) {
   if (isPromptStart(words)) return true
   return entries.some((e) => {
     if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) return false
-    const spoken = wordsOf(e.text)
-    return indexOfRun(words, spoken) >= 0 || indexOfRun(spoken, words) >= 0
+    return echoesPhrase(words, wordsOf(e.text))
   })
 }
 
@@ -155,6 +164,8 @@ export function isEcho(entries, entry, windowMs = 10_000) {
  * يُسقط صدى العدسة من عبارة «محامٍ»: ليست صدى ← العبارة نفسها. صدى كامل أو جزئي أو تنبيه منطوق
  * (عبارة الشخص ليست داخلها كاملةً) ← `null`. وإن وردت عبارة الشخص متتاليةً داخل كلام أطول
  * (المحامي تكلم بعد الصدى مباشرة) تُحذف منه، ويُحفظ الباقي إن بقيت كلمتان فأكثر وإلا `null`.
+ * عبارة الشخص من كلمة واحدة لا تُحذف أبداً من جملة أطول (حذف «لا» يقلب المعنى): هي صدى فقط
+ * حين تكون الجملة هي الكلمة نفسها، فيُسقَط الكل.
  */
 export function removeEcho(entries, entry, windowMs = 10_000) {
   if (!isEcho(entries, entry, windowMs)) return entry
@@ -163,6 +174,7 @@ export function removeEcho(entries, entry, windowMs = 10_000) {
   for (const e of entries) {
     if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) continue
     const phrase = wordsOf(e.text)
+    if (phrase.length < 2) continue
     const at = indexOfRun(words, phrase)
     if (at < 0) continue
     words = [...words.slice(0, at), ...words.slice(at + phrase.length)]
