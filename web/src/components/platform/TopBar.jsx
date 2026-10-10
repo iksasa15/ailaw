@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { usePlatform } from '../../platform/PlatformContext'
 import { BrandIcon } from '../brand/BrandMark'
 import { Icon } from '../ui/Icon'
+import { InstantConsultButton } from './InstantConsult'
 import { RoleSwitch } from './RoleSwitch'
 import { pageTitle } from './nav'
 
@@ -23,6 +24,11 @@ export function TopBar() {
         <div className="md:hidden">
           <RoleSwitch compact />
         </div>
+        {state.role === 'person' ? (
+          <div className="hidden sm:block">
+            <InstantConsultButton />
+          </div>
+        ) : null}
         <Link
           to="/app/lens"
           className="hidden min-h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3.5 text-sm font-bold text-white sm:inline-flex"

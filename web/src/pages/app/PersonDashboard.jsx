@@ -7,6 +7,7 @@ import { StatusBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, SectionTitle } from '../../components/ui/Card'
 import { Icon } from '../../components/ui/Icon'
+import { InstantConsultButton } from '../../components/platform/InstantConsult'
 
 const SHORTCUTS = [
   { to: '/app/lawyers', icon: 'calendar', title: 'احجز جلسة', text: 'محامون يفهمون احتياجك' },
@@ -15,7 +16,7 @@ const SHORTCUTS = [
   { to: '/app/lab', icon: 'flask', title: 'المعمل', text: 'جرّب سيناريو قضية كاملة' },
 ]
 
-export default function PersonDashboard({ learning }) {
+export default function PersonDashboard({ learning, badges }) {
   const { me, myBookings, lawyerById } = usePlatform()
   const now = useNow()
   const { upcoming, past } = splitSessions(myBookings, now)
@@ -29,6 +30,8 @@ export default function PersonDashboard({ learning }) {
         <h2 className="text-3xl font-black text-[var(--ink)]">أهلاً {me.name.split(' ')[0]} 👋</h2>
         <p className="mt-1 text-[var(--muted)]">هذه لوحتك: جلساتك القادمة، وتقدّمك في تعلّم الإشارة.</p>
       </div>
+
+      <InstantConsultButton variant="banner" />
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         {next ? (
@@ -55,7 +58,7 @@ export default function PersonDashboard({ learning }) {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {next.status === 'confirmed' ? (
                 <Link
-                  to={`/app/session/${next.id}`}
+                  to={`/app/session/${next.id}/check`}
                   className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[#5eead4] px-6 font-black text-[#0b1c24] hover:bg-[#7ff0dd]"
                 >
                   <Icon name="video" size={20} /> ادخل الجلسة
@@ -98,6 +101,16 @@ export default function PersonDashboard({ learning }) {
               </div>
             ))}
             {!learning?.length ? <p className="text-sm text-[var(--muted)]">ابدأ أول درس من مركز التعلّم.</p> : null}
+            {badges ? (
+              <Link to="/app/learn" className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
+                <span className="inline-flex items-center gap-2">
+                  <Icon name="award" size={18} /> أوسمتك
+                </span>
+                <span className="tabular-nums">
+                  {badges.earned}/{badges.total}
+                </span>
+              </Link>
+            ) : null}
           </div>
         </Card>
       </div>

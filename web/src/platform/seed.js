@@ -181,7 +181,9 @@ function historyBookings(now) {
 }
 
 export function buildSeed(now) {
-  const todayStart = now.getHours() >= 16 ? at(now, 1, 11) : at(now, 0, now.getHours() + 1)
+  // جلسة اليوم بعد نصف ساعة على الأقل؛ بعد نهاية الدوام تصبح غداً 11:00.
+  const todayHour = now.getHours() + (now.getMinutes() < 30 ? 1 : 2)
+  const todayStart = todayHour >= 17 ? at(now, 1, 11) : at(now, 0, todayHour)
   const doneStart = at(now, -2, 10)
   const oldStart = at(now, -7, 13)
   const booking = (id, personId, lawyerId, start, caseType, description, channel, status, extra = {}) => ({

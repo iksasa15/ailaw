@@ -43,6 +43,11 @@ export default function LawyerProfile() {
                     {s}
                   </Badge>
                 ))}
+                {lawyer.onlineNow ? (
+                  <Badge tone="green">
+                    <span className="size-2 rounded-full bg-emerald-500" /> متصل الآن
+                  </Badge>
+                ) : null}
                 {lawyer.signFluent ? (
                   <Badge tone="accent">
                     <Icon name="hand" size={14} /> يتقن لغة الإشارة

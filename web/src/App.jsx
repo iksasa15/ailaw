@@ -22,6 +22,10 @@ import SessionRoom from './pages/app/SessionRoom'
 import SessionRecord from './pages/app/SessionRecord'
 import LearnHome from './pages/app/LearnHome'
 import Lesson from './pages/app/Lesson'
+import LensPage from './pages/app/LensPage'
+import SessionCheck from './pages/app/SessionCheck'
+import Certificate from './pages/app/Certificate'
+import Impact from './pages/app/Impact'
 
 export default function App() {
   return (
@@ -72,11 +76,14 @@ export default function App() {
               </RequireRole>
             }
           />
+          <Route path="session/:id/check" element={<SessionCheck />} />
           <Route path="session/:id" element={<SessionRoom />} />
           <Route path="session/:id/record" element={<SessionRecord />} />
+          <Route path="impact" element={<Impact />} />
           <Route path="learn" element={<LearnHome />} />
+          <Route path="learn/certificate/:course" element={<Certificate />} />
           <Route path="learn/:course/:lesson" element={<Lesson />} />
-          <Route path="lens" element={<Home serverless />} />
+          <Route path="lens" element={<LensPage />} />
           <Route path="lab" element={<Lab />} />
           <Route path="guide" element={<Guide />} />
           <Route path="settings" element={<Settings />} />

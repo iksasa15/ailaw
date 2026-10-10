@@ -5,12 +5,15 @@ import { appendEntry, CHANNEL_LABELS, isEcho } from '../../platform/logic'
 import { usePlatform } from '../../platform/PlatformContext'
 import { useNow } from '../../platform/useNow'
 import Home from '../Home'
+import { useTts } from '../../hooks/useTts'
+import { FOCUS_CLASS, FullscreenButton, useFocusMode } from '../../components/platform/FullscreenButton'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Icon } from '../../components/ui/Icon'
 
 const ROLE_NAMES = { person: 'الشخص', lawyer: 'المحامي' }
+const QUICK_REPLIES = ['نعم', 'لا', 'لم أفهم، أعد من فضلك', 'انتظر لحظة', 'أحتاج مساعدة', 'شكراً']
 const clock = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000))
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -29,11 +32,26 @@ export default function SessionRoom() {
   const [linkError, setLinkError] = useState('')
   const now = useNow(1000)
   const listRef = useRef(null)
+  const [focused, toggleFocus] = useFocusMode()
+  const [draft, setDraft] = useState('')
+  const { speak, unlock } = useTts({ cooldownMs: 0 })
 
   // ما تنطقه العدسة ويلتقطه المايك على نفس الجهاز لا يُسجَّل ككلام المحامي.
   const onConversation = useCallback(
     (entry) => setEntries((list) => (isEcho(list, entry) ? list : appendEntry(list, entry))),
     [],
+  )
+
+  // اكتب وانطق: الشخص يكتب أو يختار رداً، فيُنطق للمحامي ويُسجَّل في المحضر.
+  const say = useCallback(
+    (text) => {
+      const message = String(text || '').trim()
+      if (!message) return
+      unlock()
+      speak(message, { force: true })
+      setEntries((list) => appendEntry(list, { role: 'person', text: message, at: Date.now() }))
+    },
+    [speak, unlock],
   )
 
   useEffect(() => {
@@ -83,9 +101,12 @@ export default function SessionRoom() {
           <div className="text-xs font-bold text-[#5eead4]">جلسة مباشرة · {booking.caseType}</div>
           <div className="mt-1 text-3xl font-black tabular-nums">{clock(now.getTime() - startedAt)}</div>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-300">
-          <span className="size-2 animate-pulse rounded-full bg-red-400" /> مباشر
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-300">
+            <span className="size-2 animate-pulse rounded-full bg-red-400" /> مباشر
+          </span>
+          <FullscreenButton focused={focused} onToggle={toggleFocus} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -135,6 +156,49 @@ export default function SessionRoom() {
         </div>
       </div>
 
+      <form
+        className="flex flex-col gap-2 rounded-2xl bg-white/6 p-3"
+        onSubmit={(e) => {
+          e.preventDefault()
+          say(draft)
+          setDraft('')
+        }}
+      >
+        <div className="flex items-center gap-1.5 text-sm font-bold text-[#5eead4]">
+          <Icon name="volume" size={16} /> اكتب وانطق
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {QUICK_REPLIES.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => say(r)}
+              className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/10 hover:bg-[#0f766e]"
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={200}
+            placeholder="اكتب ما تريد قوله…"
+            aria-label="اكتب ما تريد قوله"
+            className="min-h-10 flex-1 rounded-xl bg-white/10 px-3 text-sm text-white placeholder:text-white/40 outline-none focus:ring-2 focus:ring-[#5eead4]/50"
+          />
+          <button
+            type="submit"
+            disabled={!draft.trim()}
+            aria-label="انطق"
+            className="flex size-10 items-center justify-center rounded-xl bg-[#0f766e] text-white disabled:opacity-40"
+          >
+            <Icon name="send" size={18} />
+          </button>
+        </div>
+      </form>
+
       {linkError ? <div className="rounded-xl bg-amber-400/15 px-3 py-2 text-xs font-bold text-amber-200">{linkError}</div> : null}
       <div className="flex flex-col gap-2">
         <Button variant="dark" onClick={linkDevice}>
@@ -148,7 +212,7 @@ export default function SessionRoom() {
   )
 
   return (
-    <div className="relative h-full lg:grid lg:grid-cols-[1fr_380px]">
+    <div className={`${focused ? FOCUS_CLASS : 'relative h-full'} bg-black lg:grid lg:grid-cols-[1fr_380px]`}>
       <div className="relative h-full min-h-0">
         <Home serverless onConversation={onConversation} />
       </div>
@@ -166,6 +230,7 @@ export default function SessionRoom() {
           </span>
           <span className="tabular-nums">{clock(now.getTime() - startedAt)}</span>
         </button>
+        <FullscreenButton focused={focused} onToggle={toggleFocus} className="size-12 rounded-2xl" />
         <Button variant="danger" onClick={end} aria-label="إنهاء الجلسة">
           <Icon name="x" size={20} />
         </Button>

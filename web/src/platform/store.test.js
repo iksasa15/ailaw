@@ -39,6 +39,14 @@ describe('seed', () => {
     expect(history.every((b) => b.record.entries.length >= 2 && new Date(b.start) < NOW)).toBe(true)
   })
 
+  test("today's confirmed session starts at least 30 minutes after the data is created", () => {
+    for (const minute of [0, 29, 31, 59]) {
+      const now = new Date(2026, 9, 11, 13, minute)
+      const start = new Date(buildSeed(now).bookings.find((b) => b.id === 'b-today').start)
+      expect(start.getTime() - now.getTime()).toBeGreaterThanOrEqual(30 * 60_000)
+    }
+  })
+
   test("today's confirmed session moves to tomorrow late in the day", () => {
     const late = buildSeed(new Date(2026, 9, 11, 16, 30))
     const confirmed = late.bookings.find((b) => b.status === 'confirmed' && b.lawyerId === 'l1')

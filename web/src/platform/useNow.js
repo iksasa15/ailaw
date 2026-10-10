@@ -15,6 +15,7 @@ export function relativeStart(startIso, now) {
   const diff = new Date(startIso).getTime() - now.getTime()
   const min = Math.round(diff / 60_000)
   if (diff <= 0) return 'جارية الآن'
+  if (min < 1) return 'تبدأ الآن'
   if (min < 60) return `تبدأ بعد ${min} دقيقة`
   const hours = Math.round(min / 60)
   if (hours < 24) return `تبدأ بعد ${hours} ساعة`

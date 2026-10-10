@@ -39,7 +39,7 @@ export function SessionCard({ booking, now, upcoming }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {live ? (
-          <Button as={Link} to={`/app/session/${booking.id}`}>
+          <Button as={Link} to={`/app/session/${booking.id}/check`}>
             <Icon name="video" size={18} /> ادخل الجلسة
           </Button>
         ) : null}

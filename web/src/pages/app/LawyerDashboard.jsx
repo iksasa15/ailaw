@@ -60,7 +60,7 @@ export default function LawyerDashboard() {
                       {formatTime(b.start)} · {b.caseType} · <span className="font-bold text-[var(--accent)]">{relativeStart(b.start, now)}</span>
                     </div>
                   </div>
-                  <Button as={Link} to={`/app/session/${b.id}`} size="sm">
+                  <Button as={Link} to={`/app/session/${b.id}/check`} size="sm">
                     <Icon name="video" size={16} /> ادخل
                   </Button>
                 </div>

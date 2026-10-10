@@ -5,6 +5,7 @@ export const NAV = {
     { to: '/app/lawyers', label: 'المحامون', icon: 'users' },
     { to: '/app/sessions', label: 'جلساتي', icon: 'calendar' },
     { to: '/app/learn', label: 'مركز التعلّم', icon: 'book' },
+    { to: '/app/impact', label: 'الأثر', icon: 'chart' },
     { to: '/app/lens', label: 'العدسة', icon: 'glasses' },
     { to: '/app/lab', label: 'المعمل', icon: 'flask' },
     { to: '/app/guide', label: 'التعليمات', icon: 'help' },
@@ -15,6 +16,7 @@ export const NAV = {
     { to: '/app/requests', label: 'طلبات الحجز', icon: 'inbox', badge: 'pending' },
     { to: '/app/sessions', label: 'جلساتي', icon: 'calendar' },
     { to: '/app/availability', label: 'أوقات التوفر', icon: 'clock' },
+    { to: '/app/impact', label: 'الأثر', icon: 'chart' },
     { to: '/app/lens', label: 'العدسة', icon: 'glasses' },
     { to: '/app/guide', label: 'التعليمات', icon: 'help' },
     { to: '/app/settings', label: 'الإعدادات', icon: 'settings' },
@@ -24,7 +26,9 @@ export const NAV = {
 const EXTRA_TITLES = [
   [/^\/app\/lawyers\/[^/]+$/, 'صفحة المحامي'],
   [/^\/app\/session\/[^/]+\/record$/, 'محضر الجلسة'],
+  [/^\/app\/session\/[^/]+\/check$/, 'فحص الجهاز'],
   [/^\/app\/session\/[^/]+$/, 'غرفة الجلسة'],
+  [/^\/app\/learn\/certificate\/.+$/, 'شهادة إتمام'],
   [/^\/app\/learn\/.+$/, 'درس'],
   [/^\/app\/about$/, 'عن المشروع'],
 ]

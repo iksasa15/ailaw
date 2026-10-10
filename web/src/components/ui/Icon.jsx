@@ -36,10 +36,16 @@ const PATHS = {
   file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
   link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14M8.21 13.89 7 23l5-3 5 3-1.21-9.12',
+  maximize: 'M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3',
+  minimize: 'M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3',
+  chart: 'M3 3v18h18M7 16v-4M12 16V8M17 16v-7',
+  zap: 'M13 2 3 14h9l-1 8 10-12h-9z',
+  volume: 'M11 5 6 9H2v6h4l5 4zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14',
+  send: 'M22 2 11 13M22 2l-7 20-4-9-9-4z',
 }
 
 export function Icon({ name, size = 20, className = '', strokeWidth = 2 }) {
-  const filled = name === 'star' || name === 'play'
+  const filled = name === 'star' || name === 'play' || name === 'zap'
   return (
     <svg
       viewBox="0 0 24 24"

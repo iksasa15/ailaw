@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CHANNEL_LABELS, formatDate, formatTime, recordToText } from '../../platform/logic'
 import { usePlatform } from '../../platform/PlatformContext'
@@ -6,6 +7,8 @@ import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Icon } from '../../components/ui/Icon'
+import { RatingCard } from '../../components/platform/RatingCard'
+import { SignPlayer } from '../../components/platform/SignPlayer'
 
 const ROLE_NAMES = { person: 'الشخص', lawyer: 'المحامي' }
 
@@ -21,8 +24,9 @@ function download(filename, text) {
 /** محضر الجلسة: الأطراف، الملخص، السجل الكامل؛ طباعة A4 وتنزيل نصّاً. */
 export default function SessionRecord() {
   const { id } = useParams()
-  const { myBookings, lawyerById, userById } = usePlatform()
+  const { state, myBookings, lawyerById, userById } = usePlatform()
   const booking = myBookings.find((b) => b.id === id)
+  const [watching, setWatching] = useState(false)
   if (!booking?.record) {
     return (
       <EmptyState
@@ -49,7 +53,10 @@ export default function SessionRecord() {
         <Link to="/app/sessions" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--accent)]">
           <Icon name="chevron" size={16} className="rotate-180" /> جلساتي
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" disabled={!notes.length} onClick={() => setWatching(true)}>
+            <Icon name="hand" size={18} /> شاهد التوجيهات بالإشارة
+          </Button>
           <Button variant="secondary" onClick={() => download(`محضر-${booking.id}.txt`, recordToText({ booking, lawyer, person }))}>
             <Icon name="download" size={18} /> تنزيل نصّاً
           </Button>
@@ -58,6 +65,12 @@ export default function SessionRecord() {
           </Button>
         </div>
       </div>
+
+      {state.role === 'person' ? (
+        <div className="mb-4">
+          <RatingCard booking={booking} lawyerName={lawyer?.name} />
+        </div>
+      ) : null}
 
       <Card className="print-sheet p-8">
         <header className="flex items-start justify-between gap-4 border-b border-[var(--ring)] pb-5">
@@ -147,6 +160,7 @@ export default function SessionRecord() {
           <span>{formatDate(r.endedAt)}</span>
         </footer>
       </Card>
+      {watching ? <SignPlayer title="توجيهات المحامي بلغة الإشارة" phrases={notes} onClose={() => setWatching(false)} /> : null}
     </div>
   )
 }
