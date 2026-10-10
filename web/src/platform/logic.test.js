@@ -7,6 +7,7 @@ import {
   courseProgress,
   nextSession,
   recordToText,
+  removeEcho,
   splitSessions,
   transition,
 } from './logic'
@@ -213,5 +214,31 @@ describe('isEcho', () => {
 
   test('person entries are never echoes', () => {
     expect(isEcho([person], { role: 'person', text: 'أنا كنت أقود', at: 11_000 })).toBe(false)
+  })
+})
+
+describe('removeEcho', () => {
+  const said = { role: 'person', text: 'أحتاج مساعدة', at: 1000 }
+  test('the laptop hearing its own voice is dropped', () => {
+    expect(removeEcho([said], { role: 'lawyer', text: 'أحتاج مساعدة', at: 3000 })).toBeNull()
+  })
+  test('lawyer words right after the echo are kept, without the echo', () => {
+    expect(removeEcho([said], { role: 'lawyer', text: 'أحتاج مساعدة حسناً سأساعدك الآن', at: 3000 }).text).toBe('حسناً سأساعدك الآن')
+  })
+  test('normal lawyer speech passes untouched', () => {
+    const e = { role: 'lawyer', text: 'أين وقع الحادث', at: 3000 }
+    expect(removeEcho([said], e)).toBe(e)
+  })
+  test('a partial echo or a spoken prompt is dropped as a whole', () => {
+    const grown = { role: 'person', text: 'أنا كنت أقود', at: 1000 }
+    expect(removeEcho([grown], { role: 'lawyer', text: 'أنا كنت', at: 3000 })).toBeNull()
+    expect(removeEcho([], { role: 'lawyer', text: 'وضع المحامي', at: 3000 })).toBeNull()
+  })
+  test('a single leftover word is not enough to keep', () => {
+    expect(removeEcho([said], { role: 'lawyer', text: 'أحتاج مساعدة شكراً', at: 3000 })).toBeNull()
+  })
+  test('person entries pass untouched', () => {
+    const e = { role: 'person', text: 'أحتاج مساعدة', at: 3000 }
+    expect(removeEcho([said], e)).toBe(e)
   })
 })

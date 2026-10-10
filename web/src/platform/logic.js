@@ -121,6 +121,42 @@ export function isEcho(entries, entry, windowMs = 10_000) {
   })
 }
 
+/** كلمات النص (الأصلية ومطبّعتها كلمةً كلمة)؛ ما لا يبقى منه إلا علامات ترقيم يُسقَط */
+const wordsOf = (text) =>
+  String(text || '')
+    .split(/\s+/)
+    .map((word) => ({ word, norm: normalizeArabic(word).replace(/ /g, '') }))
+    .filter((t) => t.norm)
+
+/** موضع أول ظهور متتالٍ لـ `needle` داخل `hay` (كلمات مطبّعة)، أو -1 */
+function indexOfRun(hay, needle) {
+  for (let i = 0; i + needle.length <= hay.length; i++) {
+    if (needle.every((n, k) => hay[i + k].norm === n.norm)) return i
+  }
+  return -1
+}
+
+/**
+ * يُسقط صدى العدسة من عبارة «محامٍ»: ليست صدى ← العبارة نفسها. صدى كامل أو جزئي أو تنبيه منطوق
+ * (عبارة الشخص ليست داخلها كاملةً) ← `null`. وإن وردت عبارة الشخص متتاليةً داخل كلام أطول
+ * (المحامي تكلم بعد الصدى مباشرة) تُحذف منه، ويُحفظ الباقي إن بقيت كلمتان فأكثر وإلا `null`.
+ */
+export function removeEcho(entries, entry, windowMs = 10_000) {
+  if (!isEcho(entries, entry, windowMs)) return entry
+  let words = wordsOf(entry.text)
+  let removed = false
+  for (const e of entries) {
+    if (e.role !== 'person' || entry.at < e.at || entry.at - e.at > windowMs) continue
+    const phrase = wordsOf(e.text)
+    const at = phrase.length ? indexOfRun(words, phrase) : -1
+    if (at < 0) continue
+    words = [...words.slice(0, at), ...words.slice(at + phrase.length)]
+    removed = true
+  }
+  if (!removed || words.length < 2) return null
+  return { ...entry, text: words.map((t) => t.word).join(' ') }
+}
+
 const uniqueTexts = (entries, role) => [...new Set(entries.filter((e) => e.role === role).map((e) => e.text))]
 
 /** المحضر من سجل المحادثة. */
