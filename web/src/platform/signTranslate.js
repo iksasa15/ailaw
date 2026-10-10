@@ -78,10 +78,14 @@ const SCENARIOS = Object.keys(LAWYER_PHRASES)
   })
   .filter((s) => s.words.length)
 
-/** صيغ الجذر بعد حذف لاحقة واحدة (مع بديل ت ← ه لآخر الجذر) */
-function suffixForms(stem) {
+/**
+ * صيغ الجذر بعد حذف لاحقة واحدة (مع بديل ت ← ه لآخر الجذر). `taMarbuta`: الكلمة كما قيلت تنتهي
+ * بـ«ة» فهاؤها المطبّعة ليست ضمير «ه» (فلا تصير «السلامة» «السلام» ولا «نعمة» «نعم»).
+ */
+function suffixForms(stem, taMarbuta) {
   const forms = []
   for (const suffix of SUFFIXES) {
+    if (taMarbuta && suffix === 'ه') continue
     if (!stem.endsWith(suffix)) continue
     const root = stem.slice(0, -suffix.length)
     if (root.length < MIN_STEM) continue
@@ -92,15 +96,17 @@ function suffixForms(stem) {
 }
 
 /** كما هي ← بلا سابقة ← بلا لاحقة ← بلا الاثنين */
-function candidateForms(norm) {
+function candidateForms({ word, norm }) {
+  const taMarbuta = foldAlef(word).endsWith('ة')
   const stems = PREFIXES.filter((p) => norm.startsWith(p))
     .map((p) => norm.slice(p.length))
     .filter((s) => s.length >= MIN_STEM)
-  return [norm, ...stems, ...suffixForms(norm), ...stems.flatMap(suffixForms)]
+  return [norm, ...stems, ...suffixForms(norm, taMarbuta), ...stems.flatMap((s) => suffixForms(s, taMarbuta))]
 }
 
-function lookupWord(norm) {
-  for (const form of candidateForms(norm)) {
+/** كلمة واحدة (كما قيلت ومطبّعة) ← مدخل القاموس أو null */
+function lookupWord(token) {
+  for (const form of candidateForms(token)) {
     const entry = LEXICON.get(form)
     if (entry) return entry
   }
@@ -115,7 +121,7 @@ function matchAt(tokens, i) {
       const entry = LEXICON.get(window.join(' '))
       if (entry) return { entry, span: size }
     } else if (!STOP_WORDS.has(window[0])) {
-      const entry = lookupWord(window[0])
+      const entry = lookupWord(tokens[i])
       if (entry) return { entry, span: 1 }
     }
   }

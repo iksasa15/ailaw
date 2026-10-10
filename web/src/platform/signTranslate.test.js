@@ -61,6 +61,15 @@ describe('word by word', () => {
     expect(srcs(translateToSigns('قضيتك'))).toEqual([V('word-case')])
     expect(srcs(translateToSigns('محاميكم'))).toEqual([V('word-lawyer')])
   })
+  test('a final ة is never stripped as the pronoun ه', () => {
+    const wrong = [V('word-hello'), V('word-yes'), V('word-follow')]
+    for (const text of ['مع السلامة', 'نعمة', 'التابعة']) {
+      expect(srcs(translateToSigns(text)).filter((s) => wrong.includes(s)), text).toEqual([])
+    }
+    expect(translateToSigns('مع السلامة').steps).toEqual([{ kind: 'word', label: 'السلامة', token: 1, span: 1 }])
+    expect(labels(translateToSigns('نعمة'))).toEqual(['ن', 'ع', 'م', 'ة'])
+    expect(srcs(translateToSigns('محاميه'))).toEqual([V('word-lawyer')])
+  })
   test('a stripped stem shorter than 3 letters is not a match', () => {
     expect(labels(translateToSigns('كما'))).toEqual(['ك', 'م', 'ا'])
   })
